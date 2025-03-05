@@ -1,0 +1,12 @@
+FROM php:8.1-fpm
+
+# Installation des dépendances système et des extensions PHP requises pour Symfony
+RUN apt-get update && apt-get install -y \
+    libicu-dev \
+    libpq-dev \
+    zip \
+    unzip \
+    git \
+  && docker-php-ext-install intl pdo_mysql
+
+WORKDIR /var/www
