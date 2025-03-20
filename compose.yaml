@@ -33,6 +33,19 @@ services:
       - "3306:3306"
     volumes:
       - dbdata:/var/lib/mysql
+      - ./docker/mysql/initdb:/docker-entrypoint-initdb.d
 
 volumes:
   dbdata:
+
+
+####### Pour ce connecter sur le container "symfony_db" des bases de donnees
+# docker exec -it symfony_db bash .
+# mysql -uroot -proot
+
+####### Pour voir toutes les base de donnees sur le container
+# SHOW DATABASES;
+
+####### Pour voir une base de donnees et afficher ces tables
+# USE le_nom_de_la_table;
+# SHOW TABLES;

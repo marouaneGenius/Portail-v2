@@ -1,0 +1,22 @@
+## se connecter a la base de donnees via terminal
+docker exec -it symfony_db mysql -u root -p
+
+## mot de passe 
+root
+
+## choisir la base de donnees
+SHOW DATABASES;
+
+## choisir la base de donnees
+use data_base;
+
+## voir les tables dans la bdd
+SHOW TABLES;
+
+## si on est dans le container de la bdd et on veut se connecter a mysql
+mysql -u symfony -p
+
+## ouvrir un autre terminal dans notre projet et lancer le script qui permet de creer les base de donnes dans le container "import_data.sh"
+- faut installer bash avec brew
+- lancer la commande sudo /opt/homebrew/bin/bash ./import_data.sh
+

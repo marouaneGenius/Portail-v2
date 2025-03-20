@@ -1,44 +1,129 @@
 doctrine:
     dbal:
-        url: '%env(resolve:DATABASE_URL)%'
+        default_connection: lacryo_genius_alm
+        connections:
+            lacryo_genius_alm:
+                url: '%env(resolve:DATABASE_URL_LACRYO_GENIUS_ALM)%'
+            lacryo_genius_home:
+                url: '%env(resolve:DATABASE_URL_LACRYO_GENIUS_HOME)%'
+            lacryo_geniusclass:
+                url: '%env(resolve:DATABASE_URL_LACRYO_GENIUSCLASS)%'
+            lacryo_lacryo_landing:
+                url: '%env(resolve:DATABASE_URL_LACRYO_LACRYO_LANDING)%'
+            lacryo_lacryo_lpgin_gc:
+                url: '%env(resolve:DATABASE_URL_LACRYO_LACRYO_LPGIN_GC)%'
+            lacryo_landing_gc:
+                url: '%env(resolve:DATABASE_URL_LACRYO_LANDING_GC)%'
+            lacryo_portail_gc_ass:
+                url: '%env(resolve:DATABASE_URL_LACRYO_PORTAIL_GC_ASS)%'
+            lacryo_portail_gc_eng:
+                url: '%env(resolve:DATABASE_URL_LACRYO_PORTAIL_GC_ENG)%'
+            lacryo_portail_gc_gonesse:
+                url: '%env(resolve:DATABASE_URL_LACRYO_PORTAIL_GC_GONESSE)%'
+            lacryo_portail_gc_pontoise:
+                url: '%env(resolve:DATABASE_URL_LACRYO_PORTAIL_GC_PONTOISE)%'
+            lacryo_portail_gc:
+                url: '%env(resolve:DATABASE_URL_LACRYO_PORTAIL_GC)%'
 
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
-        use_savepoints: true
     orm:
-        auto_generate_proxy_classes: true
-        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-        auto_mapping: true
-        mappings:
-            App:
-                is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
-                alias: App
-
-when@test:
-    doctrine:
-        dbal:
-            # "TEST_TOKEN" is typically set by ParaTest
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
-
-when@prod:
-    doctrine:
-        orm:
-            auto_generate_proxy_classes: false
-            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
-            query_cache_driver:
-                type: pool
-                pool: doctrine.system_cache_pool
-            result_cache_driver:
-                type: pool
-                pool: doctrine.result_cache_pool
-
-    framework:
-        cache:
-            pools:
-                doctrine.result_cache_pool:
-                    adapter: cache.app
-                doctrine.system_cache_pool:
-                    adapter: cache.system
+        default_entity_manager: lacryo_genius_alm
+        entity_managers:
+            lacryo_genius_alm:
+                connection: lacryo_genius_alm
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoGeniusAlm'
+                        prefix: 'App\Entity\LacryoGeniusAlm'
+                        alias: LacryoGeniusAlm
+            lacryo_genius_home:
+                connection: lacryo_genius_home
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoGeniusHome'
+                        prefix: 'App\Entity\LacryoGeniusHome'
+                        alias: LacryoGeniusHome
+            lacryo_geniusclass:
+                connection: lacryo_geniusclass
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoGeniusClass'
+                        prefix: 'App\Entity\LacryoGeniusClass'
+                        alias: LacryoGeniusClass
+            lacryo_lacryo_landing:
+                connection: lacryo_lacryo_landing
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoLacryoLanding'
+                        prefix: 'App\Entity\LacryoLacryoLanding'
+                        alias: LacryoLacryoLanding
+            lacryo_lacryo_lpgin_gc:
+                connection: lacryo_lacryo_lpgin_gc
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoLacryoLpginGc'
+                        prefix: 'App\Entity\LacryoLacryoLpginGc'
+                        alias: LacryoLacryoLpginGc
+            lacryo_landing_gc:
+                connection: lacryo_landing_gc
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoLandingGc'
+                        prefix: 'App\Entity\LacryoLandingGc'
+                        alias: LacryoLandingGc
+            lacryo_portail_gc_ass:
+                connection: lacryo_portail_gc_ass
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoPortailGcAss'
+                        prefix: 'App\Entity\LacryoPortailGcAss'
+                        alias: LacryoPortailGcAss
+            lacryo_portail_gc_eng:
+                connection: lacryo_portail_gc_eng
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoPortailGcEng'
+                        prefix: 'App\Entity\LacryoPortailGcEng'
+                        alias: LacryoPortailGcEng
+            lacryo_portail_gc_gonesse:
+                connection: lacryo_portail_gc_gonesse
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoPortailGcGonesse'
+                        prefix: 'App\Entity\LacryoPortailGcGonesse'
+                        alias: LacryoPortailGcGonesse
+            lacryo_portail_gc_pontoise:
+                connection: lacryo_portail_gc_pontoise
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoPortailGcPontoise'
+                        prefix: 'App\Entity\LacryoPortailGcPontoise'
+                        alias: LacryoPortailGcPontoise
+            lacryo_portail_gc:
+                connection: lacryo_portail_gc
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/LacryoPortailGc'
+                        prefix: 'App\Entity\LacryoPortailGc'
+                        alias: LacryoPortailGc
