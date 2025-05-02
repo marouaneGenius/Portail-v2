@@ -1,0 +1,52 @@
+{# templates/security/_login_form.html.twig
+<div class="w-100 content-space-t-4 content-space-t-lg-2 content-space-b-1" style="max-width: 25rem;">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <h2 class="fw-bold">Bienvenue</h2>
+        <p class="text-muted mb-0">Connectez-vous à votre espace</p>
+      </div>
+      <form class="js-validate needs-validation" novalidate method="POST" action="{{ path('app_login') }}">
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control form-control-lg" name="input_mail" id="floatingInput" placeholder="email@address.com" required>
+          <label for="floatingInput">Adresse email</label>
+          <div class="invalid-feedback">
+            Veuillez saisir une adresse email valide.
+          </div>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control form-control-lg js-toggle-password" name="input_mdp" id="floatingPassword" placeholder="Mot de passe" required>
+          <label for="floatingPassword">Mot de passe</label>
+          <div class="invalid-feedback">
+            Veuillez saisir un mot de passe valide.
+          </div>
+        </div>
+        <div class="d-grid">
+          <button type="submit" name="submit" class="btn btn-primary btn-lg">Se connecter</button>
+        </div>
+      </form>
+      <div class="text-center mt-3">
+      </div>
+    </div>
+  </div>
+</div> #}
+
+{# templates/security/_login_form.html.twig #}
+<div class="w-100 content-space-t-4 content-space-t-lg-2 content-space-b-1" style="width: 100%;">
+  <div class="card border-0">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <h2 class="fw-bold">Connexion avec Google</h2>
+        <p class="text-muted mb-0">Utilisez votre compte Google pour accéder rapidement à votre espace.</p>
+      </div>
+      <div class="d-grid mb-3 d-flex justify-content-center"style="width: 100%;">
+        <a href="{{ path('app_google_login') }}" class="btn btn-primary btn-lg">
+          <i class="bi bi-google me-2"></i>Se connecter avec Google
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+///support a enlever de tous@geniusclass.fr

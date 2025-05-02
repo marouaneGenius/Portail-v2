@@ -4,133 +4,29 @@
 
 {% block body %}
 <body class="d-flex align-items-center min-h-100">
-
   <header class="position-absolute top-0 start-0 end-0 mt-3 mx-3">
     <div class="d-flex d-lg-none justify-content-between">
-      <!-- Logo (mobile) -->
-      {# <a href="{{ path('welcome') }}"> #}
-        <a >
-            <img class="w-100"
-                src="{{ asset('assets/svg/logos/logo.svg') }}"
-                alt="Genius Logo"
-                style="min-width: 7rem; max-width: 7rem;">
-        </a>
+      <a>
+        <img class="w-100" src="{{ asset('assets/svg/logos/logo.svg') }}"
+             alt="Genius Logo" style="min-width: 7rem; max-width: 7rem;">
+      </a>
     </div>
   </header>
 
   <main id="content" role="main" class="main pt-0">
     <div class="container-fluid px-3">
       <div class="row">
-        <!-- Col gauche -->
+        <!-- Colonne gauche -->
         <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center min-vh-lg-100 position-relative bg-light px-0">
-          <div class="position-absolute top-0 start-0 end-0 mt-3 mx-3">
-            <div class="d-none d-lg-flex justify-content-between">
-              <a >
-
-                <img class="w-100"
-                    src="{{ asset('assets/icon.png') }}"
-                    alt="Genius Logo"
-                    style="min-width: 7rem; max-width: 7rem;">
-              </a>
-            </div>
-          </div>
-
-          <div style="max-width: 23rem;">
-            <div class="text-center mb-5">
-              <!-- Illustration -->
-              <img class="img-fluid"
-                   src="{{ asset('assets/svg/illustrations/oc-chatting.svg') }}"
-                   alt="Illustration"
-                   style="width: 12rem;">
-            </div>
-
-            <div class="mb-5">
-              <h2 class="display-5">Build digital products with:</h2>
-            </div>
-
-            <ul class="list-checked list-checked-lg list-checked-primary list-py-2">
-              <li class="list-checked-item">
-                <span class="d-block fw-semibold mb-1">All-in-one tool</span>
-                Build, run, and scale your apps – end to end
-              </li>
-              <li class="list-checked-item">
-                <span class="d-block fw-semibold mb-1">Easily add &amp; manage your services</span>
-                It brings together your tasks, projects, timelines, files and more
-              </li>
-            </ul>
-
-            <div class="row justify-content-between mt-5 gx-3">
-              <div class="col">
-                <img class="img-fluid" src="{{ asset('assets/svg/brands/gitlab-gray.svg') }}" alt="Logo">
-              </div>
-              <div class="col">
-                <img class="img-fluid" src="{{ asset('assets/svg/brands/fitbit-gray.svg') }}" alt="Logo">
-              </div>
-              <div class="col">
-                <img class="img-fluid" src="{{ asset('assets/svg/brands/flow-xo-gray.svg') }}" alt="Logo">
-              </div>
-              <div class="col">
-                <img class="img-fluid" src="{{ asset('assets/svg/brands/layar-gray.svg') }}" alt="Logo">
-              </div>
-            </div>
-          </div>
+          {% include 'security/_left.html.twig' %}
         </div>
-        <!-- Fin Col gauche -->
 
-        <!-- Col droite (formulaire) -->
-        <div class="col-lg-6 d-flex justify-content-center align-items-center min-vh-lg-100">
-          <div class="w-100 content-space-t-4 content-space-t-lg-2 content-space-b-1" style="max-width: 25rem;">
-            <!-- Formulaire de connexion -->
-            {# Remplace la route 'app_login' par la tienne si besoin #}
-            <form class="js-validate needs-validation" novalidate method="POST" action="{{ path('app_login') }}">
-              <div class="text-center">
-                <div class="mb-5">
-                  <h1 class="display-5">Bienvenue</h1>
-                </div>
-              </div>
-
-              <div class="mb-4">
-                <input type="email"
-                       class="form-control form-control-lg"
-                       name="input_mail"
-                       id="signinSrEmail"
-                       placeholder="email@address.com"
-                       required>
-                <span class="invalid-feedback">Please enter a valid email address.</span>
-              </div>
-
-              <div class="mb-4">
-                <label class="form-label w-100" for="signupSrPassword">
-                  <span class="d-flex justify-content-between align-items-center">Mot de passe</span>
-                </label>
-
-                <div class="input-group input-group-merge">
-                  <input type="password"
-                         class="js-toggle-password form-control form-control-lg"
-                         name="input_mdp"
-                         id="signupSrPassword"
-                         placeholder="Mot de passe"
-                         required>
-                  <a id="changePassTarget" class="input-group-text" href="javascript:;">
-                    <i id="changePassIcon" class="bi-eye"></i>
-                  </a>
-                </div>
-                <span class="invalid-feedback">Please enter a valid password.</span>
-              </div>
-
-              <div class="d-grid">
-                <button type="submit" name="submit" class="btn btn-primary btn-lg">Se connecter</button>
-              </div>
-            </form>
-            <!-- Fin Formulaire -->
-          </div>
+        <!-- Colonne droite (formulaire de connexion) -->
+        <div class="col-lg-6 d-flex justify-content-center align-items-center min-vh-lg-100 bg-white">
+          {% include 'security/_login_form.html.twig' %}
         </div>
-        
-        <!-- Fin Col droite -->
       </div>
     </div>
   </main>
-
-
 </body>
 {% endblock %}
