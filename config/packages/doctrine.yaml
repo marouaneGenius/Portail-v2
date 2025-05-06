@@ -1,19 +1,18 @@
 doctrine:
     dbal:
-        default_connection: lacryo_genius_alm
-        connections:
-            lacryo_genius_alm:
-                url: '%env(resolve:DATABASE_URL_LACRYO_GENIUS_ALM)%'
+        url: '%env(resolve:DATABASE_URL)%'
+        server_version: '15'
 
     orm:
-        default_entity_manager: lacryo_genius_alm
+        default_entity_manager: default
+        auto_generate_proxy_classes: true
+
         entity_managers:
-            lacryo_genius_alm:
-                connection: lacryo_genius_alm
+            default:
+                connection: default
                 mappings:
                     App:
                         is_bundle: false
                         type: attribute
-                        dir: '%kernel.project_dir%/src/Entity/LacryoGeniusAlm'
-                        prefix: 'App\Entity\LacryoGeniusAlm'
-                        alias: LacryoGeniusAlm
+                        dir: '%kernel.project_dir%/src/Entity'
+                        prefix: 'App\Entity'

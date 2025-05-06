@@ -22,30 +22,18 @@ services:
       - php
 
   db:
-    image: mysql:8.0
+    image: postgres:15
     container_name: symfony_db
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-symfony}
-      MYSQL_USER: ${MYSQL_USER:-symfony}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-symfony}
+      POSTGRES_DB:       ${POSTGRES_DB:-symfony}
+      POSTGRES_USER:     ${POSTGRES_USER:-symfony}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-symfony}
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - dbdata:/var/lib/mysql
-      - ./docker/mysql/initdb:/docker-entrypoint-initdb.d
+      - dbdata:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d
+
 
 volumes:
   dbdata:
-
-
-####### Pour ce connecter sur le container "symfony_db" des bases de donnees
-# docker exec -it symfony_db bash .
-# mysql -uroot -proot
-
-####### Pour voir toutes les base de donnees sur le container
-# SHOW DATABASES;
-
-####### Pour voir une base de donnees et afficher ces tables
-# USE le_nom_de_la_table;
-# SHOW TABLES;
