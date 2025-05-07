@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    // … tes autres options …
+    "target": "ES2020",            // ou ESNext
+    "module": "ESNext",            // autorise import.meta
+    "moduleResolution": "Node",    // résout bien les imports
+    "jsx": "react-jsx",            // si tu utilises React 17+
+    "strict": true,                // recommandé
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "types": ["vite/client"]       // pour typer import.meta.env
+  },
+  "include": ["src", "vite-env.d.ts"]  // et/ou 'src/vite-env.d.ts'
+}

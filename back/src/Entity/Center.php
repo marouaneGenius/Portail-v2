@@ -136,4 +136,10 @@ class Center
 
         return $this;
     }
+
+    public function __toString(): string
+    {
+        // Retourne le nom du centre, utile pour les <option> du formulaire
+        return (string) $this->getName();
+    }
 }

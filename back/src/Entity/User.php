@@ -6,9 +6,12 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User
+#[ORM\Table(name: 'users')]
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -72,12 +75,41 @@ class User
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: Report::class)]
     private Collection $reports;
 
+    #[ORM\Column(length: 255)]
+    private ?string $role = 'ROLE_USER';
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
         $this->day = new ArrayCollection();
         $this->tutorSchedules = new ArrayCollection();
         $this->reports = new ArrayCollection();
+    }
+
+    public function getUserIdentifier(): string
+    {
+        // Vous pouvez utiliser l’email comme identifiant unique
+        return (string) $this->email;
+    }
+
+
+    public function getRoles(): array
+    {
+        // Si vous avez un champ roles en base, utilisez-le.
+        // Sinon, assurez au moins ROLE_USER :
+        $roles = $this->roles ?? [];
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    /**
+     * Méthode requise par UserInterface
+     */
+    public function eraseCredentials(): void
+    {
+        // Si vous stockiez un plainPassword temporaire, vous l’effaceriez ici.
+        $this->plainPassword = null;
     }
 
     public function getId(): ?int
@@ -381,6 +413,18 @@ class User
                 $report->setIdUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(string $role): static
+    {
+        $this->role = $role;
 
         return $this;
     }

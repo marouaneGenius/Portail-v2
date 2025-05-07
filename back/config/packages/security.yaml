@@ -1,39 +1,62 @@
+# config/packages/security.yaml
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    # 1) Hashing des mots de passe
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+
+    # 2) Chargement des utilisateurs
     providers:
-        users_in_memory: { memory: null }
+        users_in_memory:
+            memory: null
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    # 3) Firewalls
     firewalls:
+        # Désactivation de la sécurité pour les assets et le profiler
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: users_in_memory
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+        # Point d’entrée login (stateless, JSON)
+        login:
+            pattern:  ^/login$
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path:      /login
+                username_path:   email
+                password_path:   password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+                # success_handler / failure_handler (facultatif)
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+        # Toutes les routes /api sont protégées par JWT
+        api:
+            pattern:   ^/api
+            stateless: true
+            provider:  app_user_provider   # ← ajoute ceci
+            jwt: ~
+            # si tu veux des cookies HttpOnly à la place des headers :
+            # jwt_cookie: true
+      
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+    # 4) Contrôles d’accès
     access_control:
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api,     roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
+# --------------------------------------------------
+# Configuration spécifique pour les tests
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
-                algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                algorithm:    auto
+                cost:         4   # bcrypt minimal
+                time_cost:    3   # argon2 minimal
+                memory_cost: 10   # argon2 minimal
