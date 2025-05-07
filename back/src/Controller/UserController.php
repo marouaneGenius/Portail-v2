@@ -24,21 +24,14 @@ class UserController extends AbstractController
     public function __construct(
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
-        CenterRepository $centerRepository
+        CenterRepository $centerRepository,
+        private UserRepository $userRepository
     ) {
         $this->em               = $em;
         $this->passwordHasher   = $passwordHasher;
         $this->centerRepository = $centerRepository;
     }
 
-    
-    #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
-    {
-        return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
-        ]);
-    }
 
     #[Route('', name: 'create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
@@ -104,41 +97,59 @@ class UserController extends AbstractController
             'id_center' => $user->getIdCenter()?->getId(),
         ], JsonResponse::HTTP_CREATED);
     }
-
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
+    
+    #[Route('', name: 'api_users_list', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function list(): JsonResponse
     {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
-        ]);
+        $users = $this->userRepository->findAll();
+
+        // On mappe chaque entité User en tableau simple
+        $data = array_map(fn($u) => [
+            'id'        => $u->getId(),
+            'email'     => $u->getEmail(),
+            'firstname' => $u->getFirstname(),
+            'lastname'  => $u->getLastname(),
+            'roles'     => $u->getRoles(),
+        ], $users);
+
+        return $this->json($data);
     }
 
-    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
+    // #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
+    // public function show(User $user): Response
+    // {
+    //     return $this->render('user/show.html.twig', [
+    //         'user' => $user,
+    //     ]);
+    // }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+    // #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
+    // public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    // {
+    //     $form = $this->createForm(UserType::class, $user);
+    //     $form->handleRequest($request);
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-        }
+    //     if ($form->isSubmitted() && $form->isValid()) {
+    //         $entityManager->flush();
 
-        return $this->renderForm('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
-    }
+    //         return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+    //     }
 
-    #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
-        }
+    //     return $this->renderForm('user/edit.html.twig', [
+    //         'user' => $user,
+    //         'form' => $form,
+    //     ]);
+    // }
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-    }
+    // #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
+    // public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    // {
+    //     if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+    //         $entityManager->remove($user);
+    //         $entityManager->flush();
+    //     }
+
+    //     return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+    // }
 }

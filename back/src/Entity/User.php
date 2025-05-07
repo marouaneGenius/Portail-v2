@@ -76,7 +76,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $reports;
 
     #[ORM\Column(length: 255)]
-    private ?string $role = 'ROLE_USER';
+    private ?string $role = null;
 
     public function __construct()
     {
@@ -98,7 +98,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // Si vous avez un champ roles en base, utilisez-le.
         // Sinon, assurez au moins ROLE_USER :
         $roles = $this->roles ?? [];
-        $roles[] = 'ROLE_USER';
+        $roles[] = $this->role;
 
         return array_unique($roles);
     }

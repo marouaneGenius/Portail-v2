@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
 import DataTable from '../components/DataTable';
 
-const Users: React.FC = () => {
+const Parents: React.FC = () => {
   const { user } = useAuth();
 
   if (!user) {
@@ -13,10 +13,10 @@ const Users: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Users</h1>
-      <DataTable endpoint="user" pageSize={20} />
+      <h1 className="text-3xl font-bold mb-6">Parents</h1>
+      <DataTable endpoint="student" pageSize={20} />
     </div>
   );
 };
 
-export default Users;
+export default Parents;
