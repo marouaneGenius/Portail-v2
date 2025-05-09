@@ -1,7 +1,7 @@
 // src/components/Sidebar.tsx
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { HiUsers, HiOfficeBuilding, HiUserCircle, HiMenu, HiX } from 'react-icons/hi';
+import { HiUsers, HiOfficeBuilding, HiUserCircle, HiMenu, HiX, HiOutlineUsers, HiCubeTransparent, HiAcademicCap } from 'react-icons/hi';
 import { useAuth } from '../Hooks/auth';
 
 const Sidebar: React.FC = () => {
@@ -14,8 +14,9 @@ const Sidebar: React.FC = () => {
     { to: '/users', icon: <HiUsers />, label: 'Utilisateurs' },
     { to: '/centers', icon: <HiOfficeBuilding />, label: 'Centres' },
     { to: '/profile', icon: <HiUserCircle />, label: 'Mon profil' },
+    { to: '/students', icon: <HiAcademicCap />, label: 'Étudiants' },
+    { to: '/parent', icon: <HiOutlineUsers />, label: 'Parents' },
     { to: '/sessions', icon: <HiOfficeBuilding />, label: 'Séances' },
-    { to: '/students', icon: <HiUserCircle />, label: 'Étudiants' },
   ];
 
   return (
@@ -31,13 +32,12 @@ const Sidebar: React.FC = () => {
       <div className="flex items-center justify-between p-4 border-b">
         {!collapsed && 
             <h2 className="flex items-center space-x-3 text-2xl font-bold">
-  <span>Admin</span>
-  <img
-    src="/logo/GENIUS-THUNDERBOLD-BIG.png"
-    alt="Logo Genius"
-    className="h-8 w-8 object-contain"
-  />
-</h2>
+              <img
+                src="/logo/GENIUS-THUNDERBOLD-BIG.png"
+                alt="Logo Genius"
+                className="h-8 w-8 object-contain"
+              />
+            </h2>
         }
         <button
           onClick={() => setCollapsed(!collapsed)}

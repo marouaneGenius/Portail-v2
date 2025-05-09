@@ -109,32 +109,25 @@ class StudentParentController extends AbstractController
         return $this->json($data);
     }
 
-    #[Route('/api/parents/{id}', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function update(  int $id, Request $request): JsonResponse {
-        $parent = $this->em->getRepository(StudentParent::class)->find($id);
-        if (!$parent) {
-            return $this->json(['error'=>'Parent introuvable'], 404);
-        }
 
-        $data = json_decode($request->getContent(), true);
-        $parent->setFirstname($data['firstname'] ?? $parent->getFirstname());
 
-        if (!empty($data['student_ids']) && is_array($data['student_ids'])) {
-            foreach ($parent->getStudents() as $oldStudent) {
-                $parent->removeStudent($oldStudent);
-            }
-            foreach ($data['student_ids'] as $studentId) {
-                $student = $this->em->getRepository(Student::class)->find($studentId);
-                if ($student) {
-                    $parent->addStudent($student);
-                }
-            }
-        }
-
-        $this->em->flush();
-
-        return $this->json(['success'=>true]);
+    #[Route('/{id}', methods: ['GET'])]
+    public function show(int $id): JsonResponse
+    {
+        $user = $this->parentRepo->find($id);
+        if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        return $this->json([
+            'id'                => $user->getId(),
+            'email'             => $user->getEmail(),
+            'firstname'         => $user->getFirstname(),
+            'lastname'          => $user->getLastname(),
+            'phone'             => $user->getPhone(),
+            'created_at'        => $user->getCreatedAt(),
+            'created_by'        => $user->getCreatedBy(),
+            'updated_at'        => $user->getUpdatedAt(),
+            'updated_by'        => $user->getUpdatedBy(),
+            ]);
     }
+
 
 }

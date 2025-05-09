@@ -116,6 +116,50 @@ class UserController extends AbstractController
         return $this->json($data);
     }
 
+    #[Route('/{id}', methods: ['GET'])]
+    public function show(int $id): JsonResponse
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        return $this->json([
+            'id'                => $user->getId(),
+            'email'             => $user->getEmail(),
+            'firstname'         => $user->getFirstname(),
+            'lastname'          => $user->getLastname(),
+            'roles'             => $user->getRoles(),
+            'phone'             => $user->getPhone(),
+            'siret'             => $user->getSiret(),
+            'is_active'         => $user->isIsActive(),
+            'is_deleted'        => $user->isIsDeleted(),
+            'created_at'        => $user->getCreatedAt(),
+            'created_by'        => $user->getCreatedBy(),
+            'updated_at'        => $user->getUpdatedAt(),
+            'updated_by'        => $user->getUpdatedBy(),
+            'max_session'       => $user->getMaxSession(),
+            'price_per_hour'    => $user->getPricePerHour(),
+            'tutor_schedules' => array_map(fn($ts) => [
+                'id'         => $ts->getId(),
+                'day'        => $ts->getDay()->format('Y-m-d'),
+                'start_hour' => $ts->getStartHour()->format('H:i:s'),
+                'end_hour'   => $ts->getEndHour()->format('H:i:s'),
+            ], $user->getTutorSchedules()->toArray()),
+
+            'reports' => array_map(fn($r) => [
+                'id'          => $r->getId(),
+                'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
+            ], $user->getReports()->toArray()),
+
+            'center' => $user->getIdCenter()
+                ? [
+                    'id'      => $user->getIdCenter()->getId(),
+                    'name'    => $user->getIdCenter()->getName(),
+                    'address' => $user->getIdCenter()->getAddress(),
+                    'city'    => $user->getIdCenter()->getCity(),
+                ]
+                : null,
+            ]);
+    }
+
     // #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
     // public function show(User $user): Response
     // {

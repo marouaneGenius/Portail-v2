@@ -79,4 +79,18 @@ class CenterController extends AbstractController
 
         return $this->json($data);
     }
+
+
+    #[Route('/{id}', methods: ['GET'])]
+    public function show(int $id): JsonResponse
+    {
+        $center = $this->centerRepo->find($id);
+        if (!$center) { return $this->json(['message'=>'Pas trouvé'],404); }
+        return $this->json([
+            'id'        => $center->getId(),
+            'name'      => $center->getName(),
+            'address'   => $center->getAddress(),
+            'city'      => $center->getCity(),
+            ]);
+    }
 }

@@ -10,7 +10,9 @@ const Navbar: React.FC = () => {
     <nav className="bg-white shadow-md p-4 flex justify-between">
       <div className="flex items-center space-x-4">
         <Link to="/dashboard" className="font-bold text-lg">
-          Portail Genius
+          {/* Admin */}
+          <span >Bonjour {user?.firstname}</span>
+
         </Link>
         {/* <Link to="/dashboard/students" className="text-gray-600 hover:text-gray-800">
           Étudiants
@@ -20,7 +22,6 @@ const Navbar: React.FC = () => {
         </Link> */}
       </div>
       <div className="flex items-center space-x-3">
-        <span className="text-gray-500">Bonjour {user?.firstname}</span>
         <button
           onClick={() => logout()}
           className="flex items-center space-x-1 text-red-500 hover:text-red-700"

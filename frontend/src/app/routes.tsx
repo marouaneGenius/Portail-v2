@@ -9,6 +9,8 @@ import Centers from "../pages/Centers";
 import Sessions from "../pages/Sessions";
 import Users from "../pages/Users";
 import Students from "../pages/Students";
+import ItemDetails from "../components/ItemDetails";
+import Parents from "../pages/Parents";
 
 export const router = createBrowserRouter([
     {
@@ -25,6 +27,8 @@ export const router = createBrowserRouter([
             { path: "/sessions", element: <Sessions /> },
             { path: "/users", element: <Users /> },
             { path: "/students", element: <Students /> },
+            { path: '/:resource/:id', element: <ItemDetails /> },
+            { path: '/parent', element: <Parents /> },
           ],
         },
       ],

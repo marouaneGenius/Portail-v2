@@ -116,4 +116,37 @@ class StudentController extends AbstractController
 
         return $this->json($data);
     }
+
+
+    #[Route('/{id}', methods: ['GET'])]
+    public function show(int $id): JsonResponse
+    {
+        $user = $this->studentRepo->find($id);
+        if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        return $this->json([
+            'id'                => $user->getId(),
+            'email'             => $user->getEmail(),
+            'firstname'         => $user->getFirstname(),
+            'lastname'          => $user->getLastname(),
+            'phone'             => $user->getPhone(),
+            'is_active'         => $user->isIsActive(),
+            'is_deleted'        => $user->isIsDeleted(),
+            'created_at'        => $user->getCreatedAt(),
+            'created_by'        => $user->getCreatedBy(),
+            'updated_at'        => $user->getUpdatedAt(),
+            'updated_by'        => $user->getUpdatedBy(),
+            'reports' => array_map(fn($r) => [
+                'id'          => $r->getId(),
+                'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
+            ], $user->getReports()->toArray()),
+            'center' => $user->getIdCenter()
+                ? [
+                    'id'      => $user->getIdCenter()->getId(),
+                    'name'    => $user->getIdCenter()->getName(),
+                    'address' => $user->getIdCenter()->getAddress(),
+                    'city'    => $user->getIdCenter()->getCity(),
+                ]
+                : null,
+            ]);
+    }
 }
