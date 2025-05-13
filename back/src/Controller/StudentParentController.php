@@ -114,19 +114,100 @@ class StudentParentController extends AbstractController
     #[Route('/{id}', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
-        $user = $this->parentRepo->find($id);
-        if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        $parent = $this->parentRepo->find($id);
+        if (!$parent) {
+            return $this->json(['message' => 'Pas trouvé'], 404);
+        }
+    
+        // Sérialisation des élèves liés
+        $students = $parent->getStudents()->map(function(\App\Entity\Student $s) {
+            return [
+                'id'        => $s->getId(),
+                'firstname' => $s->getFirstname(),
+                'lastname'  => $s->getLastname(),
+                // 'email'     => $s->getEmail(),
+                'class'     => $s->getClass(),
+                // 'is_active' => $s->isIsActive(),
+            ];
+        })->toArray();
+    
         return $this->json([
-            'id'                => $user->getId(),
-            'email'             => $user->getEmail(),
-            'firstname'         => $user->getFirstname(),
-            'lastname'          => $user->getLastname(),
-            'phone'             => $user->getPhone(),
-            'created_at'        => $user->getCreatedAt(),
-            'created_by'        => $user->getCreatedBy(),
-            'updated_at'        => $user->getUpdatedAt(),
-            'updated_by'        => $user->getUpdatedBy(),
-            ]);
+            'id'          => $parent->getId(),
+            'firstname'   => $parent->getFirstname(),
+            'lastname'    => $parent->getLastname(),
+            'gender'      => $parent->getGender(),
+            'email'       => $parent->getEmail(),
+            'phone'       => $parent->getPhone(),
+            'address'     => $parent->getAddress(),
+            'zip_code'    => $parent->getZipCode(),
+            'city'        => $parent->getCity(),
+            'created_at'  => $parent->getCreatedAt()->format(\DateTime::ATOM),
+            'created_by'  => $parent->getCreatedBy(),
+            'updated_at'  => $parent->getUpdatedAt()?->format(\DateTime::ATOM),
+            'updated_by'  => $parent->getUpdatedBy(),
+            'students'    => $students,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_parents_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function update(int $id, Request $request): JsonResponse
+    {
+        // 1. Charger le parent
+        $parent = $this->parentRepo->find($id);
+        if (!$parent) {
+            return $this->json(['error' => 'Parent non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // 2. Décoder le JSON
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error' => 'JSON invalide'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 3. Hydrater les champs éditables
+        foreach (['firstname', 'lastname', 'gender', 'email', 'phone', 'address', 'zip_code', 'city'] as $field) {
+            if (array_key_exists($field, $data)) {
+                // Construire le nom du setter, en camel case
+                $setter = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
+                $parent->$setter($data[$field]);
+            }
+        }
+
+        // 4. Mettre à jour les métadonnées
+        $parent->setUpdatedAt(new \DateTimeImmutable());
+        $parent->setUpdatedBy($this->getUser()->getUserIdentifier());
+
+        // 5. Persister
+        $this->em->flush();
+
+        // 6. Retour JSON de confirmation
+        return $this->json([
+            'id'        => $parent->getId(),
+            'firstname' => $parent->getFirstname(),
+            'lastname'  => $parent->getLastname(),
+            'gender'    => $parent->getGender(),
+            'email'     => $parent->getEmail(),
+            'phone'     => $parent->getPhone(),
+            'address'   => $parent->getAddress(),
+            'zip_code'  => $parent->getZipCode(),
+            'city'      => $parent->getCity(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_parents_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(int $id): JsonResponse
+    {
+        $parent = $this->parentRepo->find($id);
+        if (!$parent) {
+            return $this->json(['error' => 'Parent non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $this->em->remove($parent);
+        $this->em->flush();
+
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 
 

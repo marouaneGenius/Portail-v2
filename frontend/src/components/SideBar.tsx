@@ -13,10 +13,11 @@ const Sidebar: React.FC = () => {
   const menu = [
     { to: '/users', icon: <HiUsers />, label: 'Utilisateurs' },
     { to: '/centers', icon: <HiOfficeBuilding />, label: 'Centres' },
-    { to: '/profile', icon: <HiUserCircle />, label: 'Mon profil' },
     { to: '/students', icon: <HiAcademicCap />, label: 'Étudiants' },
-    { to: '/parent', icon: <HiOutlineUsers />, label: 'Parents' },
+    { to: '/parents', icon: <HiOutlineUsers />, label: 'Parents' },
     { to: '/sessions', icon: <HiOfficeBuilding />, label: 'Séances' },
+    { to: '/profile', icon: <HiUserCircle />, label: 'Mon profil' },
+
   ];
 
   return (

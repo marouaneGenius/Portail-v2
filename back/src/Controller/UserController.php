@@ -34,6 +34,7 @@ class UserController extends AbstractController
 
 
     #[Route('', name: 'create', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): JsonResponse
     {
         // 1. Récupérer et décoder le JSON
@@ -60,6 +61,8 @@ class UserController extends AbstractController
         $user->setUpdatedBy(null);
         $user->setMaxSession($data['max_session'] ?? null);
         $user->setPricePerHour($data['price_per_hour'] ?? null);
+        $user->setRoles($data['roles'] ?? ['ROLE_USER']);
+
 
         // 3. Associer le Center si fourni
         if (!empty($data['id_center'])) {
@@ -80,6 +83,25 @@ class UserController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
+        if (!empty($data['email'])) {
+            $existing = $this->userRepository->findOneBy(['email' => $data['email']]);
+            if ($existing) {
+                return new JsonResponse(
+                    ['error' => 'Un utilisateur avec cet email existe déjà.'],
+                    JsonResponse::HTTP_CONFLICT
+                );
+            }
+        }
+        if (!empty($data['phone'])) {
+            $existing = $this->userRepository->findOneBy(['phone' => $data['phone']]);
+            if ($existing) {
+                return new JsonResponse(
+                    ['error' => 'Un utilisateur avec ce numéro de téléphone existe déjà.'],
+                    JsonResponse::HTTP_CONFLICT
+                );
+            }
+        }
+        
         $hashedPwd = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPwd);
 
@@ -117,6 +139,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function show(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
@@ -160,40 +183,81 @@ class UserController extends AbstractController
             ]);
     }
 
-    // #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    // public function show(User $user): Response
-    // {
-    //     return $this->render('user/show.html.twig', [
-    //         'user' => $user,
-    //     ]);
-    // }
+    #[Route('/{id}', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function update(int $id, Request $request): JsonResponse
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user) {
+            return $this->json(['error'=>'Utilisateur non trouvé'], 404);
+        }
 
-    // #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    // public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    // {
-    //     $form = $this->createForm(UserType::class, $user);
-    //     $form->handleRequest($request);
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error'=>'JSON invalide'], 400);
+        }
+    
+        // Unicité email / phone
+        if (!empty($data['email']) && $data['email'] !== $user->getEmail()) {
+            if ($this->userRepository->findOneBy(['email'=>$data['email']])) {
+                return $this->json(['error'=>'Email déjà utilisé'], 409);
+            }
+            $user->setEmail($data['email']);
+        }
+        if (!empty($data['phone']) && $data['phone'] !== $user->getPhone()) {
+            if ($this->userRepository->findOneBy(['phone'=>$data['phone']])) {
+                return $this->json(['error'=>'Téléphone déjà utilisé'], 409);
+            }
+            $user->setPhone($data['phone']);
+        }
+    
+        // Champs simples
+        
+        foreach (['firstname','lastname','siret','max_session','price_per_hour'] as $f) {
+            if (array_key_exists($f, $data)) {
+                $setter = 'set'.ucfirst($f);
+                $user->$setter($data[$f]);
+            }
+        }
+        if (isset($data['is_active'])) {
+            $user->setIsActive((bool)$data['is_active']);
+        }
+        if (isset($data['is_deleted'])) {
+            $user->setIsDeleted((bool)$data['is_deleted']);
+        }
+        // Met à jour la date
+        $user->setUpdatedAt(new \DateTimeImmutable());
+        $user->setUpdatedBy($this->getUser()->getUserIdentifier());
 
-    //     if ($form->isSubmitted() && $form->isValid()) {
-    //         $entityManager->flush();
+    
+        $this->em->flush();
+    
+        return $this->json([
+            'id'        => $user->getId(),
+            'email'     => $user->getEmail(),
+            'firstname' => $user->getFirstname(),
+            'lastname'  => $user->getLastname(),
+            // etc.
+        ]);
+    }
 
-    //         return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-    //     }
+    #[Route('/{id}', name: 'api_users_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(int $id): JsonResponse
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
 
-    //     return $this->renderForm('user/edit.html.twig', [
-    //         'user' => $user,
-    //         'form' => $form,
-    //     ]);
-    // }
+        $this->em->remove($user);
+        $this->em->flush();
 
-    // #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    // public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    // {
-    //     if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
-    //         $entityManager->remove($user);
-    //         $entityManager->flush();
-    //     }
+        // 204 No Content, suppression OK
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
 
-    //     return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-    // }
+
+
+    
 }

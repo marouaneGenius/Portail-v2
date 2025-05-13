@@ -42,6 +42,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $is_deleted = false;
 
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
+
     #[ORM\Column]
     private ?\DateTimeImmutable $created_at = null;
 
@@ -75,8 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: Report::class)]
     private Collection $reports;
 
-    #[ORM\Column(length: 255)]
-    private ?string $role = null;
+
 
     public function __construct()
     {
@@ -95,13 +97,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        // Si vous avez un champ roles en base, utilisez-le.
-        // Sinon, assurez au moins ROLE_USER :
-        $roles = $this->roles ?? [];
-        $roles[] = $this->role;
-
-        return array_unique($roles);
+        return $this->roles;
     }
+    
 
     /**
      * Méthode requise par UserInterface
@@ -417,15 +415,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getRole(): ?string
+    public function setRoles(array $roles): self
     {
-        return $this->role;
-    }
-
-    public function setRole(string $role): static
-    {
-        $this->role = $role;
-
+        $this->roles = $roles;
         return $this;
     }
 }

@@ -37,11 +37,10 @@ const ItemDetails: React.FC = () => {
 
 
     <div className=" mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold mb-4">
-            Détails de l'élève 
+        <h1 className="text-4xl font-bold mb-4">
+            Détails du {resource}
         </h1>
-        <div className="max-w-4xl mx-auto py-10 px-4 bg-white shadow rounded">
-
+        <div className="mx-auto py-10 px-4 bg-white shadow rounded">
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {Object.entries(item).map(([key, value]) => (
                 <div key={key}>
@@ -49,92 +48,204 @@ const ItemDetails: React.FC = () => {
                     {key.replace('_', ' ')}
                     </dt>
                     <dd className="mt-1 text-gray-700">
-                    {/* Cas null */}
-                    {value === null && '—'}
+                        {/* Cas null */}
+                        {value === null && '—'}
 
-                    {/* Cas simple */}
-                    {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-                        ? String(value)
-                        : null}
+                        {/* Cas simple */}
+                        {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+                            ? String(value)
+                            : null}
 
-                    {/* Cas center (objet) */}
-                    {key === 'center' && value && (
-                        <ul className="list-disc list-inside">
-                        {Object.entries(value).map(([cKey, cVal]) => (
-                            <li key={cKey}>
-                            <strong className="capitalize">{cKey.replace('_',' ')}:</strong>{' '}
-                            {String(cVal)}
-                            </li>
-                        ))}
-                        </ul>
-                    )}
-
-                    {/* Cas reports (tableau d’objets) */}
-                    {key === 'reports' && Array.isArray(value) && (
-                        <table className="w-full text-left text-sm mb-2">
-                        <thead className="bg-gray-100">
-                            <tr>
-                            {value.length > 0 &&
-                                Object.keys(value[0]).map((col) => (
-                                <th
-                                    key={col}
-                                    className="px-2 py-1 font-medium text-gray-600"
-                                >
-                                    {col}
-                                </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {value.map((row: Record<string, any>, idx: number) => (
-                            <tr
-                                key={idx}
-                                className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                            >
-                                {Object.values(row).map((cell, i) => (
-                                <td key={i} className="px-2 py-1">
-                                    {String(cell)}
-                                </td>
-                                ))}
-                            </tr>
+                        {/* Cas center (objet) */}
+                        {key === 'center' && value && (
+                            <ul className="list-disc list-inside">
+                            {Object.entries(value).map(([cKey, cVal]) => (
+                                <li key={cKey}>
+                                <strong className="capitalize">{cKey.replace('_',' ')}:</strong>{' '}
+                                {String(cVal)}
+                                </li>
                             ))}
-                        </tbody>
-                        </table>
-                    )}
+                            </ul>
+                        )}
 
-                    {key === 'tutor_schedules' && Array.isArray(value) && (
-                        <table className="w-full text-left text-sm mb-2">
-                        <thead className="bg-gray-100">
-                            <tr>
-                            {value.length > 0 &&
-                                Object.keys(value[0]).map((col) => (
-                                <th
-                                    key={col}
-                                    className="px-2 py-1 font-medium text-gray-600"
+                        {/* Cas reports (tableau d’objets) */}
+                        {key === 'reports' && Array.isArray(value) && (
+                            <table className="w-full text-left text-sm mb-2">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                {value.length > 0 &&
+                                    Object.keys(value[0]).map((col) => (
+                                    <th
+                                        key={col}
+                                        className="px-2 py-1 font-medium text-gray-600"
+                                    >
+                                        {col}
+                                    </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {value.map((row: Record<string, any>, idx: number) => (
+                                <tr
+                                    key={idx}
+                                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                                 >
-                                    {col.replace('_',' ')}
-                                </th>
+                                    {Object.values(row).map((cell, i) => (
+                                    <td key={i} className="px-2 py-1">
+                                        {String(cell)}
+                                    </td>
+                                    ))}
+                                </tr>
                                 ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {value.map((row: Record<string, any>, idx: number) => (
-                            <tr
-                                key={idx}
-                                className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                            >
-                                {Object.entries(row).map(([col, cell], i) => (
-                                <td key={i} className="px-2 py-1">
-                                    {col.toLowerCase().includes('date') || col.includes('hour')
-                                    ? String(cell).substring(0, 10)
-                                    : String(cell)}
-                                </td>
+                            </tbody>
+                            </table>
+                        )}
+
+                        {key === 'tutor_schedules' && Array.isArray(value) && (
+                            <table className="w-full text-left text-sm mb-2">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                {value.length > 0 &&
+                                    Object.keys(value[0]).map((col) => (
+                                    <th
+                                        key={col}
+                                        className="px-2 py-1 font-medium text-gray-600"
+                                    >
+                                        {col.replace('_',' ')}
+                                    </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {value.map((row: Record<string, any>, idx: number) => (
+                                <tr
+                                    key={idx}
+                                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                >
+                                    {Object.entries(row).map(([col, cell], i) => (
+                                    <td key={i} className="px-2 py-1">
+                                        {col.toLowerCase().includes('date') || col.includes('hour')
+                                        ? String(cell).substring(0, 10)
+                                        : String(cell)}
+                                    </td>
+                                    ))}
+                                </tr>
                                 ))}
-                            </tr>
-                            ))}
-                        </tbody>
-                        </table>
-                    )}
+                            </tbody>
+                            </table>
+                        )}
+
+                        {key === 'students' && Array.isArray(value) && (
+                        <div className="md:col-span-2">
+                            {/* <dt className="text-sm font-medium text-gray-500">Enfants</dt> */}
+                            <dd className="mt-1 text-gray-700">
+                            <table className="w-full text-left text-sm mb-2">
+                                <thead className="bg-gray-100">
+                                <tr>
+                                    {/* colonnes déduites du premier enfant */}
+                                    {value.length > 0 &&
+                                    Object.keys(value[0]).map((col) => (
+                                        <th
+                                        key={col}
+                                        className="px-2 py-1 font-medium text-gray-600"
+                                        >
+                                        {col.replace('_', ' ')}
+                                        </th>
+                                    ))}
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {value.map((child: Record<string, any>, idx: number) => (
+                                    <tr
+                                    key={idx}
+                                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                    >
+                                    {Object.values(child).map((cell, i) => (
+                                        <td key={i} className="px-2 py-1">
+                                        {String(cell)}
+                                        </td>
+                                    ))}
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                            </dd>
+                        </div>
+                        )}
+
+                        {key === 'parents' && Array.isArray(value) && (
+                        <div className="md:col-span-2">
+                            <dd className="mt-1 text-gray-700">
+                            <table className="w-full text-left text-sm mb-4">
+                                <thead className="bg-gray-100">
+                                <tr>
+                                    {/* colonnes déduites du premier parent */}
+                                    {value.length > 0 &&
+                                    Object.keys(value[0]).map((col) => (
+                                        <th
+                                        key={col}
+                                        className="px-2 py-1 font-medium text-gray-600"
+                                        >
+                                        {col.replace('_', ' ')}
+                                        </th>
+                                    ))}
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {value.map((parent: Record<string, any>, idx: number) => (
+                                    <tr
+                                    key={idx}
+                                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                    >
+                                    {Object.values(parent).map((cell, i) => (
+                                        <td key={i} className="px-2 py-1">
+                                        {String(cell)}
+                                        </td>
+                                    ))}
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                            </dd>
+                        </div>
+                        )}
+
+                        {key === 'sessions' && Array.isArray(value) && (
+                        <div className="md:col-span-2">
+                            <dd className="mt-1 text-gray-700">
+                            <table className="w-full text-left text-sm mb-4">
+                                <thead className="bg-gray-100">
+                                <tr>
+                                    {/* colonnes déduites de la première session */}
+                                    {value.length > 0 &&
+                                    Object.keys(value[0]).map((col) => (
+                                        <th
+                                        key={col}
+                                        className="px-2 py-1 font-medium text-gray-600"
+                                        >
+                                        {col.replace('_', ' ')}
+                                        </th>
+                                    ))}
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {value.map((session: Record<string, any>, idx: number) => (
+                                    <tr
+                                    key={idx}
+                                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                    >
+                                    {Object.values(session).map((cell, i) => (
+                                        <td key={i} className="px-2 py-1">
+                                        {String(cell)}
+                                        </td>
+                                    ))}
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                            </dd>
+                        </div>
+                        )}
                     </dd>
                 </div>
                 ))}

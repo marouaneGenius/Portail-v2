@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Student;
+use App\Repository\CenterRepository;
 use App\Repository\StudentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +17,8 @@ class StudentController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private StudentRepository      $studentRepo
+        private StudentRepository      $studentRepo,
+        private CenterRepository $centerRepository,
     ) {}
 
     /**
@@ -121,6 +123,41 @@ class StudentController extends AbstractController
     #[Route('/{id}', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
+        $student = $this->studentRepo->find($id);
+        if (!$student) {
+            return $this->json(['message'=>'Pas trouvé'], 404);
+        }
+
+        $parents = $student->getIdParent()->map(function(\App\Entity\StudentParent $p) {
+            return [
+                'id'        => $p->getId(),
+                'firstname' => $p->getFirstname(),
+                'lastname'  => $p->getLastname(),
+                'email'     => $p->getEmail(),
+                'phone'     => $p->getPhone(),
+            ];
+        })->toArray();
+
+        $sessions = $student->getSessions()->map(function(\App\Entity\Session $s) {
+            return [
+                'id'             => $s->getId(),
+                'date_slot'      => $s->getDateSlot()->format('Y-m-d'),
+                'session_type'   => $s->getSessionType(),
+                'is_canceled'    => $s->isIsCanceled(),
+                'tutor_id'       => $s->getIdTutor()?->getId(),
+            ];
+        })->toArray();
+
+        $subscriptions = $student->getSessions()->map(function(\App\Entity\Subscription $session) {
+            return [
+                'id'             => $session->getId(),
+                'offre_type'     =>$session->getOfferType(),
+                'is_multiple'    => $session->getCombinedId(),
+                'tutor'          => $session->getSchoolSubjects(),
+                'is_valid'          => $session->isIsValide(),
+            ];
+        })->toArray();
+
         $user = $this->studentRepo->find($id);
         if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
         return $this->json([
@@ -147,6 +184,93 @@ class StudentController extends AbstractController
                     'city'    => $user->getIdCenter()->getCity(),
                 ]
                 : null,
+            'parents'   => $parents,
+            'sessions'  => $sessions,
             ]);
     }
+
+    #[Route('/{id}', name: 'api_students_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function update(int $id, Request $request): JsonResponse
+    {
+        // 1. Charger l'élève
+        $student = $this->studentRepo->find($id);
+        if (!$student) {
+            return $this->json(['error' => 'Élève non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // 2. Décoder le JSON
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error' => 'JSON invalide'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 3. Hydrater les champs simples
+        foreach (['firstname', 'lastname', 'gender', 'class', 'email', 'phone'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $setter = 'set' . ucfirst($field);
+                $student->$setter($data[$field]);
+            }
+        }
+
+        // 4. Mettre à jour le center si fourni
+        if (array_key_exists('id_center', $data)) {
+            if ($data['id_center'] === null) {
+                $student->setIdCenter(null);
+            } else {
+                // Récupération dans une variable explicite
+                $centerEntity = $this->centerRepository->find($data['id_center']);
+                if (!$centerEntity) {
+                    return $this->json(['error' => 'Centre non trouvé'], JsonResponse::HTTP_BAD_REQUEST);
+                }
+                // NE PAS passer $student mais bien l'entité Center
+                $student->setIdCenter($centerEntity);
+            }
+        }
+
+        // 5. Champs booléens
+        if (array_key_exists('is_active', $data)) {
+            $student->setIsActive((bool)$data['is_active']);
+        }
+        if (array_key_exists('is_deleted', $data)) {
+            $student->setIsDeleted((bool)$data['is_deleted']);
+        }
+
+        // 6. Mettre à jour les métadonnées
+        $student->setUpdatedAt(new \DateTimeImmutable());
+        $student->setUpdatedBy($this->getUser()->getUserIdentifier());
+
+        // 7. Persister
+        $this->em->flush();
+
+        // 8. Réponse JSON
+        return $this->json([
+            'id'         => $student->getId(),
+            'firstname'  => $student->getFirstname(),
+            'lastname'   => $student->getLastname(),
+            'gender'     => $student->getGender(),
+            'class'      => $student->getClass(),
+            'email'      => $student->getEmail(),
+            'phone'      => $student->getPhone(),
+            'is_active'  => $student->isIsActive(),
+            'is_deleted' => $student->isIsDeleted(),
+            'id_center'  => $student->getIdCenter()?->getId(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_students_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(int $id): JsonResponse
+    {
+        $student = $this->studentRepo->find($id);
+        if (!$student) {
+            return $this->json(['error' => 'Élève non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $this->em->remove($student);
+        $this->em->flush();
+
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
 }

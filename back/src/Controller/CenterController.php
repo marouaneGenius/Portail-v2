@@ -93,4 +93,60 @@ class CenterController extends AbstractController
             'city'      => $center->getCity(),
             ]);
     }
+
+    #[Route('/{id}', name: 'api_centers_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function update(int $id, Request $request): JsonResponse
+    {
+        // 1. Charger le centre
+        $center = $this->centerRepo->find($id);
+        if (!$center) {
+            return $this->json(['error' => 'Centre non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // 2. Décoder le JSON
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error' => 'JSON invalide'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 3. Hydrater les champs éditables
+        foreach (['name', 'address', 'city'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $setter = 'set' . ucfirst($field);
+                $center->$setter($data[$field]);
+            }
+        }
+
+        // 4. Mettre à jour la date et l’utilisateur
+        // $center-> setUpdatedAt(new \DateTimeImmutable());
+        // $center->setUpdatedBy($this->getUser()->getUserIdentifier());
+
+        // 5. Persister
+        $this->em->flush();
+
+        // 6. Retour JSON de confirmation
+        return $this->json([
+            'id'      => $center->getId(),
+            'name'    => $center->getName(),
+            'address' => $center->getAddress(),
+            'city'    => $center->getCity(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_centers_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(int $id): JsonResponse
+    {
+        $center = $this->centerRepo->find($id);
+        if (!$center) {
+            return $this->json(['error' => 'Centre non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $this->em->remove($center);
+        $this->em->flush();
+
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
 }

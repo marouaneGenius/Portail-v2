@@ -11,6 +11,8 @@ import Users from "../pages/Users";
 import Students from "../pages/Students";
 import ItemDetails from "../components/ItemDetails";
 import Parents from "../pages/Parents";
+import CreationForm from "../components/CreationForm";
+import EditionForm from "../components/EditionForm";
 
 export const router = createBrowserRouter([
     {
@@ -28,7 +30,10 @@ export const router = createBrowserRouter([
             { path: "/users", element: <Users /> },
             { path: "/students", element: <Students /> },
             { path: '/:resource/:id', element: <ItemDetails /> },
-            { path: '/parent', element: <Parents /> },
+            { path: '/parents', element: <Parents /> },
+            { path: '/form/:resource', element: <CreationForm /> },
+            { path: '/:resource/:id/edit', element: <EditionForm /> }
+
           ],
         },
       ],

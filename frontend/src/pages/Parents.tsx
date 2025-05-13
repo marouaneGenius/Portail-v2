@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
-import DataTable from '../components/DataTable';
+import CustomDataTable from '../components/CustomDataTable';
 
 const Parents: React.FC = () => {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ const Parents: React.FC = () => {
   return (
     <div className="mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold mb-6">Parents</h1>
-      <DataTable endpoint="parent" pageSize={20} />
+      <CustomDataTable endpoint="parent" pageSize={20} />
     </div>
   );
 };
