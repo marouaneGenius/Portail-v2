@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Student;
 use App\Repository\CenterRepository;
+use App\Repository\StudentParentRepository;
 use App\Repository\StudentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,6 +20,8 @@ class StudentController extends AbstractController
         private EntityManagerInterface $em,
         private StudentRepository      $studentRepo,
         private CenterRepository $centerRepository,
+        private StudentParentRepository $studentParentRepository,
+
     ) {}
 
     /**
@@ -271,6 +274,35 @@ class StudentController extends AbstractController
         $this->em->flush();
 
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+
+    #[Route('/{studentId}/parents', name: 'student_add_parent', methods: ['POST'])]
+    public function addParent(int $studentId, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $parentId = $data['parentId'] ?? null;
+
+        if (!$parentId) {
+            return $this->json(['error'=>'parentId manquant'], 400);
+        }
+
+        $student = $this->studentRepo->find($studentId);
+        $parent  = $this->studentParentRepository->find($parentId);
+
+        if (!$student || !$parent) {
+            return $this->json(['error'=>'Étudiant ou parent introuvable'], 404);
+        }
+
+        // Associer
+        $student->addIdParent($parent);
+        $this->em->flush();
+
+        return $this->json([
+            'studentId' => $student->getId(),
+            'parentId'  => $parent->getId(),
+            'message'   => 'Parent associé à l’élève avec succès'
+        ], 201);
     }
 
 }

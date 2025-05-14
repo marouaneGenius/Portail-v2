@@ -47,6 +47,7 @@ class UserController extends AbstractController
         }
 
         // 2. Créer et hydrater l’entité User
+
         $user = new User();
         $user->setFirstname($data['firstname'] ?? null);
         $user->setLastname($data['lastname'] ?? null);
@@ -61,8 +62,7 @@ class UserController extends AbstractController
         $user->setUpdatedBy(null);
         $user->setMaxSession($data['max_session'] ?? null);
         $user->setPricePerHour($data['price_per_hour'] ?? null);
-        $user->setRoles($data['roles'] ?? ['ROLE_USER']);
-
+        $user->setRoles([$data['role']]?? ['ROLE_USER']);
 
         // 3. Associer le Center si fourni
         if (!empty($data['id_center'])) {
@@ -101,7 +101,6 @@ class UserController extends AbstractController
                 );
             }
         }
-        
         $hashedPwd = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPwd);
 
@@ -132,6 +131,7 @@ class UserController extends AbstractController
             'email'     => $u->getEmail(),
             'firstname' => $u->getFirstname(),
             'lastname'  => $u->getLastname(),
+            'is_active'  => $u->isIsActive(),
             'roles'     => $u->getRoles(),
         ], $users);
 
@@ -183,6 +183,14 @@ class UserController extends AbstractController
             ]);
     }
 
+    private function snakeToCamel(string $field): string
+    {
+        // 1) remplace les '_' par des espaces, 2) ucwords() → "Max Session", 
+        // 3) enlève les espaces → "MaxSession"
+        return str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
+    }
+
+
     #[Route('/{id}', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     public function update(int $id, Request $request): JsonResponse
@@ -211,14 +219,34 @@ class UserController extends AbstractController
             $user->setPhone($data['phone']);
         }
     
-        // Champs simples
+
+        if (array_key_exists('roles', $data)) {
+            // cas idéal : on reçoit ["ROLE_USER","ROLE_ADMIN"]
+            $roles = $data['roles'];
+        } elseif (isset($data['role'])) {
+            // cas fallback : on reçoit "ROLE_ADMIN"
+            $roles = [$data['role']];
+        }
         
+        if (isset($roles) && is_array($roles)) {
+            $user->setRoles($roles);
+        }
+        
+        
+
         foreach (['firstname','lastname','siret','max_session','price_per_hour'] as $f) {
             if (array_key_exists($f, $data)) {
-                $setter = 'set'.ucfirst($f);
+                $setter = 'set' . $this->snakeToCamel($f);
+                // Vérification que la méthode existe bien
+                if (!method_exists($user, $setter)) {
+                    throw new \RuntimeException("Méthode $setter introuvable sur User");
+                }
                 $user->$setter($data[$f]);
             }
         }
+
+
+
         if (isset($data['is_active'])) {
             $user->setIsActive((bool)$data['is_active']);
         }

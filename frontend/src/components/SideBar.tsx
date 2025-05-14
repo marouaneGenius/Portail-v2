@@ -11,12 +11,12 @@ const Sidebar: React.FC = () => {
   if (!user) return null;
 
   const menu = [
-    { to: '/users', icon: <HiUsers />, label: 'Utilisateurs' },
-    { to: '/centers', icon: <HiOfficeBuilding />, label: 'Centres' },
-    { to: '/students', icon: <HiAcademicCap />, label: 'Étudiants' },
-    { to: '/parents', icon: <HiOutlineUsers />, label: 'Parents' },
-    { to: '/sessions', icon: <HiOfficeBuilding />, label: 'Séances' },
-    { to: '/profile', icon: <HiUserCircle />, label: 'Mon profil' },
+    { to: '/users', icon: <HiUsers className='h-7 w-7 ' />, label: 'Utilisateurs' },
+    { to: '/centers', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Centres' },
+    { to: '/students', icon: <HiAcademicCap className='h-7 w-7 ' />, label: 'Étudiants' },
+    { to: '/parents', icon: <HiOutlineUsers className='h-7 w-7 ' />, label: 'Parents' },
+    { to: '/sessions', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Séances' },
+    { to: '/profile', icon: <HiUserCircle className='h-7 w-7 ' />, label: 'Mon profil' },
 
   ];
 
@@ -47,17 +47,17 @@ const Sidebar: React.FC = () => {
           {collapsed ? <HiMenu size={24} /> : <HiX size={24} />}
         </button>
       </div>
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-2 space-y-1 ">
         {menu.map(({ to, icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center p-2 rounded hover:bg-gray-100 transition-colors
+              `flex items-center p-2 rounded hover:bg-gray-100 transition-colors text-center bg-orange-100 items-center border-orange-300 border-2
               ${isActive ? 'bg-gray-200 font-semibold' : 'text-gray-700'}`
             }
           >
-            <span className="text-lg">{icon}</span>
+            <span className="text-lg text-center ">{icon}</span>
             {!collapsed && <span className="ml-3">{label}</span>}
           </NavLink>
         ))}

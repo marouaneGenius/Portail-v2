@@ -8,14 +8,13 @@ nelmio_cors:
         max_age: 3600
 
     paths:
-        '^/login$':                 # /login doit aussi autoriser les OPTIONS
-        # on peut hériter des defaults :
+        '^/login$':                 
             allow_origin: ['http://localhost:5173']
             allow_headers: ['Content-Type', 'Authorization']
             allow_methods: ['POST', 'OPTIONS']
             allow_credentials: true
 
-        '^/api/':                   # tes routes API
+        '^/api/':                   
             allow_origin: ['http://localhost:5173']
             allow_headers: ['Content-Type', 'Authorization']
             allow_methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']

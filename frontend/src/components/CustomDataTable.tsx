@@ -60,27 +60,6 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
         }
     };
 
-
-    const getCenter = async (id_center:any) => {
-        try {
-            const { data: response } = await api.get<{
-            data?: any[];
-            total?: number;
-            }>(`/api/center`);
-            const items: any = Array.isArray(response)
-            ? response
-            : response.data;
-
-            return items.filter((item:any) => item.id == id_center)
-           
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    
     useEffect(() => {
         api.get<Center[]>('/api/center').then((res) => {
           const map: Record<number,string> = {};
@@ -89,15 +68,11 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
           });
           setCenterMap(map);
         });
-      }, []);
-    
-
+    }, []);
 
     useEffect(() => {
         fetchData();
     }, [endpoint, page, pageSize]);
-
-
 
     const columns_ = useMemo(() => {
         if (!data.length) return [];
@@ -180,10 +155,10 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
             headerClassName: 'bg-gray-100 text-gray-700',
             bodyClassName: 'text-gray-800',
           });
-      }, [data]);
+    }, [data]);
     
     const header = (
-        <div className="flex justify-between items-center p-2 bg-white border-b bg-gray-300">
+        <div className="flex justify-between items-center p-3 bg-white border-b bg-gray-400">
             <span className="p-input-icon-left w-full  py-1">
             <InputText
                 value={globalFilter}
@@ -236,9 +211,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                     className="shadow-lg rounded-lg overflow-hidden"
                     tableClassName="min-w-full "
                     rowClassName={(_, i:any) => i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    // ← applique Tailwind sur tout le footer (paginator)
                     paginatorClassName="bg-white border-t border-gray-200 p-3 flex justify-between items-center"
-                    // 5) Lien actif
                     currentPageReportTemplate="Page {first}–{last} / {totalRecords}"
                     paginatorTemplate="
                       RowsPerPageDropdown 
