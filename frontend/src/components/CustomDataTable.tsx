@@ -2,11 +2,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/aixos';
 import { HiEye, HiOutlineUser, HiOutlineUserAdd, HiOutlineUserCircle, HiPencil, HiTrash } from 'react-icons/hi';
-import { TranslateHeaderNames } from '../forms/schemas';
 import { InputText } from 'primereact/inputtext';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
+import { TranslateHeaderNames } from '../services/functions';
 
 interface DataTableProps {
   endpoint: string;          // 'users' | 'centers' | 'students' | ...
@@ -158,13 +158,13 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     }, [data]);
     
     const header = (
-        <div className="flex justify-between items-center p-3 bg-white border-b bg-gray-400">
+        <div className="flex justify-between items-center p-3 bg-white border-b bg-orange-200">
             <span className="p-input-icon-left w-full  py-1">
             <InputText
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Rechercher..."
-                className="border rounded px-2 py-1 w-2/6 "
+                className="border border-orange-300 border-2 rounded px-2 py-1 w-full h-12 "
             />
             </span>
         </div>
@@ -187,19 +187,21 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     if (!data.length) return <p>Aucune donnée.</p>;
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto ">
             <div className='py-3'>
-                <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
+                <button 
+                    className="bg-white hover:bg-gray-100 text-orange-800 font-semibold py-2 px-4 border border-orange-400 rounded shadow"
+                >
                     <a
                         href={`/form/${endpoint}/`}
-                        className="text-green-600 hover:underline"
+                        className="text-orange-600 hover:underline"
                     >
-                        Ajouter
+                        Ajouter +
                     </a>
                 </button>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-md">
+            <div className="bg-white p-4 rounded-lg shadow-md rounded shadow">
                 <DataTable
                     showGridlines
                     value={data}
@@ -235,12 +237,12 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                         style={{ width: '25%' }}
                         bodyClassName="px-4 py-2 border-b border-gray-200 text-gray-800"
                         headerStyle={{
-                            backgroundColor: '#1E3A8A',  // Indigo 800
-                            color: 'white',
+                            backgroundColor: 'rgba(255, 166, 0, 0.36)',  // Indigo 800
+                            color: 'black',
                             fontWeight: '600',
                             textTransform: 'uppercase',
-                            fontSize: '0.75rem',           // text-xs
-                            padding: '0.75rem 1.5rem',     // px-6 py-3
+                            fontSize: '0.75rem',           
+                            padding: '0.75rem 1.5rem',     
                             paddingBlock: '1rem'
                         }}
 

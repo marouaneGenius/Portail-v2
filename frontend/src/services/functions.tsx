@@ -36,4 +36,70 @@ export function splitParentKeys(values: Record<string, any>): SplitValues {
 
     return { mainValues, parentValues };
 }
+
+
+export const TranslateHeaderNames = (value:String) => {
+    switch(value) {
+      case 'id':
+        return 'ID'
+      case 'firstname':
+        return 'Prénom'
+      case 'lastname':
+        return 'Nom'
+      case 'name':
+        return 'Nom'
+      case 'address':
+        return 'Adresse'
+      case 'zip_code':
+        return 'Code Postal'
+      case 'city':
+        return 'Ville'
+      case 'gender':
+        return 'Genre'
+      case 'phone':
+        return 'Télèphone'
+      case 'id_center':
+        return 'Centre'
+      case 'password':
+        return 'Mot de passe'
+      case 'email':
+        return 'E-mail'
+      case 'roles':
+        return 'Role'
+      case 'is_active':
+        return 'Activé'
+      case 'created_at':
+        return 'Création'
+      case 'created_by':
+        return 'Crée Par'
+      case 'actions':
+        return 'Actions'
+      case 'class':
+        return 'Classe'
+      case 'is_deleted':
+        return 'Compte Supprimé'
+      case 'siret':
+        return 'Siret'
+      case 'updated_by':
+        return 'Modifié Par'
+      case 'updated_at':
+        return 'Modifié le'
+      case 'max_session':
+        return 'Nombre de Seances Max'
+      case 'price_per_hour':
+        return 'Prix par heure'
+      case 'tutor_schedules':
+        return 'Planing'
+      case 'reports':
+        return 'Compte Rendu'
+      case 'parents':
+        return 'Parents'
+      case 'center':
+        return 'Centre'
+      case 'sessions':
+        return 'Sessions'
+      case 'students':
+        return 'Élèves'
+    }
+  }
   

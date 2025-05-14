@@ -34,17 +34,20 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     const hasRoleField = fields.find((item:any) => item.name === 'role');
     const hasClassField = fields.find((item:any) => item.name === 'class');
 
+    // show optional fields if we chose tutor role
     if(hasRoleField) {
       const filteredFields = currentFields.filter((item) => !optionalFields.includes(item.name))
       setFields(filteredFields)
-    }
 
-    if(roleFieldValue) {
-      setFields(fields)
-    }
+      if(roleFieldValue) {
+        setFields(fields)
+      } else {
+        setFields(filteredFields)
+      }
+    } 
 
     // For all forms to remove required for all fields to update only wanted fields
-    if(emptyFields) {
+    if(!emptyFields) {
       const fieldWithOutRequired = currentFields.map(({ required, ...rest }) => rest);
       setFields(fieldWithOutRequired)
     }
@@ -86,14 +89,12 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
       const filteredFields = currentFields.filter((item) => !optionalFields.includes(item.name))
       setFields(filteredFields)
-    } else {
-      setLoading(false)
-    }
+    } 
+    
+    setLoading(false)
   }, [fields, roleFieldValue])
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked }:any = e.target;
     setValues((prev) => ({
       ...prev,
@@ -136,7 +137,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               <div key={f.name} className={f.className ?? ''}>
                 <label
                   htmlFor={f.name}
-                  className="block text-sm font-medium mb-1"
+                  className="block text-sm font-medium mb-1 bg-orange-100 h-10 p-2 border-b-2 border-orange-300 my-2 text-lg"
                 >
                   {f.label}
                 </label>
@@ -147,7 +148,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     name={f.name}            
                     value={values[f.name] || ''}
                     onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300"
+                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border border-orange-200"
                     required={!!f.required}
                   >
                     <option value="">—</option>
@@ -165,26 +166,23 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     checked={f.type === 'checkbox' ? values[f.name] : undefined}
                     value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
                     onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300"
+                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border border-orange-200"
                     required={!!f.required}
                   />
                 )}
               </div>
             ))}
 
-            {
-              endpoint === 'student' && emptyFields &&
-              (
-                <h1 className='col-span-2 text-xl bg-orange-100 p-2 text-center rounded my-2 border-orange-300 border-2'>Ajouter le Parent</h1>
-              )
-            }
+            { endpoint === 'student' && emptyFields && (
+                <h1 className='col-span-2 text-xl bg-orange-100 p-2 text-center rounded my-3 border-b-2 border-orange-300 '>Ajouter le Parent</h1>
+            )}
 
             {
               endpoint === 'student' && emptyFields && currenParentFields.map((f:any) => (
                 <div key={f.name} className={f.className ?? ''}>
                   <label
                     htmlFor={f.name}
-                    className="block text-sm font-medium mb-1"
+                    className="block text-sm font-medium mb-1 bg-orange-100 h-10 p-2 border-b-2 border-orange-300 my-2 text-lg"
                   >
                     {f.label}
                   </label>
@@ -195,7 +193,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       name={f.name}            
                       value={values[f.name] || ''}
                       onChange={handleChange}   
-                      className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300"
+                      className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border border-orange-200"
                       required={!!f.required}
                     >
                       <option value="">—</option>
@@ -213,7 +211,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       checked={f.type === 'checkbox' ? values[f.name] : undefined}
                       value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
                       onChange={handleChange}   
-                      className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300"
+                      className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border border-orange-200"
+
                       required={!!f.required}
                     />
                   )}
@@ -225,7 +224,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           <div className="mt-6 flex items-center justify-center">
             <button
               type="submit"
-              className="md:w-auto bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+              className="w-full bg-white-600 text-orange-400 px-6 py-2 rounded hover:bg-orange-700 border-2 border-orange-300"
             >
               Enregistrer
             </button>
