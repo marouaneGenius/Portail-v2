@@ -37,6 +37,59 @@ export function splitParentKeys(values: Record<string, any>): SplitValues {
     return { mainValues, parentValues };
 }
 
+export const showDataDetails = (value:any, key: any) => {
+
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        // Format français « 13/05/2025 à 11:32 »
+        const datePart = date.toLocaleDateString('fr-FR');
+        const timePart = date.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        return `${datePart} à ${timePart}`;
+      }
+  }
+
+  if(key === 'is_active') {
+      return value === true ?
+      (
+          <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">Activé</span>
+      ):
+      (
+          <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">Désactivé</span>
+      )
+  }
+
+  if(key === 'center' || key === 'parents' || key === 'students' ) {
+      return ''
+  }
+  
+  // 2️⃣ Booléen
+  if (typeof value === 'boolean') {
+      return value ? 'Oui' : 'Non';
+  }
+
+  // 3️⃣ Null ou undefined
+  if (value == null) {
+      return 'N/C';
+  }
+  
+  if(key === 'roles') {
+  switch(value[0]) {
+      case "ROLE_TUTOR":
+          return "Tuteur"
+      case "ROLE_USER":
+          return "Utilisateur"
+      case "ROLE_ADMIN":
+          return "Admin"
+  }
+  }
+  
+  return String(value);
+}
+
 
 export const TranslateHeaderNames = (value:String) => {
     switch(value) {
