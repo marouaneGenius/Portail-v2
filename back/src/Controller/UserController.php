@@ -13,6 +13,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[Route('/api/user', name: 'api_user_')]
 class UserController extends AbstractController
@@ -265,6 +268,7 @@ class UserController extends AbstractController
             'email'     => $user->getEmail(),
             'firstname' => $user->getFirstname(),
             'lastname'  => $user->getLastname(),
+            'roles'  => $user->getRoles(),
             // etc.
         ]);
     }
@@ -283,6 +287,49 @@ class UserController extends AbstractController
 
         // 204 No Content, suppression OK
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/{id}/password', name: 'api_user_change_password', methods: ['PUT'])]
+    // #[IsGranted('ROLE_ADMIN')]
+    public function changePassword(
+        #[CurrentUser] ?User $currentUser,            // utilisateur connecté (via JWT)
+        User $user,                                   // {id} dans l’URL
+        Request $request,
+        UserPasswordHasherInterface $hasher,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+    ): JsonResponse {
+
+        if ($user !== $currentUser && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException();
+        }
+    
+        /* 2) Lecture + validation */
+        $payload = json_decode($request->getContent(), true);
+        $violations = $validator->validate(
+            $payload,
+            new Assert\Collection([
+                // pas d’ancien mot de passe
+                'password'        => [new Assert\NotBlank(), new Assert\Length(min: 8)],
+                'confirm_password' => new Assert\NotBlank(),
+            ])
+        );
+    
+        if (count($violations) > 0) {
+            return $this->json(['errors' => (string) $violations], 422);
+        }
+    
+        /* 3) Concordance des deux mdp */
+        if ($payload['password'] !== $payload['confirm_password']) {
+            return $this->json(['error' => 'Les mots de passe ne correspondent pas'], 400);
+        }
+    
+        /* 4) Hash + save */
+        $user->setPassword($hasher->hashPassword($user, $payload['password']));
+        $em->flush();
+    
+        return $this->json(['message' => 'Mot de passe mis à jour'], 200);
+    
     }
 
 

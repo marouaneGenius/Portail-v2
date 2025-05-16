@@ -15,6 +15,7 @@ interface AuthState {
 
   // setters
   setUser: (user: User, token: string) => void;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -26,6 +27,8 @@ export const useAuth = create<AuthState>()(
       accessToken: null,
 
       setUser: (user, token) => set({ user, accessToken: token }),
+
+      updateUser: (user) => set({ user }),
 
       logout: () => {
         // Ici tu peux aussi appeler ton endpoint Symfony /logout

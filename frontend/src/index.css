@@ -2,3 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+@layer components {
+    .gardient {
+      @apply bg-gradient-to-br from-pink-500 via-red-400 to-orange-500;
+    }
+
+    .gardient-border {
+        @apply bg-gradient-to-br from-pink-500 to-orange-500 
+    }
+  }

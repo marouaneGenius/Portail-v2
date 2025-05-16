@@ -91,6 +91,51 @@ export const showDataDetails = (value:any, key: any) => {
 }
 
 
+export interface PasswordValidation {
+  isValid: boolean;
+  errors: string[];
+}
+
+export function validatePasswords(
+  password: any,
+  confirm_password: any
+) {
+  const errors: string[] = [];
+
+  // Longueur
+  if (password.length < 8) {
+    errors.push("Doit contenir au moins 8 caractères.");
+  }
+
+  // Majuscule
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Doit contenir une majuscule.");
+  }
+
+  // Caractère spécial
+  if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
+    errors.push("Doit contenir un caractère spécial.");
+  }
+
+  // Correspondance des deux champs
+  if (password !== confirm_password) {
+    errors.push("Les mots de passe ne correspondent pas.");
+  }
+
+  console.log(password, confirm_password)
+
+
+
+
+  // if(password.length > 8 && /[A-Z]/.test(password) && /[!@#$%^&*(),.?\":{}|<>]/.test(password) && password == confirm_password ) {
+  //   console.log('bon')
+  // }
+
+  return { isValid: errors.length === 0, errors };
+}
+
+
+
 export const TranslateHeaderNames = (value:String) => {
     switch(value) {
       case 'id':

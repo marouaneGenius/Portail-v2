@@ -53,7 +53,7 @@ const Sidebar: React.FC = () => {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center p-2 rounded hover:bg-gray-100 transition-colors text-center bg-orange-100 items-center border-orange-300 border-2
+              `flex items-center p-2 rounded hover:bg-orange-300 transition-colors text-center bg-orange-100 items-center border-orange-300 border-2
               ${isActive ? 'bg-gray-200 font-semibold' : 'text-gray-700'}`
             }
           >

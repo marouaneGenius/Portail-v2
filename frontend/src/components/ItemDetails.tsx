@@ -71,12 +71,12 @@ const ItemDetails: React.FC = () => {
                         </div>
 
                         <div className="mt-0 text-gray-900 p-1 ">
-                            <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} />
+                          <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} />
                             <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
                             <CustomReportsComponent currentkey={key} value={value} />
                             <CustomTutorScheduleComponent currentkey={key} value={value} />
                             <CustomSessionComponent currentkey={key} value={value} />
-                            <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />
+                            <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />   {/* */}
                         </div>
                     </div>
                 ))}

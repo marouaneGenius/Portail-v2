@@ -87,7 +87,6 @@ export function CustomParentComponent({
     );
 }
 
-
 export function CustomStudentsComponent({
     value,
     currentkey,
@@ -278,9 +277,10 @@ export const CustomSessionComponent: React.FC<CustomComponentProps> =  ({value, 
 }
 
 export const CustomCenterComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect}) => {
+
     return (
         <>
-            {currentkey === 'center'&& value && 
+           {value !== null && currentkey === 'center'&& value && 
                 <div className=' text-lg w-full flex items-center justify-between h-16  p-4 rounded'>
                     <span>{ value.name } </span> 
                     <button type="button" 
@@ -290,9 +290,9 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> =  ({value, c
                     </button>
                 </div>
             }
-            { currentkey === 'center' && value.length === 0 &&  (
+              { currentkey === 'center' &&( !value||  value.length === 0 )&&  (
                 <CustomAlert title='Message!' message="Vous n'avez pas de Centre pour l'instant" />
-            )} 
+            )}{/*  */}
         </>
     )
 }
