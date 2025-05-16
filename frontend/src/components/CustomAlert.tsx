@@ -10,13 +10,14 @@ interface CustomComponentProps {
     value?:any
     currentkey?:any
     onRedirect?: (item:any) => void;
+    open?:() => void;
 }
 
 export const CustomAlert: React.FC<CustomAlertProps> =  ({title, message, onClose}) => {
     return(
         <div className=" text-center py-4">
-            <div className="p-2 bg-orange-300 items-center text-gray-100 leading-none lg:rounded-full flex lg:inline-flex w-full" role="alert" onClick={onClose}>
-                <span className="flex rounded-full bg-orange-500 uppercase px-2 py-1 text-xs font-bold mr-3">{title}</span>
+            <div className="p-2 bg items-center text-gray-800 leading-none lg:rounded-full flex lg:inline-flex w-full" role="alert" onClick={onClose}>
+                <span className="flex rounded-full bg-green-400 uppercase px-2 py-1 text-xs font-bold mr-3 ">{title}</span>
                 <span className="font-semibold mr-2 text-left flex-auto">{message}</span>
             </div>
         </div>
@@ -27,6 +28,8 @@ export function CustomParentComponent({
     value,
     currentkey,
     onRedirect,
+    open
+
   }: CustomComponentProps): React.ReactNode {
     if (currentkey !== 'parents' || !Array.isArray(value)) return null;
   
@@ -36,6 +39,7 @@ export function CustomParentComponent({
         <CustomAlert
           title="Attention !"
           message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
+          onClose={open}
         />
       );
     }
@@ -270,7 +274,7 @@ export const CustomSessionComponent: React.FC<CustomComponentProps> =  ({value, 
             )}
 
             { currentkey === 'sessions' && value.length === 0 &&  (
-                <CustomAlert title='Message!' message="Vous n'avez pas de Sessions pour l'instant" onClose={open}/>
+                <CustomAlert title='Message!' message="Vous n'avez pas de Sessions pour l'instant" />
             )} 
         </>
     )
@@ -296,3 +300,53 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> =  ({value, c
         </>
     )
 }
+
+
+export interface BrothersComponentProps {
+  brothers: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    [key: string]: any;
+  }[];
+}
+
+/**
+ * Affiche la liste des frères / sœurs d'un élève.
+ * Usage :
+ *   <CustomBrothersComponent brothers={brothersArray} onRedirect={callback} />
+ */
+export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
+  brothers,
+}) => {
+
+  return (
+    <div className="mt-2 bg-gray-50 p-2">
+      <h1 className='bg-border border-b-2  color-border p-4 mt-0 text-lg text-dark'>
+      Frères et soeurs
+      </h1>
+      {brothers.map((bro) => (
+        <div
+          key={bro.id}
+          className="flex items-center justify-between p-3 bg-gray-100 rounded shadow-sm"
+        >
+          <span className="font-medium text-slate-800">
+            {bro.firstname} {bro.lastname}
+          </span>
+
+          <button
+            type="button"
+            className="py-2 px-4 text-xs font-semibold text-gray-900 bg-white rounded-lg border border-green-200 hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+          >
+            Voir
+          </button>
+        </div>
+      ))}
+        {
+          brothers.length === 0 && 
+          <CustomAlert title='Message!' message="l'élève n'a pas de Frères et soeurs" />
+        }
+
+    </div>
+  );
+};

@@ -107,7 +107,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                                     <HiOutlineUserAdd className="h-5 w-5"  /> Admin
                                 </span>
                     } else if(row.roles[0] === 'ROLE_USER') {
-                        return  <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-green-600/10 ring-inset">
+                        return  <span className="inline-flex items-center rounded-md bg px-2 py-1 text-xs font-medium text-color ring-1 ring-green-600/10 ring-inset">
                                     <HiOutlineUser className="h-5 w-5"  /> User
                                 </span>
                     } else {
@@ -158,13 +158,13 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     }, [data]);
     
     const header = (
-        <div className="flex justify-between items-center p-3 bg-white border-b bg-orange-200">
+        <div className="flex justify-between items-center p-3 bg-white border-b bg">
             <span className="p-input-icon-left w-full  py-1">
             <InputText
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Rechercher..."
-                className="border border-orange-300 border-2 rounded px-2 py-1 w-full h-12 "
+                className="border color-border border-2 rounded px-2 py-1 w-full h-12 "
             />
             </span>
         </div>
@@ -187,14 +187,17 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     if (!data.length) return <p>Aucune donnée.</p>;
 
     return (
-        <div className="overflow-x-auto ">
+        <div 
+        className="overflow-x-auto "
+        
+        >
             <div className='py-3'>
                 <button 
-                    className="bg-white hover:bg-gray-100 text-orange-800 font-semibold py-2 px-4 border border-orange-400 rounded shadow"
+                    className="bg-white hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow"
                 >
                     <a
                         href={`/form/${endpoint}/`}
-                        className="text-orange-600 hover:underline"
+                        className="text-color  hover:underline"
                     >
                         Ajouter +
                     </a>
@@ -224,6 +227,15 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                     "
                 >
                 {columns_.map((col) => {
+                    const styleOfTable:any = {
+                        backgroundColor: 'rgba(36, 153, 46, 0.36)',  // Indigo 800
+                        color: 'black',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        fontSize: '0.75rem',           
+                        padding: '0.75rem 1.5rem',     
+                        paddingBlock: '1rem'
+                    }
                     let header_name:any = '';
                     header_name = TranslateHeaderNames(col.field.toLowerCase())
                     return (  
@@ -236,15 +248,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                         filter={col.field !== 'actions'}
                         style={{ width: '25%' }}
                         bodyClassName="px-4 py-2 border-b border-gray-200 text-gray-800"
-                        headerStyle={{
-                            backgroundColor: 'rgba(255, 166, 0, 0.36)',  // Indigo 800
-                            color: 'black',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            fontSize: '0.75rem',           
-                            padding: '0.75rem 1.5rem',     
-                            paddingBlock: '1rem'
-                        }}
+                        headerStyle={styleOfTable}
 
                     />
                     )

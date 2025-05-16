@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/aixos';
 import FormGenerator from './FormGenerator';
 import { parentFields } from '../forms/schemas';
+import { useParams } from 'react-router-dom';
 
 export interface Parent {
   id: number;
@@ -36,6 +37,8 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
     const noResults = !loading && search.trim() !== '' && parents.length === 0;
+      const { id } = useParams();
+    console.log
 
     useEffect(() => {
         setLoading(true);
@@ -76,7 +79,7 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
 
     const onSelect = async (parent:any) => {
         try {
-            api.post(`/api/student/${student.id}/parents`, {
+            api.post(`/api/student/${id}/parents`, {
             parentId: parent.id,
             }).then((res:any) => {
                 onClose()

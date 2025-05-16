@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
@@ -304,5 +305,44 @@ class StudentController extends AbstractController
             'message'   => 'Parent associé à l’élève avec succès'
         ], 201);
     }
+
+    #[Route('/{id}/siblings', name: 'api_students_siblings', methods: ['GET'])]
+    public function siblings(int $id): JsonResponse
+    {
+        $student = $this->studentRepo->find($id);
+
+        if (!$student) {
+            return $this->json(['error' => 'Élève non trouvé'], Response::HTTP_NOT_FOUND);
+        }
+
+        /** @var \\App\\Entity\\StudentParent[] $parents */
+        $parents = $student->getIdParent()->toArray();
+
+        if (!$parents) {
+            // L'élève n'a aucun parent enregistré → donc pas de frère/sœur
+            return $this->json([], Response::HTTP_OK);
+        }
+
+        // (on peut tout faire en RAM vu les volumes habituels)
+        $siblings = [];
+        foreach ($parents as $parent) {
+            foreach ($parent->getStudents() as $child) {
+                if ($child->getId() === $id) {
+                    continue; // on exclut l’élève lui-même
+                }
+                // On indexe par id pour dé-dupliquer si deux parents communs
+                $siblings[$child->getId()] = [
+                    'id'        => $child->getId(),
+                    'firstname' => $child->getFirstname(),
+                    'lastname'  => $child->getLastname(),
+                    'class'     => $child->getClass(),
+                    'email'     => $child->getEmail(),
+                ];
+            }
+        }
+
+        return $this->json(array_values($siblings), Response::HTTP_OK);
+    }
+
 
 }

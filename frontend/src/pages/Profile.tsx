@@ -136,7 +136,7 @@ const Profile: React.FC = () => {
                   <>
                     <button
                       type="submit"
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                     >
                       Enregistrer
                     </button>
@@ -144,7 +144,7 @@ const Profile: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setUpdateMode(false)}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 bg   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                     >
                       Annuler
                     </button>
@@ -155,7 +155,7 @@ const Profile: React.FC = () => {
                   <button
                     type="button"
                     onClick={()=> setUpdateMode(true)}
-                    className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                    className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                   >
                     Modifier
                   </button>
@@ -167,7 +167,7 @@ const Profile: React.FC = () => {
                     <button
                       type="submit"
                       disabled={enableSaveButton}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                     >
                       Enregistrer le mot de passe
                     </button>
@@ -175,7 +175,7 @@ const Profile: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setUpdatePasswordMode(false)}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                     >
                       Annuler
                     </button>
@@ -186,7 +186,7 @@ const Profile: React.FC = () => {
                   <button
                     type="button"
                     onClick={()=> setUpdatePasswordMode (true)}
-                    className="ml-auto py-2.5 px-5 text-sm font-medium text-orange-400 border-2 border-orange-200   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                    className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
                   >
                     Modifier le mot de passe
                   </button>
@@ -203,7 +203,7 @@ const Profile: React.FC = () => {
                 <>
                     <button
                     onClick={close}
-                    className="px-4 py-2 bg-orange-200 rounded hover:bg-gray-300 border-2 border-orange-500 rounded-b"
+                    className="px-4 py-2 bg rounded hover:bg-gray-300 border-2 color-border rounded-b"
                     >
                     Fermer
                     </button>

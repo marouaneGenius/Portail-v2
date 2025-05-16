@@ -9,7 +9,7 @@ interface DetailProps {
   
   export const Detail: React.FC<DetailProps> = ({ label, value, onUpdate, handleChange, fieldName, spanClass }) => (
     <div  className={`space-y-1 bg-gray-100 rounded ${spanClass}`}>
-      <h3 className="text-sm font-semibold text-slate-900  bg-orange-100 p-3 border-b-2 border-orange-300">
+      <h3 className="text-sm font-semibold text-slate-900  bg p-3 border-b-2 color-border">
         {label} 
       </h3>
   

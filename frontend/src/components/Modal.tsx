@@ -23,7 +23,7 @@ const Modal: React.FC<ModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full w-4/6"
+        className="bg-white rounded-lg shadow-lg w-full w-3/6"
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
