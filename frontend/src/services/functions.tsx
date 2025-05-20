@@ -199,7 +199,7 @@ export const TranslateHeaderNames = (value:String) => {
       case 'students':
         return 'Élèves'
       case 'google_id':
-        return 'Type de Connexion'
+        return 'Type de Compte'
     }
   }
   

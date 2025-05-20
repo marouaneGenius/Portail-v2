@@ -104,7 +104,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                         <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">
                         <img src="logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
                             GOOGLE</span>
-                    ) : (<span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">Auth</span>)
+                    ) : (<span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-orange-600/10 ring-inset">Auth</span>)
                
                 }
                 if(key === 'roles'){
