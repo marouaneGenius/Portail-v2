@@ -198,6 +198,8 @@ export const TranslateHeaderNames = (value:String) => {
         return 'Sessions'
       case 'students':
         return 'Élèves'
+      case 'google_id':
+        return 'Type de Connexion'
     }
   }
   

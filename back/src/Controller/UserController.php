@@ -136,6 +136,7 @@ class UserController extends AbstractController
             'lastname'  => $u->getLastname(),
             'is_active'  => $u->isIsActive(),
             'roles'     => $u->getRoles(),
+            'google_id' => $u->getGoogleId()
         ], $users);
 
         return $this->json($data);
@@ -298,7 +299,7 @@ class UserController extends AbstractController
         UserPasswordHasherInterface $hasher,
         EntityManagerInterface $em,
         ValidatorInterface $validator
-    ): JsonResponse {
+        ): JsonResponse {
 
         if ($user !== $currentUser && !$this->isGranted('ROLE_ADMIN')) {
             throw $this->createAccessDeniedException();
@@ -332,6 +333,26 @@ class UserController extends AbstractController
     
     }
 
+
+    #[Route('/me/current_user', name: 'user_me', methods: ['GET'])]
+    public function me(): JsonResponse
+    {
+        $user = $this->getUser();                
+
+        if (!$user) {
+            return $this->json(['message' => 'Non authentifié'], 401);
+        }
+
+        return $this->json([
+            'id'             => $user->getId(),
+            'email'          => $user->getEmail(),
+            'firstname'      => $user->getFirstname(),
+            'lastname'       => $user->getLastname(),
+            'roles'          => $user->getRoles(),
+            'is_active'      => $user->isIsActive(),
+            'created_at'     => $user->getCreatedAt(),
+        ]);
+    }
 
 
     

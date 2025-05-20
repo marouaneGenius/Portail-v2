@@ -13,6 +13,15 @@ interface CustomComponentProps {
     open?:() => void;
 }
 
+export interface BrothersComponentProps {
+  brothers: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    [key: string]: any;
+  }[];
+}
+
 export const CustomAlert: React.FC<CustomAlertProps> =  ({title, message, onClose}) => {
     return(
         <div className=" text-center py-4">
@@ -301,21 +310,6 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> =  ({value, c
     )
 }
 
-
-export interface BrothersComponentProps {
-  brothers: {
-    id: number;
-    firstname: string;
-    lastname: string;
-    [key: string]: any;
-  }[];
-}
-
-/**
- * Affiche la liste des frères / sœurs d'un élève.
- * Usage :
- *   <CustomBrothersComponent brothers={brothersArray} onRedirect={callback} />
- */
 export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
   brothers,
 }) => {

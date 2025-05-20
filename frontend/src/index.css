@@ -14,15 +14,15 @@
     }
 
     .bg-border {
-      @apply bg-green-100  border-green-500 
+      @apply border-b-2 bg-green-100  border-green-500 
     }
 
     .color-border {
-      @apply border-green-200  
+      @apply border-b-2 border-green-300  
     }
 
     .bg {
-      @apply bg-green-300  
+      @apply bg-green-200  
     }
 
     .text-color {

@@ -33,6 +33,12 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
                 # success_handler / failure_handler (facultatif)
 
+        google_oauth:
+            pattern: ^/connect/google        
+            stateless: true
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator 
+
         # Toutes les routes /api sont protégées par JWT
         api:
             pattern:   ^/api
@@ -46,6 +52,7 @@ security:
     # 4) Contrôles d’accès
     access_control:
         - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/connect/google, roles: PUBLIC_ACCESS }
         - { path: ^/api,     roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

@@ -1,0 +1,10 @@
+# config/packages/knpu_oauth2_client.yaml
+knpu_oauth2_client:
+  clients:
+    google:
+      type: google
+      # récupère tes credentials dans .env(.local)
+      client_id: '%env(resolve:GOOGLE_OAUTH_CLIENT_ID)%'
+      client_secret: '%env(resolve:GOOGLE_OAUTH_CLIENT_SECRET)%'
+      redirect_route: connect_google_check
+      # redirect_params: {}   # optionnel

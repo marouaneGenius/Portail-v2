@@ -44,12 +44,10 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
             const items: any = Array.isArray(response)
             ? response
             : response.data;
-
             const filteredData = items.map(({ is_deleted, ...rest }:any) => rest);
-
+            
             setData(filteredData);
             setTotal(response.total ?? null);
-
             if (items.length && columns.length === 0) {
             setColumns(Object.keys(items[0]));
             }
@@ -100,6 +98,14 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                     return row.is_active ? (
                         <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">Activé</span>
                     ) : (<span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">Désactivé</span>)
+                }
+                if (key === 'google_id') {
+                    return row.google_id ? (
+                        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">
+                        <img src="logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
+                            GOOGLE</span>
+                    ) : (<span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">Auth</span>)
+               
                 }
                 if(key === 'roles'){
                     if (row.roles[0] === 'ROLE_ADMIN') {
@@ -154,7 +160,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
             ),
             headerClassName: 'bg-gray-100 text-gray-700',
             bodyClassName: 'text-gray-800',
-          });
+        });
     }, [data]);
     
     const header = (
@@ -188,8 +194,7 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
 
     return (
         <div 
-        className="overflow-x-auto "
-        
+            className="overflow-x-auto "
         >
             <div className='py-3'>
                 <button 

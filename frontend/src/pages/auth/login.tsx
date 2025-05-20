@@ -1,11 +1,12 @@
 // src/pages/Login.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../api/api';
-import { useAuth } from '../../Hooks/auth';
+import { getCurrentUser, login } from '../../api/api';
+import { useAuth, User } from '../../Hooks/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +25,35 @@ const Login: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+
+  const handleGoogleLogin = () => {
+    const popup = window.open(
+      `${API_URL}/connect/google`,
+      '_blank',
+      'width=500,height=650'
+    );
+    if (!popup) return; 
+  
+    const receive = async (e: MessageEvent) => {
+      if (e.data?.token) {
+        localStorage.setItem('jwt', e.data.token);
+        const me :any = await getCurrentUser(API_URL, e.data.token)
+
+        if(me) {
+
+          console.log(me)
+          useAuth.getState().setUser(me, e.data.token);
+          navigate('/dashboard');
+        } else {
+          console.error('ERROR => Un problème est survenu lors de la recuperatin du compte')
+          return ;
+        }
+        window.removeEventListener('message', receive);
+      }
+    };
+    window.addEventListener('message', receive);
   };
 
   return (
@@ -93,14 +123,14 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded bg-white py-2 font-medium text-indigo-600 transition hover:bg-gray-100 disabled:opacity-50"
+              className="w-full rounded bg-border py-2 font-medium text-indigo-600 transition hover:bg-gray-100 disabled:opacity-50"
             >
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
             <button
               type="button"
-              onClick={() => {/* Google OAuth… */}}
-              className="flex w-full items-center justify-center rounded border border-white bg-transparent py-2 font-medium  transition hover:bg-white/20"
+              onClick={handleGoogleLogin} 
+              className="flex w-full color-border items-center justify-center rounded border bg-transparent py-2 font-medium  transition hover:bg-white/20"
             >
               <img src="logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
               Connexion Google

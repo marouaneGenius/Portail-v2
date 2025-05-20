@@ -16,3 +16,16 @@ export async function login(email: string, password: string): Promise<User> {
   useAuth.getState().setUser(data.user, data.token);
   return data.user;
 }
+
+
+export const getCurrentUser = async (host:String, jwt:any) => {
+  try {
+    const res = await fetch(`${host}/api/user/me/current_user`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });   
+    const me = await res.json();
+    return me;   
+  } catch(e:any) {
+    console.error('errer ==>',e)
+  }
+}
