@@ -7,8 +7,9 @@ import Modal from './Modal';
 import ParentSelector from './ParentFinder';
 import { showDataDetails, TranslateHeaderNames } from '../services/functions';
 import { CustomAlert, CustomBrothersComponent, CustomCenterComponent, CustomParentComponent, CustomReportsComponent, CustomSessionComponent, CustomStudentsComponent, CustomTutorScheduleComponent } from './CustomAlert';
+import { GradientCard } from './GardientCard';
 
-interface DetailPageParams {
+export interface DetailPageParams {
   resource: string;
   id: string;
   [key: string]: string | undefined;
@@ -20,8 +21,6 @@ const ItemDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updateItem, setUpdateItem] = useState(false);
   const [brothers, setBrothers] = useState([]);
-
-
   const [error, setError] = useState<string | null>(null);
   const { isOpen, open, close } = useModal();
   const navigate = useNavigate(); 
@@ -55,6 +54,10 @@ const ItemDetails: React.FC = () => {
     navigate(`/${route}`);
   }
 
+  const redirectionToForm = (route:any) => {
+    navigate(`/form/tutorschedule/${id}`);
+  }
+
   const getBrothers = () => {
     api
     .get(`/api/student/${id}/siblings`)
@@ -66,36 +69,39 @@ const ItemDetails: React.FC = () => {
   if (!item) return <Navigate to={`/${resource}`} replace />;
 
   return (
-    <div className=" mx-auto py-3 px-4">
+    <div className=" mx-auto py-3 px-4 flex flex-col justify-center items-center">
         <h1 className="text-4xl font-bold mb-4">
             Détails du {resource}
         </h1>
-        <div className="mx-auto py-3 px-2 bg-white shadow-xl rounded">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {Object.entries(item).map(([key, value]) => (
-                  <div key={key} className="bg-gray-50 w-full p-2 rounded">
-                    <div className="text-sm font-medium  capitalize w-full">
-                        <div className='bg-border text-lg w-full flex items-center h-10 border-b-2  px-1'>
-                            {value !== null ? TranslateHeaderNames(key) :  key.replace('_', ' ')}
-                        </div>
+        <GradientCard className="w-4/5" innerClassName="p-4 space-y-6">
+        
+          <div className="mx-auto py-3 px-2 bg-white shadow-xl rounded">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {Object.entries(item).map(([key, value]) => (
+                    <div key={key} className="bg-gray-50 w-full p-2 rounded">
+                      <div className="text-sm font-medium  capitalize w-full">
+                          <div className='bg-border text-lg w-full flex items-center h-10 border-b-2  px-1 '>
+                              {value !== null ? TranslateHeaderNames(key) :  key.replace('_', ' ')}
+                          </div>
+                      </div>
+                      <div className=''>
+                          { showDataDetails(value, key) }
+                      </div>
+                      <div className="mt-0 text-gray-900 p-1 ">
+                        <CustomParentComponent currentkey={key} value={value} onRedirect={redirection}  />
+                        <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
+                        <CustomReportsComponent currentkey={key} value={value} />
+                        <CustomTutorScheduleComponent currentkey={key} value={value} onRedirect={redirectionToForm} />
+                        <CustomSessionComponent currentkey={key} value={value} />
+                        <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />   {/* */}
+                      </div>
                     </div>
-                    <div className=''>
-                        { showDataDetails(value, key) }
-                    </div>
-                    <div className="mt-0 text-gray-900 p-1 ">
-                      <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} open={open} />
-                      <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
-                      <CustomReportsComponent currentkey={key} value={value} />
-                      <CustomTutorScheduleComponent currentkey={key} value={value} />
-                      <CustomSessionComponent currentkey={key} value={value} />
-                      <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />   {/* */}
-                    </div>
-                  </div>
-                ))}
-                  
-            </div>
-            { resource === 'student' && <CustomBrothersComponent  brothers={brothers}  /> }
-        </div>
+                  ))}
+                    
+              </div>
+              { resource === 'student' && <CustomBrothersComponent  brothers={brothers}  /> }
+          </div>
+        </GradientCard>
         <Modal
             isOpen={isOpen}
             title="Attacher ou créer le parent"

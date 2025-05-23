@@ -13,6 +13,8 @@ import ItemDetails from "../components/ItemDetails";
 import Parents from "../pages/Parents";
 import CreationForm from "../components/CreationForm";
 import EditionForm from "../components/EditionForm";
+import Subscriptions from "../pages/Subscriptions";
+import { StudentDetails } from "../pages/studentDetails";
 
 export const router = createBrowserRouter([
     {
@@ -29,11 +31,12 @@ export const router = createBrowserRouter([
             { path: "/sessions", element: <Sessions /> },
             { path: "/users", element: <Users /> },
             { path: "/students", element: <Students /> },
+            { path: "/abonnements/:id", element: <Subscriptions /> },
             { path: '/:resource/:id', element: <ItemDetails /> },
             { path: '/parents', element: <Parents /> },
-            { path: '/form/:resource', element: <CreationForm /> },
-            { path: '/:resource/:id/edit', element: <EditionForm /> }
-
+            { path: '/form/:resource/:id?', element: <CreationForm /> },
+            { path: '/:resource/:id/edit', element: <EditionForm /> },
+            { path: '/studentDetails/:id', element: <StudentDetails />}
           ],
         },
       ],

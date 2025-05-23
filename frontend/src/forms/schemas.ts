@@ -1,4 +1,12 @@
 import { FormField } from "../components/FormGenerator";
+export interface ArrayField  extends FormField   {
+  type: 'array';
+  itemFields: FormField[];      // définition des champs à l’intérieur
+  addLabel?: string;            // label du bouton « Ajouter »
+  name:any;
+  required: false;
+  label:any;
+}
 
 export const userFields: FormField[] = [
   { name: 'firstname', label: 'Prénom', type: 'text', className: 'col-span-1' },
@@ -16,6 +24,8 @@ export const userFields: FormField[] = [
   { name: 'price_per_hour', label: 'Prix Par Heure', type: 'text' },
   { name: 'max_session', label: 'Nombre de seance Max', type: 'text' },
   { name: 'siret', label: 'Siret', type: 'text', className: 'col-span-2' },
+  { name: 'centers', label: 'Centers', type: 'select', className: 'col-span-2', multiple: true },
+
 ];
 
 export const centerFields: FormField[] = [
@@ -56,4 +66,25 @@ export const parentFields: FormField[] = [
 
 
 
-  
+// export const tutorScheduleFields: (FormField|ArrayField)[] = [
+//   {
+//     name: 'schedules',
+//     label: 'Créneaux',
+//     type: 'array',
+//     required: false,
+//     addLabel: 'Ajouter un créneau',
+//     itemFields: [
+//       {
+//         name: 'day',
+//         label: 'Jour',
+//         type: 'select',
+//         required: true,
+//         options: [
+
+//         ]
+//       },
+//       { name: 'start_hour', label: 'Heure début', type: 'time', required: true },
+//       { name: 'end_hour',   label: 'Heure fin',   type: 'time', required: true },
+//     ]
+//   },
+// ];

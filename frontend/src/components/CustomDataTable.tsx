@@ -7,6 +7,8 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { TranslateHeaderNames } from '../services/functions';
+import { useNavigate } from 'react-router-dom';
+import { GradientCard } from './GardientCard';
 
 interface DataTableProps {
   endpoint: string;          // 'users' | 'centers' | 'students' | ...
@@ -33,6 +35,8 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     const [loading, setLoading] = useState(false);
     const [globalFilter, setGlobalFilter] = useState<string>('');
     const [centerMap, setCenterMap] = useState<Record<number, string>>({});
+      const navigate = useNavigate(); 
+    
 
     const fetchData = async () => {
         setLoading(true);
@@ -72,6 +76,12 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
         fetchData();
     }, [endpoint, page, pageSize]);
 
+    const handleSelect = (row: any) => {
+        if(row.data && row.data.class) {
+            navigate(`/studentDetails/${row.data.id}`);
+        }
+    };
+
     const columns_ = useMemo(() => {
         if (!data.length) return [];
         return Object.keys(data[0])
@@ -91,6 +101,8 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
                         })
                     : '—';
                 }
+
+
                 if (key === 'id_center' && centerMap) {
                     return `${centerMap[row.id_center]}`
                 }
@@ -193,73 +205,72 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     if (!data.length) return <p>Aucune donnée.</p>;
 
     return (
-        <div 
-            className="overflow-x-auto "
-        >
+        <div  className="overflow-x-auto ">
             <div className='py-3'>
-                <button 
-                    className="bg-white hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow"
-                >
-                    <a
-                        href={`/form/${endpoint}/`}
-                        className="text-color  hover:underline"
-                    >
+                <button   className="bg-white hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow">
+                    <a href={`/form/${endpoint}/`}  className="text-color  hover:underline" >
                         Ajouter +
                     </a>
                 </button>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-md rounded shadow">
-                <DataTable
-                    showGridlines
-                    value={data}
-                    header={header}                       
-                    globalFilter={globalFilter}
-                    paginator
-                    rows={10}
-                    rowsPerPageOptions={[10,25,50]}
-                    className="shadow-lg rounded-lg overflow-hidden"
-                    tableClassName="min-w-full "
-                    rowClassName={(_, i:any) => i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    paginatorClassName="bg-white border-t border-gray-200 p-3 flex justify-between items-center"
-                    currentPageReportTemplate="Page {first}–{last} / {totalRecords}"
-                    paginatorTemplate="
-                      RowsPerPageDropdown 
-                      CurrentPageReport 
-                      PrevPageLink 
-                      PageLinks 
-                      NextPageLink
-                    "
-                >
-                {columns_.map((col) => {
-                    const styleOfTable:any = {
-                        backgroundColor: 'rgba(36, 153, 46, 0.36)',  // Indigo 800
-                        color: 'black',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        fontSize: '0.75rem',           
-                        padding: '0.75rem 1.5rem',     
-                        paddingBlock: '1rem'
-                    }
-                    let header_name:any = '';
-                    header_name = TranslateHeaderNames(col.field.toLowerCase())
-                    return (  
-                    <Column
-                        key={col.field}
-                        field={col.field}
-                        header={header_name}
-                        body={col.body}
-                        sortable
-                        filter={col.field !== 'actions'}
-                        style={{ width: '25%' }}
-                        bodyClassName="px-4 py-2 border-b border-gray-200 text-gray-800"
-                        headerStyle={styleOfTable}
-
-                    />
-                    )
-                } )}
-            </DataTable>
-            </div>
+            <GradientCard className=" w-5/5" innerClassName="p-4 space-y-6">
+                <div className="bg-white p-4 rounded-lg shadow-md rounded shadow">
+                    <DataTable
+                        showGridlines
+                        value={data}
+                        header={header}                       
+                        globalFilter={globalFilter}
+                        onRowClick={(params) => {
+                            handleSelect(params)
+                        }}
+                        paginator
+                        rows={10}
+                        onClick={handleSelect}
+                        rowsPerPageOptions={[10,25,50]}
+                        className="shadow-lg rounded-lg overflow-hidden"
+                        tableClassName="min-w-full "
+                        rowClassName={(_, i:any) => i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                        paginatorClassName="bg-white border-t border-gray-200 p-3 flex justify-between items-center "
+                        currentPageReportTemplate="Page {first}–{last} / {totalRecords}"
+                        paginatorTemplate=" 
+                        RowsPerPageDropdown 
+                        CurrentPageReport 
+                        PrevPageLink 
+                        PageLinks 
+                        NextPageLink
+                        "
+                    >
+                    {columns_.map((col) => {
+                        const styleOfTable:any = {
+                            backgroundColor: 'rgba(36, 153, 46, 0.36)',  // Indigo 800
+                            color: 'black',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            fontSize: '0.75rem',           
+                            padding: '0.75rem 1.5rem',     
+                            paddingBlock: '1rem'
+                        }
+                        let header_name:any = '';
+                        header_name = TranslateHeaderNames(col.field.toLowerCase())
+                        return (  
+                        <Column
+                            key={col.field}
+                            field={col.field}
+                            header={header_name}
+                            body={col.body}
+                            sortable
+                            filter={col.field !== 'actions'}
+                            style={{ width: '25%' }}
+                            bodyClassName="px-4 py-2 border-b border-gray-200 text-gray-800 "
+                            headerStyle={styleOfTable}
+                            className=' hover:bg-gray-100 cursor-pointer'
+                        />
+                        )
+                    } )}
+                </DataTable>
+                </div>
+            </GradientCard>
         </div>
     );
 };

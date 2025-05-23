@@ -1,3 +1,5 @@
+import { Action } from "../components/CustomAlert";
+
 export const SchoolSubjectOptions = [
     { value: 'CP',        label: 'CP' },
     { value: 'CE1',       label: 'CE1' },
@@ -11,4 +13,25 @@ export const SchoolSubjectOptions = [
     { value: '2nde',      label: '2nde' },
     { value: '1ère',      label: '1ère' },
     { value: 'Terminale', label: 'Terminale' },
+  ];
+
+
+   export const actions: Action[] = [
+    { label: 'Ajouter un Abonnement', to: (id) => `/abonnements/${id}` },
+    { label: "Créer une séance d'essai", to: (id) => `/students/${id}/trial-session` },
+    { label: 'Voir plus de détails', to: (id) => `/student/${id}` },
+    { label: 'Ajouter une facture', to: (id) => `/students/${id}/invoices/new` },
+    { label: 'Rupture de contrat', to: (id) => `/students/${id}/terminate` },
+    { label: "Modifier l'élève", to: (id) => `/student/${id}/edit` },
+  ];
+
+
+  export const Days = [
+    { value: 'lundi', label: 'Lundi'  }, 
+    { value: 'mardi', label: 'Mardi'  },
+    { value: 'mercredi', label: 'Mercredi' },
+    { value: 'jeudi', label: 'Jeudi'  },
+    { value: 'vendredi', label: 'Vendredi' },
+    { value: 'samedi', label: 'Samedi'  },
+    { value: 'dimanche', label: 'Dimanche' },
   ];

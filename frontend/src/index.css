@@ -14,7 +14,7 @@
     }
 
     .bg-border {
-      @apply border-b-2 bg-green-100  border-green-500 
+      @apply border-b-2 bg-gray-100  border-green-500 
     }
 
     .color-border {
@@ -22,7 +22,7 @@
     }
 
     .bg {
-      @apply bg-green-200  
+      @apply bg-gray-200  
     }
 
     .text-color {

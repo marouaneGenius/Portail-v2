@@ -37,19 +37,23 @@ export function splitParentKeys(values: Record<string, any>): SplitValues {
     return { mainValues, parentValues };
 }
 
-export const showDataDetails = (value:any, key: any) => {
+export const getDate = (value:string, showhour?:boolean) => {
+  const date = new Date(value);
+  if (!isNaN(date.getTime())) {
+    // Format français « 13/05/2025 à 11:32 »
+    const datePart = date.toLocaleDateString('fr-FR');
+    const timePart = date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return  showhour ? `${datePart} à ${timePart}`: `${datePart}`;
+  }
+} 
 
+export const showDataDetails = (value:any, key: any) => {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        // Format français « 13/05/2025 à 11:32 »
-        const datePart = date.toLocaleDateString('fr-FR');
-        const timePart = date.toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        return `${datePart} à ${timePart}`;
-      }
+      const date = getDate(value, true);
+      return date;
   }
 
   if(key === 'is_active') {

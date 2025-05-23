@@ -1,16 +1,17 @@
 import React, { ReactNode } from 'react';
+import { actions } from '../mocks/SchoolSubjects';
 
 interface CustomAlertProps {
   title?: string;
   message?: string;
-  onClose?: () => void;
+  action?: (item:any) => void;
 }
 
 interface CustomComponentProps {
     value?:any
     currentkey?:any
     onRedirect?: (item:any) => void;
-    open?:() => void;
+    action?:(item:any) => void;
 }
 
 export interface BrothersComponentProps {
@@ -22,10 +23,15 @@ export interface BrothersComponentProps {
   }[];
 }
 
-export const CustomAlert: React.FC<CustomAlertProps> =  ({title, message, onClose}) => {
+export interface Action {
+  label: string;
+  to: (studentId: number) => string; // fonction qui génère la route
+}
+
+export const CustomAlert: React.FC<CustomAlertProps> =  ({title, message, action}) => {
     return(
         <div className=" text-center py-4">
-            <div className="p-2 bg items-center text-gray-800 leading-none lg:rounded-full flex lg:inline-flex w-full" role="alert" onClick={onClose}>
+            <div className="p-2 bg items-center text-gray-800 leading-none lg:rounded-full flex lg:inline-flex w-full" role="alert" onClick={action}>
                 <span className="flex rounded-full bg-green-400 uppercase px-2 py-1 text-xs font-bold mr-3 ">{title}</span>
                 <span className="font-semibold mr-2 text-left flex-auto">{message}</span>
             </div>
@@ -37,7 +43,7 @@ export function CustomParentComponent({
     value,
     currentkey,
     onRedirect,
-    open
+    action
 
   }: CustomComponentProps): React.ReactNode {
     if (currentkey !== 'parents' || !Array.isArray(value)) return null;
@@ -48,7 +54,7 @@ export function CustomParentComponent({
         <CustomAlert
           title="Attention !"
           message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
-          onClose={open}
+          action={action}
         />
       );
     }
@@ -199,51 +205,53 @@ export const CustomReportsComponent: React.FC<CustomComponentProps> =  ({value, 
             )}
 
             { currentkey === 'reports' && value.length === 0 &&  (
-                <CustomAlert title='Message !' message="Vous n'avez pas de Comptes rendu pour l'instant" onClose={open}/>
+                <CustomAlert title='Message !' message="Vous n'avez pas de Comptes rendu pour l'instant" />
             )} 
         </>
     )
 }
 
-export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> =  ({value, currentkey}) => {
-    return (
-        <>
-            {currentkey === 'tutor_schedules' && Array.isArray(value) && (
-                <table className="w-full text-left text-sm mb-2">
-                <thead className="bg-gray-100">
-                    <tr>
-                    {value.length > 0 &&
-                        Object.keys(value[0]).map((col) => (
-                        <th
-                            key={col}
-                            className="px-2 py-1 font-medium text-gray-600"
-                        >
-                            {col}
-                        </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {value.map((row: Record<string, any>, idx: number) => (
-                    <tr
-                        key={idx}
-                        className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    >
-                        {Object.values(row).map((cell, i) => (
-                        <td key={i} className="px-2 py-1">
-                            {String(cell)}
-                        </td>
-                        ))}
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            )}
+export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect}) => {
 
-            { currentkey === 'tutor_schedules' && value.length === 0 &&  (
-                <CustomAlert title='Attention !' message="Vous n'avez pas de Creneau pour l'instant" onClose={open}/>
-            )} 
-        </>
+
+    return (
+      <>
+        {currentkey === 'tutor_schedules' && Array.isArray(value) && (
+            <table className="w-full text-left text-sm mb-2">
+            <thead className="bg-gray-100">
+                <tr>
+                {value.length > 0 &&
+                    Object.keys(value[0]).map((col) => (
+                    <th
+                        key={col}
+                        className="px-2 py-1 font-medium text-gray-600"
+                    >
+                        {col}
+                    </th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {value.map((row: Record<string, any>, idx: number) => (
+                <tr
+                    key={idx}
+                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                >
+                    {Object.values(row).map((cell, i) => (
+                    <td key={i} className="px-2 py-1">
+                        {String(cell)}
+                    </td>
+                    ))}
+                </tr>
+                ))}
+            </tbody>
+            </table>
+        )}
+
+        { currentkey === 'tutor_schedules' && value.length === 0 &&  (
+            <CustomAlert title='Attention !' message="Vous n'avez pas de Creneau pour l'instant, cliquer ici pour creer des creneaux !" action={() => onRedirect?.(`user/${value}`)}/>
+        )} 
+      </>
     )
 }
 
@@ -344,3 +352,17 @@ export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
     </div>
   );
 };
+
+export const ActionGrid: React.FC<{ studentId: any }> = ({ studentId }) => (
+  <div className="p-2 bg-gray-100 grid grid-rows-2  gap-2 ">
+    {actions.map((a) => (
+      <a
+        key={a.label}
+        href={a.to(studentId)}
+        className="bg-white text-center hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow"
+      >
+        {a.label}
+      </a>
+    ))}
+  </div>
+);

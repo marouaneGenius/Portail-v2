@@ -29,3 +29,9 @@ export const getCurrentUser = async (host:String, jwt:any) => {
     console.error('errer ==>',e)
   }
 }
+
+
+export const getCenters = async () => {
+  const response = await api.get<any[]>('/api/center');
+  return response.data;
+}

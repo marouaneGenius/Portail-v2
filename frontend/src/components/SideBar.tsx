@@ -1,7 +1,7 @@
 // src/components/Sidebar.tsx
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { HiUsers, HiOfficeBuilding, HiUserCircle, HiMenu, HiX, HiOutlineUsers, HiCubeTransparent, HiAcademicCap } from 'react-icons/hi';
+import { HiUsers, HiOfficeBuilding, HiUserCircle, HiMenu, HiX, HiOutlineUsers, HiCubeTransparent, HiAcademicCap, HiViewGridAdd, HiViewGrid, HiCalendar } from 'react-icons/hi';
 import { useAuth } from '../Hooks/auth';
 
 const Sidebar: React.FC = () => {
@@ -11,13 +11,14 @@ const Sidebar: React.FC = () => {
   if (!user) return null;
 
   const menu = [
-    { to: '/users', icon: <HiUsers className='h-7 w-7 ' />, label: 'Utilisateurs' },
-    { to: '/centers', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Centres' },
-    { to: '/students', icon: <HiAcademicCap className='h-7 w-7 ' />, label: 'Étudiants' },
+    { to: '/users', icon: <HiUsers className='h-7 w-7' />, label: 'Utilisateurs' },
+    { to: '/centers', icon: <HiOfficeBuilding className='h-7 w-7' />, label: 'Centres' },
+    { to: '/students', icon: <HiAcademicCap className='h-7 w-7' />, label: 'Étudiants' },
     { to: '/parents', icon: <HiOutlineUsers className='h-7 w-7 ' />, label: 'Parents' },
     { to: '/sessions', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Séances' },
     { to: '/profile', icon: <HiUserCircle className='h-7 w-7 ' />, label: 'Mon profil' },
-
+    // { to: '/abonnements', icon: <HiViewGridAdd className='h-7 w-7 ' />, label: 'Abonnements' },
+    // { to: '/tutor-schedule', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Dispo Tuteur' },
   ];
 
   return (
@@ -57,7 +58,7 @@ const Sidebar: React.FC = () => {
               ${isActive ? 'bg-green-300 font-semibold' : 'text-gray-700'}`
             }
           >
-            <span className="text-lg text-center ">{icon}</span>
+              <span className="text-lg text-center ">{icon}</span>
             {!collapsed && <span className="ml-3">{label}</span>}
           </NavLink>
         ))}

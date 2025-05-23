@@ -13,7 +13,7 @@ import api from '../api/aixos';
 import { useState } from 'react';
 import { splitParentKeys } from '../services/functions';
 
-const schemaMap: Record<string, FormField[]> = {
+const schemaMap: Record<string, FormField[] > = {
   user: userFields,
   center: centerFields,
   student: studentFields,
