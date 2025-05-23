@@ -176,15 +176,12 @@ class UserController extends AbstractController
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
             ], $user->getReports()->toArray()),
 
-            'center' => $user->getIdCenter()
-                ? [
-                    'id'      => $user->getIdCenter()->getId(),
-                    'name'    => $user->getIdCenter()->getName(),
-                    'address' => $user->getIdCenter()->getAddress(),
-                    'city'    => $user->getIdCenter()->getCity(),
-                ]
-                : null,
-            ]);
+            'center' => array_map(fn($c) => [
+                'id'          => $c->getId(),
+                // 'created_at'  => $c->getCreatedAt()->format(\DateTime::ATOM),
+                'name'        => $c->getName(),
+            ], $user->getCentres()->toArray()),
+        ]);
     }
 
     private function snakeToCamel(string $field): string

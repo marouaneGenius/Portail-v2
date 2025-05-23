@@ -63,8 +63,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $price_per_hour = null;
 
-    #[ORM\ManyToOne(inversedBy: 'users')]
-    private ?Center $id_center = null;
+    #[ORM\ManyToMany(targetEntity: Center::class, inversedBy: 'users')]
+    #[ORM\JoinTable(name: 'user_center')]
+    private Collection $centres;
 
     #[ORM\OneToMany(mappedBy: 'id_tutor', targetEntity: Session::class)]
     private Collection $sessions;
@@ -285,16 +286,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
-
-    public function getIdCenter(): ?Center
+    /**
+     * @return Collection<int, Center>
+     */
+    public function getCentres(): Collection
     {
-        return $this->id_center;
+        return $this->centres;
     }
 
-    public function setIdCenter(?Center $id_center): static
+    public function addCentre(Center $centre): static
     {
-        $this->id_center = $id_center;
+        if (!$this->centres->contains($centre)) {
+            $this->centres->add($centre);
+        }
+        return $this;
+    }
 
+    public function removeCentre(Center $centre): static
+    {
+        $this->centres->removeElement($centre);
         return $this;
     }
 

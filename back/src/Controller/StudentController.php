@@ -173,6 +173,7 @@ class StudentController extends AbstractController
             'is_active'         => $user->isIsActive(),
             'is_deleted'        => $user->isIsDeleted(),
             'created_at'        => $user->getCreatedAt(),
+            'class'             => $user->getClass(),
             'created_by'        => $user->getCreatedBy(),
             'updated_at'        => $user->getUpdatedAt(),
             'updated_by'        => $user->getUpdatedBy(),
