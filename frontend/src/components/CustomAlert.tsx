@@ -297,26 +297,60 @@ export const CustomSessionComponent: React.FC<CustomComponentProps> =  ({value, 
     )
 }
 
-export const CustomCenterComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect}) => {
 
+export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
+  value,
+  currentkey,
+  onRedirect,
+}) => {
+  // On attend que value soit soit un objet unique, soit un tableau d’objets
+  const centers = Array.isArray(value) ? value : value ? [value] : [];
+
+  if (currentkey !== 'center') {
+    return null;
+  }
+
+  // Aucun centre du tout
+  if (centers.length === 0) {
     return (
-        <>
-           {value !== null && currentkey === 'center'&& value && 
-                <div className=' text-lg w-full flex items-center justify-between h-16  p-4 rounded'>
-                    <span>{ value.name } </span> 
-                    <button type="button" 
-                        onClick={() => onRedirect?.(`center/${value.id}`)}
-                        className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-green-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-                        Voir
-                    </button>
-                </div>
-            }
-              { currentkey === 'center' &&( !value||  value.length === 0 )&&  (
-                <CustomAlert title='Message!' message="Vous n'avez pas de Centre pour l'instant" />
-            )}{/*  */}
-        </>
-    )
-}
+      <CustomAlert
+        title="Message !"
+        message="Vous n'avez pas de centre pour l'instant"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {centers.map((ctr: any) => (
+        <div
+          key={ctr.id}
+          className="text-lg w-full flex items-center justify-between  p-0 border-b-2 rounded bg-gray-50"
+        >
+          <span>{ctr.name}</span>
+          <button
+            type="button"
+            onClick={() => onRedirect?.(`center/${ctr.id}`)}
+            className="
+              py-2.5 px-5 me-2 mb-2
+              text-sm font-medium text-gray-900
+              focus:outline-none bg-white rounded-lg
+              border border-green-200
+              hover:bg-gray-100 hover:text-blue-700
+              focus:z-10 focus:ring-4 focus:ring-gray-100
+              dark:focus:ring-gray-700 dark:bg-gray-800
+              dark:text-gray-400 dark:border-gray-600
+              dark:hover:text-white dark:hover:bg-gray-700
+            "
+          >
+            Voir
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 
 export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
   brothers,

@@ -35,43 +35,69 @@ export default function CreationForm() {
     return <p>Ressource inconnue : {resource}</p>;
   }
 
+  const insertMultipleCenters = async (values: Record<string, any>) => {
+    try {
+      setLoading(true);
+      const payload = {
+        ...values,
+        // si besoin, convertir les strings en entiers
+        centers: (values.centers as string[]).map((id) => parseInt(id, 10)),
+      };
+  
+      const { data: createdUser } = await api.post<Record<string, any>>(
+        '/api/user',
+        payload
+      );
+  
+      // mise à jour locale, navigation, etc.
+      console.log('Utilisateur créé', createdUser);
+    } catch (err: any) {
+      console.error('Erreur création user', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const postData = async (values: Record<string, any>) => {
     setLoading(true);
     setError(null);
 
-    // get parent & student data
-    const { mainValues, parentValues } =  splitParentKeys(values);
-    try {
-      // create item
-      const { data: created } = await api.post<Record<string, any>>(
-        `/api/${resource}`,
-      //check if we get student anad parent data, or we passe original values
-        mainValues ? mainValues : values,
-      );
-
-      //check if we get parent data, to create parent
-      if( created && parentValues ){
-        const { data: parent } = await api.post<Record<string, any>>(
-          `/api/parent`,
-          parentValues,
+    if(values.centers) {
+      insertMultipleCenters(values)
+    } else {
+      // get parent & student data
+      const { mainValues, parentValues } =  splitParentKeys(values);
+      try {
+        // create item
+        const { data: created } = await api.post<Record<string, any>>(
+          `/api/${resource}`,
+          mainValues ? mainValues : values,
         );
-        //check if we create parent and student &  create colone on many to many table
-        if(parent && created) {
-          api.post(`/api/student/${created.id}/parents`, {
-            parentId: parent.id,
-            }).then()
-            .catch(console.error);
+
+        //check if we get parent data, to create parent
+        if( created && parentValues ){
+          const { data: parent } = await api.post<Record<string, any>>(
+            `/api/parent`,
+            parentValues,
+          );
+          //check if we create parent and student &  create colone on many to many table
+          if(parent && created) {
+            api.post(`/api/student/${created.id}/parents`, {
+              parentId: parent.id,
+              }).then()
+              .catch(console.error);
+          }
         }
+    
+        setData(prev => [created, ...prev]);
+        return created;
+      } catch (err: any) {
+        console.error(err);
+        setError(err.response?.data?.error || 'Erreur lors de la création');
+        throw err;
+      } finally {
+        setLoading(false);
       }
-  
-      setData(prev => [created, ...prev]);
-      return created;
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Erreur lors de la création');
-      throw err;
-    } finally {
-      setLoading(false);
     }
   };
 

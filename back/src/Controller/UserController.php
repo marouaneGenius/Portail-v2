@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Center;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\CenterRepository;
@@ -67,17 +68,34 @@ class UserController extends AbstractController
         $user->setPricePerHour($data['price_per_hour'] ?? null);
         $user->setRoles([$data['role']]?? ['ROLE_USER']);
 
+
+
+
         // 3. Associer le Center si fourni
-        if (!empty($data['id_center'])) {
-            $center = $this->centerRepository->find($data['id_center']);
-            if (!$center) {
-                return new JsonResponse(
-                    ['error' => 'Center not found'],
-                    JsonResponse::HTTP_BAD_REQUEST
-                );
+        // if (!empty($data['id_center'])) {
+        //     $center = $this->centerRepository->find($data['id_center']);
+        //     if (!$center) {
+        //         return new JsonResponse(
+        //             ['error' => 'Center not found'],
+        //             JsonResponse::HTTP_BAD_REQUEST
+        //         );
+        //     }
+        //     $user->setIdCenter($center);
+        // }
+        if (!empty($data['centers']) && is_array($data['centers'])) {
+            foreach ($data['centers'] as $centerId) {
+                // /** @var Center|null $center */
+                $center = $this->centerRepository->find($centerId);
+                if ($center) {
+                    // addCentre gérera l’inverse dans Center
+                    $user->addCentre($center);
+                }
             }
-            $user->setIdCenter($center);
         }
+
+
+
+
 
         // 4. Hasher le password
         if (empty($data['password'])) {
@@ -118,7 +136,10 @@ class UserController extends AbstractController
             'lastname'  => $user->getLastname(),
             'email'     => $user->getEmail(),
             'phone'     => $user->getPhone(),
-            'id_center' => $user->getIdCenter()?->getId(),
+            'centers' => array_map(fn(Center $c) => [
+                'id'   => $c->getId(),
+                'name' => $c->getName(),
+            ], $user->getCentres()->toArray()),
         ], JsonResponse::HTTP_CREATED);
     }
     

@@ -111,28 +111,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   };
 
   const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    // const { name, type, value, checked }:any = e.target;
-    // setValues((prev) => ({
-    //   ...prev,
-    //   [name]: type === 'checkbox' ? checked : value,
-    // }));
     const { name, type, value, checked,  options }:any = e.target ;
     const multiple = e.target.multiple ;
-
-    if (multiple) {
-      // const vals = Array.from(options)
-      //   .filter((o) => o.selected)
-      //   .map((o) => o.value);
-      // setValues((v) => ({ ...v, [name]: vals }));
-
-      const vals =  Array.from(options).filter((o:any) => o.selected).map((o:any) => o.value);
-      console.log(vals)
-
-    } else {
-      // setValues((v) => ({ ...v, [name]: e.target.value }));
-    }
-
-
 
     setValues(prev => ({
       ...prev,
@@ -177,8 +157,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // onSubmit(values);
-    console.log(values)
+    onSubmit(values);
   };
 
   if (loading) {

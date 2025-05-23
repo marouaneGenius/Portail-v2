@@ -90,6 +90,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->day = new ArrayCollection();
         $this->tutorSchedules = new ArrayCollection();
         $this->reports = new ArrayCollection();
+        $this->centres        = new ArrayCollection();
     }
 
     public function getUserIdentifier(): string
