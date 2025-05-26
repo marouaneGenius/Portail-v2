@@ -32,10 +32,14 @@ class Center
     #[ORM\OneToMany(mappedBy: 'id_center', targetEntity: Student::class)]
     private Collection $students;
 
+    #[ORM\ManyToMany(targetEntity: TutorSchedule::class, mappedBy: 'center')]
+    private Collection $tutorSchedules;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->students = new ArrayCollection();
+        $this->tutorSchedules = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -143,5 +147,32 @@ class Center
     {
         // Retourne le nom du centre, utile pour les <option> du formulaire
         return (string) $this->getName();
+    }
+
+    /**
+     * @return Collection<int, TutorSchedule>
+     */
+    public function getTutorSchedules(): Collection
+    {
+        return $this->tutorSchedules;
+    }
+
+    public function addTutorSchedule(TutorSchedule $tutorSchedule): static
+    {
+        if (!$this->tutorSchedules->contains($tutorSchedule)) {
+            $this->tutorSchedules->add($tutorSchedule);
+            $tutorSchedule->addCenter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTutorSchedule(TutorSchedule $tutorSchedule): static
+    {
+        if ($this->tutorSchedules->removeElement($tutorSchedule)) {
+            $tutorSchedule->removeCenter($this);
+        }
+
+        return $this;
     }
 }

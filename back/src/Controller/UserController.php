@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Center;
+use App\Entity\TutorSchedule;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\CenterRepository;
@@ -68,20 +69,6 @@ class UserController extends AbstractController
         $user->setPricePerHour($data['price_per_hour'] ?? null);
         $user->setRoles([$data['role']]?? ['ROLE_USER']);
 
-
-
-
-        // 3. Associer le Center si fourni
-        // if (!empty($data['id_center'])) {
-        //     $center = $this->centerRepository->find($data['id_center']);
-        //     if (!$center) {
-        //         return new JsonResponse(
-        //             ['error' => 'Center not found'],
-        //             JsonResponse::HTTP_BAD_REQUEST
-        //         );
-        //     }
-        //     $user->setIdCenter($center);
-        // }
         if (!empty($data['centers']) && is_array($data['centers'])) {
             foreach ($data['centers'] as $centerId) {
                 // /** @var Center|null $center */
@@ -92,10 +79,6 @@ class UserController extends AbstractController
                 }
             }
         }
-
-
-
-
 
         // 4. Hasher le password
         if (empty($data['password'])) {
@@ -163,7 +146,7 @@ class UserController extends AbstractController
         return $this->json($data);
     }
 
-    #[Route('/{id}', methods: ['GET'])]
+    #[Route('/{id}', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_ADMIN')]
     public function show(int $id): JsonResponse
     {
@@ -187,9 +170,13 @@ class UserController extends AbstractController
             'price_per_hour'    => $user->getPricePerHour(),
             'tutor_schedules' => array_map(fn($ts) => [
                 'id'         => $ts->getId(),
-                'day'        => $ts->getDay()->format('Y-m-d'),
+                'day'        => $ts->getDay(),
                 'start_hour' => $ts->getStartHour()->format('H:i:s'),
                 'end_hour'   => $ts->getEndHour()->format('H:i:s'),
+                'centers'   => array_map(fn(Center $c) => [
+                    'id'   => $c->getId(),
+                    'name' => $c->getName(),
+                ], $ts->getCenter()->toArray()),
             ], $user->getTutorSchedules()->toArray()),
 
             'reports' => array_map(fn($r) => [
@@ -197,12 +184,45 @@ class UserController extends AbstractController
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
             ], $user->getReports()->toArray()),
 
-            'center' => array_map(fn($c) => [
+            'centers' => array_map(fn($c) => [
                 'id'          => $c->getId(),
                 // 'created_at'  => $c->getCreatedAt()->format(\DateTime::ATOM),
                 'name'        => $c->getName(),
             ], $user->getCentres()->toArray()),
+            
         ]);
+    }
+
+
+    #[Route('/tutors', name: 'api_tutors_list', methods: ['GET'])]
+    public function tutorsList(): JsonResponse
+    {
+        $users = $this->userRepository->findTutors();
+        // On mappe chaque entité User en tableau simple
+        $data = array_map(fn($u) => [
+            'id'        => $u->getId(),
+            'email'     => $u->getEmail(),
+            'firstname' => $u->getFirstname(),
+            'lastname'  => $u->getLastname(),
+            'is_active'  => $u->isIsActive(),
+            'roles'     => $u->getRoles(),
+            'centers' => array_map(fn(Center $c) => [
+                'id'   => $c->getId(),
+                'name' => $c->getName(),
+            ], $u->getCentres()->toArray()),
+            'events' => array_map(fn(TutorSchedule $tutorSchedule) => [
+                'id'   => $tutorSchedule->getId(),
+                'day' => $tutorSchedule->getDay(),
+                'start_end' => $tutorSchedule->getStartHour(),
+                'end_hour' => $tutorSchedule->getEndHour(),
+                'centers'   => array_map(fn(Center $center) => [
+                    'id'   => $center->getId(),
+                    'name' => $center->getName(),
+                ], $tutorSchedule->getCenter()->toArray()),
+            ], $u->getTutorSchedules()->toArray()),
+        ], $users);
+
+        return $this->json($data);
     }
 
     private function snakeToCamel(string $field): string
@@ -211,7 +231,6 @@ class UserController extends AbstractController
         // 3) enlève les espaces → "MaxSession"
         return str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
     }
-
 
     #[Route('/{id}', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
@@ -234,13 +253,39 @@ class UserController extends AbstractController
             }
             $user->setEmail($data['email']);
         }
+        
         if (!empty($data['phone']) && $data['phone'] !== $user->getPhone()) {
             if ($this->userRepository->findOneBy(['phone'=>$data['phone']])) {
                 return $this->json(['error'=>'Téléphone déjà utilisé'], 409);
             }
             $user->setPhone($data['phone']);
         }
-    
+
+        //recuperer uniquement les id des centre
+        if (!empty($data['centers']) && is_array($data['centers'])) {
+
+            // Vider les centres existants de l'utilisateur avant d'ajouter les nouveaux
+            foreach ($user->getCentres() as $existingCenter) {
+                $user->removeCentre($existingCenter);
+            }
+        
+            // Ajouter uniquement les centres envoyés dans la nouvelle liste
+            foreach ($data['centers'] as $centerData) {
+        
+                // Vérifie si l'élément courant est un tableau (objet) ou un entier directement
+                if (is_array($centerData) && isset($centerData['id'])) {
+                    $centerId = $centerData['id'];
+                } else {
+                    $centerId = $centerData; // suppose que c’est directement un entier
+                }
+        
+                $center = $this->centerRepository->find($centerId);
+        
+                if ($center) {
+                    $user->addCentre($center);
+                }
+            }
+        }
 
         if (array_key_exists('roles', $data)) {
             // cas idéal : on reçoit ["ROLE_USER","ROLE_ADMIN"]
@@ -253,7 +298,6 @@ class UserController extends AbstractController
         if (isset($roles) && is_array($roles)) {
             $user->setRoles($roles);
         }
-        
         
 
         foreach (['firstname','lastname','siret','max_session','price_per_hour'] as $f) {
@@ -371,7 +415,4 @@ class UserController extends AbstractController
             'created_at'     => $user->getCreatedAt(),
         ]);
     }
-
-
-    
 }

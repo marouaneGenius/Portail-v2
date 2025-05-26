@@ -181,7 +181,7 @@ class StudentController extends AbstractController
                 'id'          => $r->getId(),
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
             ], $user->getReports()->toArray()),
-            'center' => $user->getIdCenter()
+            'centers' => $user->getIdCenter()
                 ? [
                     'id'      => $user->getIdCenter()->getId(),
                     'name'    => $user->getIdCenter()->getName(),

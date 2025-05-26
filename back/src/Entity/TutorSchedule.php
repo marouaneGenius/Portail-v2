@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\TutorScheduleRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -17,14 +19,22 @@ class TutorSchedule
     #[ORM\ManyToOne(inversedBy: 'tutorSchedules')]
     private ?User $id_user = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $day = null;
+    #[ORM\Column(type: 'string', length: 20)]
+    private ?string $day = null;
 
     #[ORM\Column(type: Types::TIME_IMMUTABLE)]
     private ?\DateTimeImmutable $start_hour = null;
 
     #[ORM\Column(type: Types::TIME_IMMUTABLE)]
     private ?\DateTimeImmutable $end_hour = null;
+
+    #[ORM\ManyToMany(targetEntity: Center::class, inversedBy: 'tutorSchedules')]
+    private Collection $center;
+
+    public function __construct()
+    {
+        $this->center = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -43,15 +53,14 @@ class TutorSchedule
         return $this;
     }
 
-    public function getDay(): ?\DateTimeInterface
+    public function getDay(): ?string
     {
         return $this->day;
     }
-
-    public function setDay(\DateTimeInterface $day): static
+    
+    public function setDay(string $day): static
     {
         $this->day = $day;
-
         return $this;
     }
 
@@ -75,6 +84,30 @@ class TutorSchedule
     public function setEndHour(\DateTimeImmutable $end_hour): static
     {
         $this->end_hour = $end_hour;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Center>
+     */
+    public function getCenter(): Collection
+    {
+        return $this->center;
+    }
+
+    public function addCenter(Center $center): static
+    {
+        if (!$this->center->contains($center)) {
+            $this->center->add($center);
+        }
+
+        return $this;
+    }
+
+    public function removeCenter(Center $center): static
+    {
+        $this->center->removeElement($center);
 
         return $this;
     }
