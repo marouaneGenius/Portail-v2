@@ -44,7 +44,6 @@ export default function EditionForm() {
   }, [resource, id]);
 
   const handleSubmit = async (values: Record<string, any>) => {
-    // PUT vers l’API
     const payload: Record<string, any> = {};
     fields.forEach(field => {
       // ne prendre que les clés de ton schema

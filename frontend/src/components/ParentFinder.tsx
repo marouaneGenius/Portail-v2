@@ -37,8 +37,7 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
     const noResults = !loading && search.trim() !== '' && parents.length === 0;
-      const { id } = useParams();
-    console.log
+    const { id } = useParams();
 
     useEffect(() => {
         setLoading(true);

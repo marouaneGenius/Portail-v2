@@ -21,7 +21,7 @@ export function MultiSelectNoCtrl({
         size={options.length}
         className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-900 bg-white"
       >
-        {options.map((opt) => {
+        {values && options.map((opt) => {
           const isSelected = values.includes(opt.value);
           return (
             <option

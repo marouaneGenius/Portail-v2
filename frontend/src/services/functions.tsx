@@ -20,10 +20,14 @@ export function renameFields<T extends { name?: string }>(fields: T[]): T[] {
 }
 
 
-export function splitParentKeys(values: Record<string, any>): SplitValues {
+export function splitParentKeys(values: Record<string, any>, resource:any) {
+
+  if(resource === "tutorschedule") {
+    return values;
+  } else {
     const mainValues: Record<string, any> = {};
     const parentValues: Record<string, any> = {};
-
+  
     Object.entries(values).forEach(([key, val]) => {
         if (key.endsWith('_parent')) {
         // on retire le suffixe "_parent" pour la clé dans parentValues
@@ -33,8 +37,9 @@ export function splitParentKeys(values: Record<string, any>): SplitValues {
         mainValues[key] = val;
         }
     });
-
+  
     return { mainValues, parentValues };
+  }
 }
 
 export const getDate = (value:string, showhour?:boolean) => {
@@ -55,6 +60,11 @@ export const showDataDetails = (value:any, key: any) => {
       const date = getDate(value, true);
       return date;
   }
+  // console.log( value)
+
+  if(typeof value === 'object' && value !== null ) {
+    return '';
+  } 
 
   if(key === 'is_active') {
       return value === true ?
@@ -198,6 +208,8 @@ export const TranslateHeaderNames = (value:String) => {
         return 'Parents'
       case 'center':
         return 'Centre'
+      case 'centers':
+        return 'Centres'
       case 'sessions':
         return 'Sessions'
       case 'students':

@@ -17,6 +17,7 @@ const Sidebar: React.FC = () => {
     { to: '/parents', icon: <HiOutlineUsers className='h-7 w-7 ' />, label: 'Parents' },
     { to: '/sessions', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Séances' },
     { to: '/profile', icon: <HiUserCircle className='h-7 w-7 ' />, label: 'Mon profil' },
+    { to: '/planing', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Planing' },
     // { to: '/abonnements', icon: <HiViewGridAdd className='h-7 w-7 ' />, label: 'Abonnements' },
     // { to: '/tutor-schedule', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Dispo Tuteur' },
   ];

@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { actions } from '../mocks/SchoolSubjects';
+import { CustomButton } from './CustomButton';
 
 interface CustomAlertProps {
   title?: string;
@@ -12,6 +13,7 @@ interface CustomComponentProps {
     currentkey?:any
     onRedirect?: (item:any) => void;
     action?:(item:any) => void;
+    id?: string;
 }
 
 export interface BrothersComponentProps {
@@ -211,45 +213,55 @@ export const CustomReportsComponent: React.FC<CustomComponentProps> =  ({value, 
     )
 }
 
-export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect}) => {
-
-
+export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect, id, action }) => {
     return (
       <>
         {currentkey === 'tutor_schedules' && Array.isArray(value) && (
             <table className="w-full text-left text-sm mb-2">
-            <thead className="bg-gray-100">
-                <tr>
-                {value.length > 0 &&
-                    Object.keys(value[0]).map((col) => (
-                    <th
-                        key={col}
-                        className="px-2 py-1 font-medium text-gray-600"
-                    >
-                        {col}
-                    </th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
+              <thead className="bg-gray-100">
+                  <tr>
+                  {value.length > 0 &&
+                      Object.keys(value[0]).map((col) => (
+                      <th
+                          key={col}
+                          className="px-2 py-1 font-medium text-gray-600"
+                      >
+                          {col}
+                      </th>
+                      ))}
+                  </tr>
+              </thead>
+              <tbody>
                 {value.map((row: Record<string, any>, idx: number) => (
-                <tr
+                  <>
+                    <tr
                     key={idx}
                     className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                >
-                    {Object.values(row).map((cell, i) => (
-                    <td key={i} className="px-2 py-1">
-                        {String(cell)}
-                    </td>
-                    ))}
-                </tr>
+                    >
+                      {Object.entries(row).map(([key, cell], i) => (
+                        <td key={i} className="px-2 py-1">
+                          {key === 'centers' && Array.isArray(cell)
+                            ? cell.map((center: any) => center.name).join(', ')
+                            : String(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  </>
                 ))}
-            </tbody>
+              </tbody>
             </table>
         )}
 
+        {
+          currentkey === 'tutor_schedules' && value.length !== 0 &&
+          <div className='p-2 w-full '>
+            <CustomButton action={()=>action?.(`planing`)} title='voir le planing' />
+            <CustomButton action={onRedirect} title='Gerer le planing' />
+          </div>
+        }
+
         { currentkey === 'tutor_schedules' && value.length === 0 &&  (
-            <CustomAlert title='Attention !' message="Vous n'avez pas de Creneau pour l'instant, cliquer ici pour creer des creneaux !" action={() => onRedirect?.(`user/${value}`)}/>
+            <CustomAlert title='Attention !' message="Vous n'avez pas de Creneau pour l'instant, cliquer ici pour creer des creneaux !" action={onRedirect}/>
         )} 
       </>
     )
@@ -297,16 +309,11 @@ export const CustomSessionComponent: React.FC<CustomComponentProps> =  ({value, 
     )
 }
 
-
-export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
-  value,
-  currentkey,
-  onRedirect,
-}) => {
+export const CustomCenterComponent: React.FC<CustomComponentProps> = ({ value, currentkey,onRedirect,}) => {
   // On attend que value soit soit un objet unique, soit un tableau d’objets
   const centers = Array.isArray(value) ? value : value ? [value] : [];
 
-  if (currentkey !== 'center') {
+  if (currentkey !== 'centers') {
     return null;
   }
 
@@ -350,7 +357,6 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
     </div>
   );
 };
-
 
 export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
   brothers,

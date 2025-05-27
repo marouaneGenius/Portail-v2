@@ -6,6 +6,7 @@ import {renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
 import { getCenters } from '../api/api';
 import { MultiSelectNoCtrl } from './forms/customInput';
+import { useParams } from 'react-router-dom';
 
 
 export interface FormField {
@@ -27,10 +28,10 @@ export interface FormGeneratorProps {
 
 const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {}, onSubmit, endpoint }) => {
 
-  const defaultValues = {
-    centers: [],            // ou 'center': []
+  const defaultValues = endpoint === "user" ? {
+    centers: [],            
     ...initialValues,
-  };
+  }: {...initialValues};
 
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [currentFields, setFields] = useState(fields);
@@ -39,6 +40,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
+  const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
     const hasRoleField = fields.find((item:any) => item.name === 'role');
@@ -55,9 +57,27 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     } 
 
     // For all forms to remove required for all fields to update only wanted fields
-    if(!emptyFields) {
-      const fieldWithOutRequired = currentFields.map(({ required, ...rest }) => rest);
-      setFields(fieldWithOutRequired)
+
+    if (!emptyFields) {
+      // Retirer la propriété 'required' des champs actuels
+      const fieldsWithoutRequired = currentFields.map(({ required, ...rest }) => rest);
+    
+      // Récupérer les centres et mettre à jour les options si nécessaire
+      getCenters().then((res) => {
+        const centerOptions = res.map((c: any) => ({
+          value: String(c.id),
+          label: c.name,
+        }));
+    
+        const updatedFields: FormField[] = fieldsWithoutRequired.map((f: any) => {
+          if (f.name === 'centers') {
+            return { ...f, options: centerOptions };
+          }
+          return f as FormField;
+        });
+    
+        setFields(updatedFields);
+      });
     }
 
     // For student form tu add centers ans classes dynamically
@@ -178,9 +198,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                 >
                   {f.label}
                 </label>
-            
-                {f.name === 'centers' && f.multiple ? (
-                  
+                {values.centers && f.name === 'centers' && f.multiple ? (
                     <>
                       {
                        f.options && <MultiSelectNoCtrl
@@ -192,31 +210,38 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       />
                       }
                       <div className="flex flex-wrap gap-2 mt-2 bg-gray-100">
-                        {(values[f.name] as string[]).map((val) => {
-                          const label = f.options!.find((o:any) => o.value === val)?.label || val;
-                          return (
-                            <div
-                              key={val}
-                              className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
-                            >
-                              {label}
-                              <button
-                                type="button"
-                                onClick={() => removeCenter(val)}
-                                className="ml-2 text-indigo-500 hover:text-indigo-700"
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          );
-                        })}
+                        {values[f.name] &&
+                          Array.isArray(values[f.name]) &&
+                          values[f.name].map((val: any) => {
+                            if (f.options) {
+                              const option = f.options.find((o: any) => o.value === (val.value || val));
+                              const label =
+                                option?.label || (typeof val === 'object' ? val.label || val.name || JSON.stringify(val) : val);
+                              const key = typeof val === 'object' ? val.id || val.value : val;
+                              return (
+                                <div
+                                  key={key}
+                                  className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
+                                >
+                                  {label}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCenter(val)}
+                                    className="ml-2 text-indigo-500 hover:text-indigo-700"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              );
+                            }
+                            return null; // ensure a return statement
+                          })}
                       </div>
                     </>
                   ) : f.type === 'select' ? (
                     <select
                     id={f.name}
                     name={f.name}            
-                    // value={values[f.name] || ''}
                     value={ 
                       f.multiple 
                         ? values[f.name] ?? []     // un tableau pour le multiple
@@ -248,48 +273,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     required={!!f.required}
                   />
                   )}
-
-
-
-                {/* {f.type === 'select' ? (
-                  <select
-                    id={f.name}
-                    name={f.name}            
-                    // value={values[f.name] || ''}
-                    value={ 
-                      f.multiple 
-                        ? values[f.name] ?? []     // un tableau pour le multiple
-                        : values[f.name] || ''     // une string sinon
-                    }
-
-                    onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
-                    required={!!f.required && !f.multiple}
-                    multiple={!!f.multiple}
-                  >
-                    {!f.multiple && <option value="">—</option>}
-                    {(f.options || []).map((opt:any) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-
-                  </select>
-                ) : (
-                  <input
-                    id={f.name}
-                    name={f.name}             
-                    type={f.type}
-                    checked={f.type === 'checkbox' ? values[f.name] : undefined}
-                    value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
-                    onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
-                    required={!!f.required}
-                  />
-                )} */}
-
-
-
               </div>
             ))}
 
@@ -344,6 +327,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               dayOptions={Days}
               initialSchedules={values.schedules}
               onChange={(schedules) => setValues({ ...values, schedules })}
+              id={id}
             />
           )}
 

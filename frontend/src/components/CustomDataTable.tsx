@@ -35,9 +35,8 @@ const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) 
     const [loading, setLoading] = useState(false);
     const [globalFilter, setGlobalFilter] = useState<string>('');
     const [centerMap, setCenterMap] = useState<Record<number, string>>({});
-      const navigate = useNavigate(); 
+    const navigate = useNavigate(); 
     
-
     const fetchData = async () => {
         setLoading(true);
         try {

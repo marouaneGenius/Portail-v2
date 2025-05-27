@@ -18,18 +18,13 @@ interface StudentItem {
         id:String;
         name:String;
     };
-
-
 }
   
   export const StudentDetails: React.FC = () => {
-    // const fullName = `${student.firstName} ${student.lastName}`;
     const [loading, setLoading] = useState(false);
     const { resource, id } = useParams<DetailPageParams>();
     const [error, setError] = useState<string | null>(null);
     const [student, setStudent] = useState<StudentItem>();
-
-
 
     useEffect(() => {
         // if (!resource || !id) return;
@@ -46,12 +41,12 @@ interface StudentItem {
     }, [resource, id]);
   
     return (
-      <div className="min-h-screen flex justify-center items-start py-2 px-1">
+      <div className="min-h-screen flex justify-center items-center   ">
         <GradientCard className=" w-2/5 " innerClassName="p-4 space-y-6">
             {
                 student ?        
                 <>
-                    <div className="flex flex-col items-center space-y-4">
+                    <div className="flex flex-col items-center space-y-4 ">
                         <div className="p-3 rounded-full gardient shadow-lg">
                             <Avatar
                                 src={"/images/avatar.svg"}

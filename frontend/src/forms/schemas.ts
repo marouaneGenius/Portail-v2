@@ -65,26 +65,26 @@ export const parentFields: FormField[] = [
 ];
 
 
+export const tutorScheduleFields: (FormField|ArrayField)[] = [
+  {
+    name: 'schedules',
+    label: 'Créneaux',
+    type: 'array',
+    required: false,
+    addLabel: 'Ajouter un créneau',
+    itemFields: [
+      {
+        name: 'day',
+        label: 'Jour',
+        type: 'select',
+        required: true,
+        options: [
 
-// export const tutorScheduleFields: (FormField|ArrayField)[] = [
-//   {
-//     name: 'schedules',
-//     label: 'Créneaux',
-//     type: 'array',
-//     required: false,
-//     addLabel: 'Ajouter un créneau',
-//     itemFields: [
-//       {
-//         name: 'day',
-//         label: 'Jour',
-//         type: 'select',
-//         required: true,
-//         options: [
-
-//         ]
-//       },
-//       { name: 'start_hour', label: 'Heure début', type: 'time', required: true },
-//       { name: 'end_hour',   label: 'Heure fin',   type: 'time', required: true },
-//     ]
-//   },
-// ];
+        ]
+      },
+      { name: 'start_hour', label: 'Heure début', type: 'time', required: true },
+      { name: 'end_hour',   label: 'Heure fin',   type: 'time', required: true },
+      { name: 'centers', label: 'Centers', type: 'select', className: 'col-span-2', multiple: true },
+    ]
+  },
+];

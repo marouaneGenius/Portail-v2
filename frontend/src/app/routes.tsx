@@ -15,6 +15,7 @@ import CreationForm from "../components/CreationForm";
 import EditionForm from "../components/EditionForm";
 import Subscriptions from "../pages/Subscriptions";
 import { StudentDetails } from "../pages/studentDetails";
+import {Planing} from "../pages/planing";
 
 export const router = createBrowserRouter([
     {
@@ -36,7 +37,9 @@ export const router = createBrowserRouter([
             { path: '/parents', element: <Parents /> },
             { path: '/form/:resource/:id?', element: <CreationForm /> },
             { path: '/:resource/:id/edit', element: <EditionForm /> },
-            { path: '/studentDetails/:id', element: <StudentDetails />}
+            { path: '/studentDetails/:id', element: <StudentDetails />},
+            { path: '/planing', element: <Planing/>},
+
           ],
         },
       ],

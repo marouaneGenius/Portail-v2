@@ -5,9 +5,7 @@ import { userFields ,
         centerFields,
         studentFields,
         parentFields,
-//   sessionFields,
-//   subscriptionFields,
-
+        tutorScheduleFields,
 } from '../forms/schemas';
 import api from '../api/aixos';
 import { useState } from 'react';
@@ -18,6 +16,7 @@ const schemaMap: Record<string, FormField[] > = {
   center: centerFields,
   student: studentFields,
   parent: parentFields,
+  tutorschedule: tutorScheduleFields
 //   sessions: sessionFields,
 //   subscriptions: subscriptionFields,
 };
@@ -66,7 +65,7 @@ export default function CreationForm() {
       insertMultipleCenters(values)
     } else {
       // get parent & student data
-      const { mainValues, parentValues } =  splitParentKeys(values);
+      const { mainValues, parentValues } =  splitParentKeys(values, resource);
       try {
         // create item
         const { data: created } = await api.post<Record<string, any>>(
@@ -107,7 +106,12 @@ export default function CreationForm() {
     }catch(err: any){
       setError(err.response?.data?.error || 'Erreur lors de la Validation du formulaire');
     }
-    navigate(`/${resource}s`);
+
+    if(resource === "tutorschedule") {
+      navigate(`/users`);
+    } else {
+      navigate(`/${resource}s`);
+    }
   };
 
   return (

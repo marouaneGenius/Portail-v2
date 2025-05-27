@@ -91,7 +91,7 @@ const ItemDetails: React.FC = () => {
                         <CustomParentComponent currentkey={key} value={value} onRedirect={redirection}  />
                         <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
                         <CustomReportsComponent currentkey={key} value={value} />
-                        <CustomTutorScheduleComponent currentkey={key} value={value} onRedirect={redirectionToForm} />
+                        <CustomTutorScheduleComponent currentkey={key} value={value} onRedirect={redirectionToForm} action={redirection} id={id} />
                         <CustomSessionComponent currentkey={key} value={value} />
                         <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />   {/* */}
                       </div>
