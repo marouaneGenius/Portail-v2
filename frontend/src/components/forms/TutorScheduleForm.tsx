@@ -7,6 +7,7 @@ import { TextField } from '@mui/material';
 import { AlertMessage } from '../Alert';
 import { getCenters } from '../../api/api';
 import { FormField } from '../FormGenerator';
+import { formatTime } from '../../services/functions';
 
 export interface Schedule {
   day: string;
@@ -14,7 +15,8 @@ export interface Schedule {
   end_hour: any | null;
   id?: string;
   center: string;
-
+  centers?: any[];
+  id_user?: string;
 }
 
 export interface ScheduleArrayFieldProps {
@@ -35,39 +37,39 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   id
 }) => {
   const [draft, setDraft] = useState<Schedule>({ day: '', start_hour: null, end_hour: null, id:id, center: '' });
-  const [schedules, setSchedules] = useState<Schedule[]>(initialSchedules);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [showError, setShowError] = useState(false);
   const [centers, setCenters] = useState<any>([]);
-
-
-  const formatTime = (d: Date) => {
-    const h = d.getHours().toString().padStart(2, '0');
-    const m = d.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
-  };
+  const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
   const addSlot = () => {
-    const { day, start_hour, end_hour, id, center } = draft;
-
+    const { day, start_hour, end_hour, id, center, id_user } = draft;
     if (!day || !start_hour || !end_hour) {
         setShowError(true)
     } else {
-        setShowError(false)
-        const newSlot = {
-          day,
-          center,
-          start_hour: start_hour instanceof Date
-            ? formatTime(start_hour)
-            : String(start_hour),
-          end_hour:   end_hour   instanceof Date
-            ? formatTime(end_hour)
-            : String(end_hour),
-          id,
-        };
+      setShowError(false)
+      const newSlot = {
+        day,
+        center,
+        start_hour: start_hour instanceof Date
+          ? formatTime(start_hour)
+          : String(start_hour),
+        end_hour:   end_hour   instanceof Date
+          ? formatTime(end_hour)
+          : String(end_hour),
+        id,
+        id_user
+      };
+
+      if(isUpdate && newSlot) {
+        onChange?.([newSlot]);
+        setSchedules([newSlot]);
+      } else {
         const updated = [...schedules, newSlot];
         setSchedules(updated);
         onChange?.(updated);
         setDraft({ day: '', start_hour: null, end_hour: null, id: id, center: center });
+      }
     }
   };
 
@@ -87,10 +89,25 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
     })
   }, [])
 
+  useEffect(() => {
+    if (initialSchedules && initialSchedules.length > 0 && initialSchedules[0]?.centers) {
+      setIsUpdate(true)
+      setSchedules(initialSchedules);
+      setDraft({
+        day: initialSchedules[0].day || '',
+        start_hour: initialSchedules[0].start_hour || formatTime(initialSchedules[0].start_hour ) , 
+        end_hour: initialSchedules[0].end_hour || formatTime(initialSchedules[0].end_hour ) ,
+        id: initialSchedules[0].id || id,
+        center: initialSchedules[0]?.centers[0]?.id || '',
+        id_user: initialSchedules[0]?.id_user || ''
+      });
+    }
+  }, [initialSchedules]);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <div className="w-full">
-        <div className="grid grid-cols-3 gap-4 items-end mb-4">
+        <div className="grid grid-cols-3 gap-4 items-end mb-4 ">
           <div className="col-span-4 p-2 flex flex-col">
             <input type='hidden' value={id}/> 
             <select
@@ -164,27 +181,29 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
             </select>
 
             </div>
-      
-          </div>
-          <button
+
+            <button
             type="button"
             onClick={addSlot}
             className="col-span-3 w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border-yellow-400 text-yellow-500 bg-white"
           >
-            Ajouter un créneau
+            {
+              isUpdate ? ' Modifier' : ' Ajouter le créneau'
+            }
           </button>
+          </div>
+
         </div>
         
         { showError &&  <AlertMessage message={'Veuillez remplir tous les champs !'} /> }
         
-        <div className="flex">
+        <div className="flex bg-gray-100 p-4 rounded-lg shadow-md">
           <div className="flex flex-wrap gap-2 mb-4">
             {schedules.map((c, i) => (
               <div
                 key={i}
                 className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
               >
-                {/* {`${c.day} ${c.start_hour?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}-${c.end_hour?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`} */}
                 {`${c.day} ${c.start_hour}-${c.end_hour}`}
 
                 <button

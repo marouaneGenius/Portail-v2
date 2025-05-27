@@ -23,8 +23,6 @@ class TutorScheduleController extends AbstractController
         private TutorScheduleRepository $tutorScheduleRepository,
         private UserRepository $userRepository,
         private CenterRepository $centerRepository
-
-
     ) {}
 
     #[Route('', name: 'api_tutorschedule_create', methods: ['POST'])]
@@ -91,4 +89,91 @@ class TutorScheduleController extends AbstractController
             'schedules' => $created,
         ], 201);
     }
+
+
+    #[Route('/{id}', name: 'api_tutorschedule_update', methods: ['PUT'])]
+    public function update(int $id, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
+        $schedule = $this->tutorScheduleRepository->find($id);
+        if (!$schedule) {
+            return $this->json(['error' => 'TutorSchedule non trouvé'], 404);
+        }
+
+        if (empty($data['day']) || empty($data['start_hour']) || empty($data['end_hour']) || empty($data['id_user']) || empty($data['center'])) {
+            return $this->json(['error' => 'Le créneau doit contenir day, start_hour, end_hour, id_user et center'], 422);
+        }
+
+        $startHour = \DateTimeImmutable::createFromFormat('H:i', $data['start_hour']);
+        $endHour = \DateTimeImmutable::createFromFormat('H:i', $data['end_hour']);
+        if (!$startHour || !$endHour) {
+            return $this->json(['error' => 'Format horaire invalide'], 422);
+        }
+
+        $user = $this->userRepository->find($data['id_user']);
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non trouvé'], 404);
+        }
+
+        $schedule
+            ->setDay($data['day'])
+            ->setStartHour($startHour)
+            ->setEndHour($endHour)
+            ->setIdUser($user);
+
+        // Réinitialiser les centres liés
+        foreach ($schedule->getCenter() as $existingCenter) {
+            $schedule->removeCenter($existingCenter);
+        }
+
+        $center = $this->centerRepository->find($data['center']);
+        if ($center) {
+            $schedule->addCenter($center);
+        } else {
+            return $this->json(['error' => 'Centre avec ID ' . $data['center'] . ' non trouvé'], 404);
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'message' => 'Créneau mis à jour avec succès',
+            'schedule' => [
+                'id' => $schedule->getId(),
+                'day' => $schedule->getDay(),
+                'start_hour' => $schedule->getStartHour()->format('H:i'),
+                'end_hour' => $schedule->getEndHour()->format('H:i'),
+                'user_id' => $user->getId(),
+                'center_id' => $center->getId(),
+            ]
+        ]);
+    }
+
+    #[Route('/{id}', name: 'api_tutorschedule_delete', methods: ['DELETE'])]
+    public function delete(int $id): JsonResponse
+    {
+        $schedule = $this->tutorScheduleRepository->find($id);
+
+        if (!$schedule) {
+            return $this->json(['error' => 'TutorSchedule non trouvé'], 404);
+        }
+
+        // Dissocier les centres si relation ManyToMany
+        foreach ($schedule->getCenter() as $center) {
+            $schedule->removeCenter($center);
+        }
+
+        $this->em->remove($schedule);
+        $this->em->flush();
+
+        return $this->json([
+            'message' => 'Créneau supprimé avec succès',
+            'id' => $id,
+        ], 200);
+    }
+
+
 }

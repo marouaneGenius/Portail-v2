@@ -17,7 +17,6 @@ export async function login(email: string, password: string): Promise<User> {
   return data.user;
 }
 
-
 export const getCurrentUser = async (host:String, jwt:any) => {
   try {
     const res = await fetch(`${host}/api/user/me/current_user`, {
@@ -30,8 +29,12 @@ export const getCurrentUser = async (host:String, jwt:any) => {
   }
 }
 
-
 export const getCenters = async () => {
   const response = await api.get<any[]>('/api/center');
+  return response.data;
+}
+
+export const getUser = async (id:string) => {
+  const response = await api.get<any[]>(`/api/user/${id}`);
   return response.data;
 }

@@ -104,7 +104,6 @@ export const showDataDetails = (value:any, key: any) => {
   return String(value);
 }
 
-
 export interface PasswordValidation {
   isValid: boolean;
   errors: string[];
@@ -147,8 +146,6 @@ export function validatePasswords(
 
   return { isValid: errors.length === 0, errors };
 }
-
-
 
 export const TranslateHeaderNames = (value:String) => {
     switch(value) {
@@ -217,5 +214,15 @@ export const TranslateHeaderNames = (value:String) => {
       case 'google_id':
         return 'Type de Compte'
     }
-  }
+}
   
+export const getFrenchDayLabel = (dateInput: string | Date): string => {
+  const date = new Date(dateInput);
+  return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+};
+
+export const formatTime = (d: Date) => {
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
