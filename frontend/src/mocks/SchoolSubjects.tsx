@@ -1,6 +1,6 @@
 import { Action } from "../components/CustomAlert";
 
-export const SchoolSubjectOptions = [
+export const ClassesOptions = [
     { value: 'CP',        label: 'CP' },
     { value: 'CE1',       label: 'CE1' },
     { value: 'CE2',       label: 'CE2' },
@@ -35,3 +35,25 @@ export const SchoolSubjectOptions = [
     { value: 'samedi', label: 'Samedi'  },
     { value: 'dimanche', label: 'Dimanche' },
   ];
+
+  export const SchoolSubjects = [
+    { value: 'physique', label: 'Physique' },
+    { value: 'maths', label: 'Maths' },
+    { value: 'français', label: 'Français' },
+    { value: 'ses', label: 'SES' },
+    { value: 'philosophie', label: 'Philosophie' },
+    { value: 'anglais', label: 'Anglais' },
+    { value: 'espagnole', label: 'Espagnole' },
+    { value: 'svt', label: 'SVT' },
+    { value: 'nsi', label: 'NSI' },
+    { value: 'histoire', label: 'Histoire' },
+    { value: 'si', label: 'SI' },
+    { value: 'droit-et-economie', label: 'Droit et Economie' },
+    { value: 'aggsp', label: 'AGGSP' },
+    { value: 'amc', label: 'AMC' },
+    { value: 'aide-aux-devoirs', label: 'Aide aux devoirs' },
+    { value: 'hggsp', label: 'HGGSP' },
+    { value: 'management', label: 'Management' },
+    { value: 'mathematiques', label: 'Mathématiques' },
+  ];
+  

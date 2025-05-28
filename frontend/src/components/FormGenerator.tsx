@@ -1,11 +1,11 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import api from '../api/aixos';
-import { Days, SchoolSubjectOptions } from '../mocks/SchoolSubjects';
+import { ClassesOptions, Days, SchoolSubjects} from '../mocks/SchoolSubjects';
 import { parentFields } from '../forms/schemas';
 import {renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
 import { getCenters } from '../api/api';
-import { MultiSelectNoCtrl } from './forms/customInput';
+import { MultiSelectNoCtrl, RenderField } from './forms/customInput';
 import { useParams } from 'react-router-dom';
 
 
@@ -29,7 +29,8 @@ export interface FormGeneratorProps {
 const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {}, onSubmit, endpoint }) => {
 
   const defaultValues = endpoint === "user" ? {
-    centers: [],            
+    centers: [],   
+    school_subjects: [],
     ...initialValues,
   }: {...initialValues};
 
@@ -39,7 +40,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [currenParentFields, setCurrenParentFields] = useState(parentFields);
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
-  const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
+  const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects'];
   const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
@@ -57,12 +58,11 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     } 
 
     // For all forms to remove required for all fields to update only wanted fields
-
     if (!emptyFields) {
       // Retirer la propriété 'required' des champs actuels
       const fieldsWithoutRequired = currentFields.map(({ required, ...rest }) => rest);
-    
       // Récupérer les centres et mettre à jour les options si nécessaire
+
       getCenters().then((res) => {
         const centerOptions = res.map((c: any) => ({
           value: String(c.id),
@@ -73,9 +73,12 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           if (f.name === 'centers') {
             return { ...f, options: centerOptions };
           }
+          if (f.name === "school_subjects") {
+            console.log(f)
+            return { ...f, options: SchoolSubjects };
+          }
           return f as FormField;
         });
-    
         setFields(updatedFields);
       });
     }
@@ -103,7 +106,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               return { ...f, options: centerOptions };
             }
             if (f.name === 'class') {
-              return { ...f, options: SchoolSubjectOptions };
+              return { ...f, options: ClassesOptions };
             }
             return f as FormField;
           });
@@ -123,10 +126,14 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     setLoading(false)
   }, [fields, roleFieldValue]);
 
-  const removeCenter = (centerValue: string) => {
-    setValues((prev) => ({
+// pour supprimer une valeur du champ multi select
+  const removeValueFromField = (field: any, value: any) => {
+    console.log(field, value)
+    setValues((prev: any) => ({
       ...prev,
-      centers: (prev.centers as string[]).filter((c) => c !== centerValue),
+      [field]: Array.isArray(prev[field])
+        ? prev[field].filter((v: any) => (typeof v === 'object' ? v.value || v.id : v) !== (typeof value === 'object' ? value.value || value.id : value))
+        : prev[field],
     }));
   };
 
@@ -134,6 +141,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     const { name, type, value, checked,  options }:any = e.target ;
     const multiple = e.target.multiple ;
 
+    //pour gerer les select multiple
     setValues(prev => ({
       ...prev,
       [name]: multiple
@@ -145,6 +153,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         : value,
     }));
 
+    // pour gerer les select one
     if(type === "select-one" && name === "role"){
       if(value === 'ROLE_TUTOR') {
         let fieldWithOutRequired :any = fields;
@@ -157,6 +166,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           const updatedFields: FormField[] = fieldWithOutRequired.map((f: any) => {
             if(f.name === 'centers') {
               return { ...f, options: centerOptions };
+            }
+            if (f.name === 'school_subjects') {
+              return { ...f, options: SchoolSubjects };
             }
             return f as FormField;
           });
@@ -198,81 +210,16 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                 >
                   {f.label}
                 </label>
-                {values.centers && f.name === 'centers' && f.multiple ? (
-                    <>
-                      {
-                       f.options && <MultiSelectNoCtrl
-                        options={f.options!}
-                        values={values.centers as string[]}
-                        onChange={(newVals) =>
-                          setValues((prev) => ({ ...prev, centers: newVals }))
-                        }
-                      />
-                      }
-                      <div className="flex flex-wrap gap-2 mt-2 bg-gray-100">
-                        {values[f.name] &&
-                          Array.isArray(values[f.name]) &&
-                          values[f.name].map((val: any) => {
-                            if (f.options) {
-                              const option = f.options.find((o: any) => o.value === (val.value || val));
-                              const label =
-                                option?.label || (typeof val === 'object' ? val.label || val.name || JSON.stringify(val) : val);
-                              const key = typeof val === 'object' ? val.id || val.value : val;
-                              return (
-                                <div
-                                  key={key}
-                                  className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
-                                >
-                                  {label}
-                                  <button
-                                    type="button"
-                                    onClick={() => removeCenter(val)}
-                                    className="ml-2 text-indigo-500 hover:text-indigo-700"
-                                  >
-                                    &times;
-                                  </button>
-                                </div>
-                              );
-                            }
-                            return null; // ensure a return statement
-                          })}
-                      </div>
-                    </>
-                  ) : f.type === 'select' ? (
-                    <select
-                    id={f.name}
-                    name={f.name}            
-                    value={ 
-                      f.multiple 
-                        ? values[f.name] ?? []     // un tableau pour le multiple
-                        : values[f.name] || ''     // une string sinon
-                    }
 
-                    onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
-                    required={!!f.required && !f.multiple}
-                    multiple={!!f.multiple}
-                  >
-                    {!f.multiple && <option value="">—</option>}
-                    {(f.options || []).map((opt:any) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
+                <RenderField 
+                  f={f}
+                  values={values}
+                  setValues={setValues}
+                  removeValueFromField={removeValueFromField}
+                  handleChange={handleChange}
+                  fieldName={f.name}
+                />
 
-                  </select>
-                  ) : (
-                    <input
-                    id={f.name}
-                    name={f.name}             
-                    type={f.type}
-                    checked={f.type === 'checkbox' ? values[f.name] : undefined}
-                    value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
-                    onChange={handleChange}   
-                    className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
-                    required={!!f.required}
-                  />
-                  )}
               </div>
             ))}
 

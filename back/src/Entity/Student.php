@@ -81,6 +81,9 @@ class Student
     #[ORM\OneToMany(mappedBy: 'id_student', targetEntity: Report::class)]
     private Collection $reports;
 
+    #[ORM\Column(nullable: true)]
+    private ?array $school_subjects = null;
+
     public function __construct()
     {
         $this->id_parent = new ArrayCollection();
@@ -417,6 +420,18 @@ class Student
                 $report->setIdStudent(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getSchoolSubjects(): ?array
+    {
+        return $this->school_subjects;
+    }
+
+    public function setSchoolSubjects(?array $school_subjects): static
+    {
+        $this->school_subjects = $school_subjects;
 
         return $this;
     }

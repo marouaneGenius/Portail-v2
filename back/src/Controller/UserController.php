@@ -52,7 +52,6 @@ class UserController extends AbstractController
         }
 
         // 2. Créer et hydrater l’entité User
-
         $user = new User();
         $user->setFirstname($data['firstname'] ?? null);
         $user->setLastname($data['lastname'] ?? null);
@@ -68,6 +67,7 @@ class UserController extends AbstractController
         $user->setMaxSession($data['max_session'] ?? null);
         $user->setPricePerHour($data['price_per_hour'] ?? null);
         $user->setRoles([$data['role']]?? ['ROLE_USER']);
+        $user->setSchoolSubjects($data['school_subjects'] ?? null);
 
         if (!empty($data['centers']) && is_array($data['centers'])) {
             foreach ($data['centers'] as $centerId) {
@@ -168,6 +168,7 @@ class UserController extends AbstractController
             'updated_by'        => $user->getUpdatedBy(),
             'max_session'       => $user->getMaxSession(),
             'price_per_hour'    => $user->getPricePerHour(),
+            'school_subjects'   => $user->getSchoolSubjects(),
             'tutor_schedules' => array_map(fn($ts) => [
                 'id'         => $ts->getId(),
                 'day'        => $ts->getDay(),
@@ -189,6 +190,8 @@ class UserController extends AbstractController
                 // 'created_at'  => $c->getCreatedAt()->format(\DateTime::ATOM),
                 'name'        => $c->getName(),
             ], $user->getCentres()->toArray()),
+
+
             
         ]);
     }
@@ -300,7 +303,7 @@ class UserController extends AbstractController
         }
         
 
-        foreach (['firstname','lastname','siret','max_session','price_per_hour'] as $f) {
+        foreach (['firstname','lastname','siret','max_session','price_per_hour', 'school_subjects'] as $f) {
             if (array_key_exists($f, $data)) {
                 $setter = 'set' . $this->snakeToCamel($f);
                 // Vérification que la méthode existe bien

@@ -82,6 +82,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $google_id = null;
 
+    #[ORM\Column(type: "json", nullable: true)]
+    private ?array $school_subjects = null;
+
 
 
     public function __construct()
@@ -443,6 +446,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGoogleId(?string $google_id): static
     {
         $this->google_id = $google_id;
+
+        return $this;
+    }
+
+    public function getSchoolSubjects(): ?array
+    {
+        return $this->school_subjects;
+    }
+
+    public function setSchoolSubjects(?array $school_subjects): static
+    {
+        $this->school_subjects = $school_subjects;
 
         return $this;
     }

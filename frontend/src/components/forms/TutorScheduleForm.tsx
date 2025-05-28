@@ -5,7 +5,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { TextField } from '@mui/material';
 import { AlertMessage } from '../Alert';
-import { getCenters } from '../../api/api';
+import { getCenters, getUser } from '../../api/api';
 import { FormField } from '../FormGenerator';
 import { formatTime } from '../../services/functions';
 
@@ -27,7 +27,6 @@ export interface ScheduleArrayFieldProps {
   /** Options pour le select des jours */
   dayOptions: { value: string; label: string }[];
   id?: string;
-
 }
 
 export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
@@ -41,6 +40,9 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   const [showError, setShowError] = useState(false);
   const [centers, setCenters] = useState<any>([]);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
+  const [days, setDays] = useState<any>(dayOptions);
+  const [selectedDays, setselectedDays] = useState<any>([]);
+
 
   const addSlot = () => {
     const { day, start_hour, end_hour, id, center, id_user } = draft;
@@ -80,6 +82,17 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   };
 
   useEffect(() => {
+    if(id){
+      getUser(id).then((res:any) => {
+        const selectedDaysByTutor = res.tutor_schedules.map((schedule:any) => {
+          return schedule.day
+        })
+        const filteredDays = dayOptions.filter((day:any) => !selectedDaysByTutor.includes(day.value));
+        setDays(filteredDays)
+        }
+      );
+    }
+ 
     getCenters().then((res) => {
       const centerOptions = res.map((c:any) => ({
         value: String(c.id),
@@ -104,6 +117,14 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
     }
   }, [initialSchedules]);
 
+  useEffect(() => {
+    if (schedules.length > 0) {
+      const filteredDaysArray = schedules.map((schedule) => schedule.day);  
+      const filteredDays = days.filter((day:any) => !filteredDaysArray.includes(day.value));
+      setDays(filteredDays);
+    } 
+  }, [schedules]);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <div className="w-full">
@@ -116,7 +137,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
               className="w-full rounded border px-3 py-3 outline-none focus:ring focus:ring-blue-300 border color-border my-2"
             >
               <option value="">Jour…</option>
-              {dayOptions.map((o) => (
+              {days.map((o:any) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -197,7 +218,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         
         { showError &&  <AlertMessage message={'Veuillez remplir tous les champs !'} /> }
         
-        <div className="flex bg-gray-100 p-4 rounded-lg shadow-md">
+        <div className="flex ">
           <div className="flex flex-wrap gap-2 mb-4">
             {schedules.map((c, i) => (
               <div

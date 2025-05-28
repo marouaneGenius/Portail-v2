@@ -60,7 +60,14 @@ export const showDataDetails = (value:any, key: any) => {
       const date = getDate(value, true);
       return date;
   }
-  // console.log( value)
+
+  if(Array.isArray(value) && value.length !== 0 && key === 'school_subjects') {
+    if(value[0] && typeof value[0] === 'object' && value[0].id) {
+      return value.map((v:any) => v.id).join(', ');
+    } else {
+      return value.join(', ');
+    }
+  }
 
   if(typeof value === 'object' && value !== null ) {
     return '';
@@ -91,14 +98,14 @@ export const showDataDetails = (value:any, key: any) => {
   }
   
   if(key === 'roles') {
-  switch(value[0]) {
-      case "ROLE_TUTOR":
-          return "Tuteur"
-      case "ROLE_USER":
-          return "Utilisateur"
-      case "ROLE_ADMIN":
-          return "Admin"
-  }
+    switch(value[0]) {
+        case "ROLE_TUTOR":
+            return "Tuteur"
+        case "ROLE_USER":
+            return "Utilisateur"
+        case "ROLE_ADMIN":
+            return "Admin"
+    }
   }
   
   return String(value);
@@ -171,6 +178,8 @@ export const TranslateHeaderNames = (value:String) => {
         return 'Centre'
       case 'password':
         return 'Mot de passe'
+      case 'school_subjects':
+        return 'Marières Scolaires'
       case 'email':
         return 'E-mail'
       case 'roles':

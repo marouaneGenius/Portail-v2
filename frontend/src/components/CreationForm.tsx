@@ -1,4 +1,3 @@
-// src/components/CreationForm.tsx
 import { useParams, useNavigate } from 'react-router-dom';
 import FormGenerator, { FormField } from './FormGenerator';
 import { userFields ,

@@ -1,4 +1,6 @@
 import { FormField } from "../components/FormGenerator";
+
+
 export interface ArrayField  extends FormField   {
   type: 'array';
   itemFields: FormField[];      // définition des champs à l’intérieur
@@ -24,8 +26,8 @@ export const userFields: FormField[] = [
   { name: 'price_per_hour', label: 'Prix Par Heure', type: 'text' },
   { name: 'max_session', label: 'Nombre de seance Max', type: 'text' },
   { name: 'siret', label: 'Siret', type: 'text', className: 'col-span-2' },
-  { name: 'centers', label: 'Centers', type: 'select', className: 'col-span-2', multiple: true },
-
+  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true },
+  { name: 'centers', label: 'Centers', type: 'select',  multiple: true },
 ];
 
 export const centerFields: FormField[] = [
@@ -46,6 +48,7 @@ export const studentFields: FormField[] = [
   { name: 'class', label: 'Classe', type: 'select', required: true },
   { name: 'email', label: 'E‑mail', type: 'email', required: true },
   { name: 'id_center', label: 'Centre', type: 'select', required: true },
+  { name: 'school_subjects', label: 'Matieres', type: 'select', className: 'col-span-2', multiple: true },
 ];
 
 export const parentFields: FormField[] = [
@@ -63,7 +66,6 @@ export const parentFields: FormField[] = [
   { name: 'zip_code', label: 'Code Postal', type: 'text', required: true},
   { name: 'city', label: 'Ville', type: 'text', required: true},
 ];
-
 
 export const tutorScheduleFields: (FormField|ArrayField)[] = [
   {
