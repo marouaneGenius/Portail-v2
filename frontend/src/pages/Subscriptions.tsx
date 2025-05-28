@@ -1,77 +1,47 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../Hooks/auth";
 import clsx from "clsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, Button } from "@mui/material";
 import { HiOutlineBadgeCheck } from "react-icons/hi";
-
-/** GradientCard – wrapper avec bordure dégradée réutilisable */
-export interface GradientCardProps {
-  children: React.ReactNode;
-  gradient?: string;
-  className?: string;
-  innerClassName?: string;
-}
-export const GradientCard: React.FC<GradientCardProps> = ({
-  children,
-  gradient = "from-purple-500 via-pink-500 to-red-500",
-  className = "",
-  innerClassName = "",
-}) => (
-  <div
-    className={clsx(
-      "relative p-[1px] rounded-2xl bg-gradient-to-br shadow-lg",
-      gradient,
-      className
-    )}
-  >
-    <div className={clsx("rounded-2xl bg-white dark:bg-zinc-900", innerClassName)}>
-      {children}
-    </div>
-  </div>
-);
-
-// Data tiers (images dans /public/images)
-const tiers = [
-  {
-    id: "stage",
-    title: "Stage d'été",
-    img: "/images/stage-ete.svg",
-    gradient: "from-rose-400 to-orange-400",
-  },
-  {
-    id: "annuel",
-    title: "Annuel",
-    img: "/images/annuel.svg",
-    gradient: "from-sky-400 to-indigo-500",
-  },
-  {
-    id: "preinscription",
-    title: "Pré‑inscription",
-    img: "/images/pre-inscription.svg",
-    gradient: "from-emerald-400 to-lime-400",
-  },
-] as const;
+import { tiers } from "../mocks/SchoolSubjects";
+import { GradientCard } from "../components/GardientCard";
 
 type TierId = typeof tiers[number]["id"];
 
 export default function Subscriptions() {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-
   const [selected, setSelected] = useState<TierId[]>([]);
+  const navigate = useNavigate(); 
+  const [params, setParams] = useState<{ [key: string]: string }>({});
+  const { id } = useParams<{ id: string }>();
+  
   const toggle = (id: TierId) => {
     setSelected((s) => (s.includes(id) ? s.filter((t) => t !== id) : [...s, id]));
   };
   const isSelected = (id: TierId) => selected.includes(id);
 
   const handleNext = () => {
-    console.log("Tiers choisis", selected);
+    const paramsString = new URLSearchParams(params).toString();
+    navigate(`/subscriptions/${id}?${paramsString}`);
   };
 
+  useEffect(() => {
+    // Set initial params based on selected tiers
+    const newParams: { [key: string]: string } = {};
+    selected.forEach((tierId) => {
+      const tier = tiers.find((t) => t.id === tierId);
+      if (tier) {
+        newParams[tierId] = tier.id;
+      }
+    });
+    setParams(newParams);
+  }, [selected]);
+  if (!user) return <Navigate to="/login" replace />;
+
   return (
-    <div className="min-h-screen flex flex-col items-center py-4 px-4 space-y-8">
+    <div className=" flex flex-col items-center py-4 px-4 space-y-8">
       <GradientCard className="w-full w-4/5" innerClassName="p-8">
         <h1 className="text-4xl font-bold mb-8 text-center">Les abonnements</h1>
 

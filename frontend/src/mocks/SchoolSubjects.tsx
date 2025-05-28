@@ -57,3 +57,24 @@ export const ClassesOptions = [
     { value: 'mathematiques', label: 'Mathématiques' },
   ];
   
+
+  export const tiers = [
+    {
+      id: "stage",
+      title: "Stage d'été",
+      img: "/images/stage-ete.svg",
+      gradient: "from-rose-400 to-orange-400",
+    },
+    {
+      id: "annuel",
+      title: "Annuel",
+      img: "/images/annuel.svg",
+      gradient: "from-sky-400 to-indigo-500",
+    },
+    {
+      id: "preinscription",
+      title: "Pré‑inscription",
+      img: "/images/pre-inscription.svg",
+      gradient: "from-emerald-400 to-lime-400",
+    },
+  ] as const;

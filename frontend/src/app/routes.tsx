@@ -15,7 +15,8 @@ import CreationForm from "../components/CreationForm";
 import EditionForm from "../components/EditionForm";
 import Subscriptions from "../pages/Subscriptions";
 import { StudentDetails } from "../pages/studentDetails";
-import {Planing} from "../pages/planing";
+import { Planing } from "../pages/Planing";
+import SubscriptionsFormView from "../components/subscriptions/views/SubscriptionFormsView";
 
 export const router = createBrowserRouter([
     {
@@ -39,7 +40,7 @@ export const router = createBrowserRouter([
             { path: '/:resource/:id/edit', element: <EditionForm /> },
             { path: '/studentDetails/:id', element: <StudentDetails />},
             { path: '/planing', element: <Planing/>},
-
+            { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
           ],
         },
       ],

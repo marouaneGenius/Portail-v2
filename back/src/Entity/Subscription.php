@@ -85,6 +85,21 @@ class Subscription
     #[ORM\ManyToMany(targetEntity: Session::class, mappedBy: 'id_subscription')]
     private Collection $sessions;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $subscription_start_date = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paiemnt_mode = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $date_caution = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $caution = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?array $favorite_slots = null;
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
@@ -384,6 +399,66 @@ class Subscription
         if ($this->sessions->removeElement($session)) {
             $session->removeIdSubscription($this);
         }
+
+        return $this;
+    }
+
+    public function getSubscriptionStartDate(): ?\DateTimeInterface
+    {
+        return $this->subscription_start_date;
+    }
+
+    public function setSubscriptionStartDate(?\DateTimeInterface $subscription_start_date): static
+    {
+        $this->subscription_start_date = $subscription_start_date;
+
+        return $this;
+    }
+
+    public function getPaiemntMode(): ?string
+    {
+        return $this->paiemnt_mode;
+    }
+
+    public function setPaiemntMode(string $paiemnt_mode): static
+    {
+        $this->paiemnt_mode = $paiemnt_mode;
+
+        return $this;
+    }
+
+    public function getDateCaution(): ?\DateTimeInterface
+    {
+        return $this->date_caution;
+    }
+
+    public function setDateCaution(?\DateTimeInterface $date_caution): static
+    {
+        $this->date_caution = $date_caution;
+
+        return $this;
+    }
+
+    public function isCaution(): ?bool
+    {
+        return $this->caution;
+    }
+
+    public function setCaution(?bool $caution): static
+    {
+        $this->caution = $caution;
+
+        return $this;
+    }
+
+    public function getFavoriteSlots(): ?array
+    {
+        return $this->favorite_slots;
+    }
+
+    public function setFavoriteSlots(?array $favorite_slots): static
+    {
+        $this->favorite_slots = $favorite_slots;
 
         return $this;
     }

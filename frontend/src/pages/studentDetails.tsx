@@ -1,11 +1,11 @@
 import { Avatar } from "@mui/material";
-import { GradientCard } from "./Subscriptions";
 import { useEffect, useState } from "react";
 import api from "../api/aixos";
 import { useParams } from "react-router-dom";
 import { DetailPageParams } from "../components/ItemDetails";
 import { ActionGrid } from "../components/CustomAlert";
 import { getDate } from "../services/functions";
+import { GradientCard } from "../components/GardientCard";
 
 interface StudentItem {
     id: string;
