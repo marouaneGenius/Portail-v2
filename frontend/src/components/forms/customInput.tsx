@@ -31,7 +31,7 @@ export function MultiSelectNoCtrl({
       >
         {
         options.map((opt:any) => {
-          // const isSelected = values && (values.includes(opt.value) || values.includes(opt.label));
+          // const isSelected = values && (values.includes(opt.value));
           const isSelected = Array.isArray(values) && (values.includes(opt.value) || values.includes(opt.label));
 
           return (
