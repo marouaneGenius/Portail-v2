@@ -78,3 +78,42 @@ export const ClassesOptions = [
       gradient: "from-emerald-400 to-lime-400",
     },
   ] as const;
+
+
+  export const SessionOptions = [
+    { value: '1', label: '1h30', duration: 90 },
+    { value: '2', label: '3h', duration: 180 },
+    { value: '3', label: '4h30', duration: 270 },
+    { value: '4', label: '6h', duration: 360 }
+  ];
+
+
+  export const HoursOptions = [
+    { value: '9h30', label: '9h30'},
+    { value: '11h00', label: '11h00'},
+    { value: '12h30', label: '12h30'},
+    { value: '14h00', label: '14h00'},
+    { value: '15h30', label: '15h30'},
+    { value: '17h00', label: '17h00'},
+    { value: '18h30', label: '18h30' }
+  ];
+
+
+  export const WeeksOptions = [
+    { value: '1', label: '1 semaine' },
+    { value: '2', label: '2 semaines' },
+    { value: '3', label: '3 semaines' },
+    { value: '4', label: '4 semaines' },
+    { value: '5', label: '5 semaines' },
+    { value: '6', label: '6 semaines' },
+    { value: '7', label: '7 semaines' },
+    { value: '8', label: '8 semaines' }];
+
+    export const WeeksOptionss = ['1 semaine' ,
+       '2 semaines' ,
+        '3 semaines' ,
+       '4 semaines' ,
+      '5 semaines' ,
+      '6 semaines' ,
+       '7 semaines' ,
+      '8 semaines' ];

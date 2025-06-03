@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import api from '../api/aixos';
-import { ClassesOptions, Days, SchoolSubjects} from '../mocks/SchoolSubjects';
+import { ClassesOptions, Days, SchoolSubjects} from '../mocks/mocks';
 import { parentFields } from '../forms/schemas';
 import {renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
@@ -17,6 +17,7 @@ export interface FormField {
   required?: boolean;
   className?: String;
   multiple?:boolean;
+  value?: any; // pour les champs avec valeur par défaut
 }
 
 export interface FormGeneratorProps {
@@ -128,7 +129,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
 // pour supprimer une valeur du champ multi select
   const removeValueFromField = (field: any, value: any) => {
-    console.log(field, value)
     setValues((prev: any) => ({
       ...prev,
       [field]: Array.isArray(prev[field])

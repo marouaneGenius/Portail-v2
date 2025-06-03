@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { actions } from '../mocks/SchoolSubjects';
+import { actions } from '../mocks/mocks';
 import { CustomButton } from './CustomButton';
 
 interface CustomAlertProps {

@@ -1,7 +1,6 @@
 <?php
 namespace App\Controller;
 
-use App\Entity\Center;
 use App\Entity\TutorSchedule;
 use App\Repository\CenterRepository;
 use App\Repository\TutorScheduleRepository;
@@ -11,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 #[Route('/api/tutorschedule')]
 class TutorScheduleController extends AbstractController
@@ -26,7 +24,6 @@ class TutorScheduleController extends AbstractController
     ) {}
 
     #[Route('', name: 'api_tutorschedule_create', methods: ['POST'])]
-    // #[IsGranted('ROLE_USER')]
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

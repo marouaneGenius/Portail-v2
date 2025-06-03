@@ -22,6 +22,7 @@ export interface Student {
     lastname: string;
     email: string;
     phone: string;
+    center?:any
   }
 
 interface ParentSelectorProps {

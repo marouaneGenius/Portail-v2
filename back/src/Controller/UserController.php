@@ -209,6 +209,7 @@ class UserController extends AbstractController
             'lastname'  => $u->getLastname(),
             'is_active'  => $u->isIsActive(),
             'roles'     => $u->getRoles(),
+            'school_subjects' => $u->getSchoolSubjects(),
             'centers' => array_map(fn(Center $c) => [
                 'id'   => $c->getId(),
                 'name' => $c->getName(),
@@ -216,7 +217,7 @@ class UserController extends AbstractController
             'events' => array_map(fn(TutorSchedule $tutorSchedule) => [
                 'id'   => $tutorSchedule->getId(),
                 'day' => $tutorSchedule->getDay(),
-                'start_end' => $tutorSchedule->getStartHour(),
+                'start_hour' => $tutorSchedule->getStartHour(),
                 'end_hour' => $tutorSchedule->getEndHour(),
                 'centers'   => array_map(fn(Center $center) => [
                     'id'   => $center->getId(),

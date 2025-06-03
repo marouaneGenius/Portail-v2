@@ -1,3 +1,9 @@
+import { WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
+import SlotSelector from "../subscriptions/SlotSelector";
+import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
+import VacationWeekSelector from "../subscriptions/WeeksAvailiabilityPicker";
+import GroupedInputs from "./GroupedInputs";
+
 export function MultiSelectNoCtrl({
     options,
     values,
@@ -11,7 +17,6 @@ export function MultiSelectNoCtrl({
     
     const toggleOption = (value: string) => {
       const safeValues = Array.isArray(values) ? values : [];
-    
       onChange(
         safeValues.includes(value)
           ? safeValues.filter((v) => v !== value)
@@ -19,15 +24,11 @@ export function MultiSelectNoCtrl({
       );
     };
     
-
-
-
-  
     return (
       <select
         multiple
         size={options.length}
-        className="w-full  rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-900 bg-white"
+        className="w-full  rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-900 h-64"
       >
         {
         options.map((opt:any) => {
@@ -66,28 +67,93 @@ export interface RenderFieldProps {
   removeValueFromField: (field: string, value: any)  => void;
   handleChange: (item:any) => void;
   fieldName: any;
+  tutors?:any,
+  title?:any
 }
 
-export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName}) => {
+interface MultiSelectWrapperProps {
+  field: {
+    name: string;
+    label?: string;
+    options?: { value: string; label: string }[];
+  };
+  values: Record<string, any>;
+  // setValues: (fn: (prev: Record<string, any>) => Record<string, any>) => void;
+  onChange: (newValues: string[]) => void;
+  removeValueFromField: (fieldName: string, value: any) => void;
+}
+
+export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any) => (
+  <>
+    {f.options && (
+      <MultiSelectNoCtrl
+        options={f.options}
+        values={values[fieldName]}
+        onChange={(newVals) =>
+          setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
+        }
+      />
+    )}
+    <div className="flex flex-wrap gap-2 mt-2  ">
+      {Array.isArray(values[fieldName]) && values[fieldName].map((val) => {
+        if (f.options) {
+          const option = f.options.find((o:any) => o.value === (val?.value || val));
+          const label = option?.label || (typeof val === 'object' ? val.label || val.name || JSON.stringify(val) : val);
+          const key = typeof val === 'object' ? val.id || val.value : val;
+          return (
+            <div
+              key={key}
+              className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
+            >
+              {label}
+              <button
+                type="button"
+                onClick={() => removeValueFromField(f.name, val)}
+                className="ml-2 text-indigo-500 hover:text-indigo-700"
+              >
+                &times;
+              </button>
+            </div>
+          );
+        }
+        return null;
+      })}
+    </div>
+  </>
+);
 
 
-  const renderMultiSelect = (field:string) => (
+export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
+  field,
+  values,
+  onChange,
+  removeValueFromField,
+}) => {
+  const fieldName = field.name;
+  const selectedValues = values[fieldName] || [];
+
+  return (
     <>
-      {f.options && (
+      {field.options && (
         <MultiSelectNoCtrl
-          options={f.options}
-          values={values[fieldName]}
-          onChange={(newVals) =>
-            setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
-          }
+          options={field.options}
+          values={selectedValues}
+          onChange={onChange}
         />
       )}
-      <div className="flex flex-wrap gap-2 mt-2 ">
-        {Array.isArray(values[fieldName]) && values[fieldName].map((val) => {
-          if (f.options) {
-            const option = f.options.find((o:any) => o.value === (val?.value || val));
-            const label = option?.label || (typeof val === 'object' ? val.label || val.name || JSON.stringify(val) : val);
+      <div className="flex flex-wrap gap-2 mt-2">
+        {Array.isArray(selectedValues) &&
+          selectedValues.map((val) => {
+            const option = field.options?.find(
+              (o) => o.value === (val?.value || val)
+            );
+            const label =
+              option?.label ||
+              (typeof val === 'object'
+                ? val.label || val.name || JSON.stringify(val)
+                : val);
             const key = typeof val === 'object' ? val.id || val.value : val;
+
             return (
               <div
                 key={key}
@@ -96,26 +162,148 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
                 {label}
                 <button
                   type="button"
-                  onClick={() => removeValueFromField(f.name, val)}
+                  onClick={() => removeValueFromField(fieldName, val)}
                   className="ml-2 text-indigo-500 hover:text-indigo-700"
                 >
                   &times;
                 </button>
               </div>
             );
-          }
-          return null;
-        })}
+          })}
       </div>
     </>
   );
+};
+
+export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
+
+  // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
+  if(title === 'Annuel'){
+    if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
+      return  <TutorAvailabilityPicker
+                  school_subjects={values.school_subjects}
+                  onSelect={(slots: any[]) => {
+                    setValues((prev: any) => ({
+                      ...prev,
+                      favorite_slots: slots // <- tableau complet des créneaux
+                    }));
+                  }}
+                />
+    }
+  
+    if (f.name === 'subscription_start_date' || f.name === 'subscription_end_date') {
+      return (
+        <GroupedInputs
+          fields={[
+            {
+              name: 'subscription_start_date',
+              label: 'On commaence le',
+              type: 'date',
+              value: values.subscription_start_date,
+              onChange: handleChange,
+            },
+            {
+              name: 'subscription_end_date',
+              label: 'Finis le',
+              type: 'date',
+              value: values.subscription_end_date,
+              onChange: handleChange,
+            },
+          ]}
+        />
+      );
+    }
+  
+    if (f.name === 'recurrent_debit_date' || f.name === 'first_debit_date') {
+      return (
+        <GroupedInputs
+          fields={[
+            {  name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    
+              options: [
+                { value: '5', label: '5 du mois' },
+                { value: '15', label: '15 du mois' },
+                { value: '28', label: '28 du mois' },
+              ],
+              value: values.recurrent_debit_date,
+              onChange: handleChange,
+            },
+            { name: 'first_debit_date', label: 'Date du premier prélèvement',
+              type: 'date',
+              value: values.first_debit_date,
+              onChange: handleChange,
+            },
+          ]}
+        />
+      );
+    }
+  
+    if (f.name === 'offer_amount' || f.name === 'offer_type' || f.name === 'discount') {
+      return (
+        <GroupedInputs
+          fields={[
+            {  name: 'offer_amount', label: 'Offre', type: 'text',
+              value: values.offer_amount,
+              onChange: handleChange,
+            },
+            { name: 'offer_type', label: 'Type d\'Offre',
+              type: 'text',
+              value: values.offer_type,
+              onChange: handleChange,
+            },
+            { name: 'discount', label: 'Reduction',
+              type: 'text',
+              value: values.discount,
+              onChange: handleChange,
+            }
+          ]}
+        />
+      );
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Stage ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if(title === 'Stage'){
+    if(f.name === 'week_count'){
+      return <VacationWeekSelector
+        onSelect={(data:any) => {
+          setValues((prev: any) => ({
+            ...prev,
+            week_count: data.week_count,
+            known_weeks: data.known_weeks,
+            selected_weeks: data.selected_weeks
+          }));
+        }}
+      />
+    }
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Pré-inscription ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if(title === 'Preinscription'){
+    if(f.name === 'favorite_slots'){
+      return <SlotSelector
+      form_values={values}
+      onSelect={(data:any) => {
+        setValues((prev:any) => ({
+          ...prev,
+          favorite_slots_mode: data.mode,
+          favorite_slots: data.slots,
+        }));
+      }}
+    />
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // OTHER FIELDS ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   if (f.name === 'centers' && f.multiple) {
-    return renderMultiSelect('centers');
+    return renderMultiSelect(f, values, 'centers', setValues, removeValueFromField);
   }
 
   if (f.name === 'school_subjects' && f.multiple) {
-    return renderMultiSelect('school_subjects');
+    return renderMultiSelect(f, values, 'school_subjects', setValues, removeValueFromField);
   }
 
   if (f.type === 'select') {
@@ -124,7 +312,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
         id={f.name}
         name={f.name}
         value={f.multiple ? values[f.name] ?? [] : values[f.name] || ''}
-        onChange={handleChange}
+        // onChange={handleChange}
+        onChange={(e) => handleChange(e)}
         className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
         required={!!f.required && !f.multiple}
         multiple={!!f.multiple}
@@ -146,7 +335,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       type={f.type}
       checked={f.type === 'checkbox' ? values[f.name] : undefined}
       value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
-      onChange={handleChange}
+      // onChange={handleChange}
+      onChange={(e) => handleChange(e)}
       className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
       required={!!f.required}
     />

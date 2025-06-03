@@ -9,7 +9,7 @@ import { AlertMessage } from '../components/Alert';
 import { getCenters, getUser } from '../api/api';
 import { DetailsItemSidebar } from '../components/DetailsItemSideBar';
 import { ScheduleArrayField } from '../components/forms/TutorScheduleForm';
-import { Days } from '../mocks/SchoolSubjects';
+import { Days } from '../mocks/mocks';
 import { getFrenchDayLabel } from '../services/functions';
 
 export const Planing: React.FC = () => {
@@ -125,8 +125,6 @@ export const Planing: React.FC = () => {
         }
         );
     }
-
-
   }
 
   const deleteSlot = () => {
@@ -183,12 +181,7 @@ export const Planing: React.FC = () => {
             <option key={center.id} value={center.id}>{center.name}</option>
           ))}
         </select>
-
-
       </div>
-
-
-
       {showError ? (
         <AlertMessage message={'Un problème est survenu lors du chargement des créneaux !'} />
       ) : (
@@ -212,9 +205,6 @@ export const Planing: React.FC = () => {
               <p><strong>Actif:</strong> {selectedUser.is_active ? 'Oui' : 'Non'}</p>
               <p><strong>Rôles:</strong> {selectedUser.roles.join(', ')}</p>
             </div>
-            
-
-
           {
             UserId &&
             <div className='bg-gray-100 p-2 rounded mt-4'>

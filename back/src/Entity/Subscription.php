@@ -37,8 +37,8 @@ class Subscription
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $first_debit_date = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $recurrent_debit_date = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $recurrent_debit_date = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $installment_count = null;
@@ -89,7 +89,7 @@ class Subscription
     private ?\DateTimeInterface $subscription_start_date = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $paiemnt_mode = null;
+    private ?string $payment_mode = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date_caution = null;
@@ -196,12 +196,12 @@ class Subscription
         return $this;
     }
 
-    public function getRecurrentDebitDate(): ?\DateTimeInterface
+    public function getRecurrentDebitDate(): ?string
     {
         return $this->recurrent_debit_date;
     }
 
-    public function setRecurrentDebitDate(?\DateTimeInterface $recurrent_debit_date): static
+    public function setRecurrentDebitDate(?string $recurrent_debit_date): static
     {
         $this->recurrent_debit_date = $recurrent_debit_date;
 
@@ -415,14 +415,14 @@ class Subscription
         return $this;
     }
 
-    public function getPaiemntMode(): ?string
+    public function getPaymentMode(): ?string
     {
-        return $this->paiemnt_mode;
+        return $this->payment_mode;
     }
 
-    public function setPaiemntMode(string $paiemnt_mode): static
+    public function setPaymentMode(?string $payment_mode): static
     {
-        $this->paiemnt_mode = $paiemnt_mode;
+        $this->payment_mode = $payment_mode;
 
         return $this;
     }

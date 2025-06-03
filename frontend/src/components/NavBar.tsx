@@ -14,12 +14,6 @@ const Navbar: React.FC = () => {
           <span >Bonjour {user?.firstname}</span>
 
         </Link>
-        {/* <Link to="/dashboard/students" className="text-gray-600 hover:text-gray-800">
-          Étudiants
-        </Link>
-        <Link to="/dashboard/sessions" className="text-gray-600 hover:text-gray-800">
-          Séances
-        </Link> */}
       </div>
       <div className="flex items-center space-x-3">
         <button

@@ -235,3 +235,12 @@ export const formatTime = (d: Date) => {
   const m = d.getMinutes().toString().padStart(2, '0');
   return `${h}:${m}`;
 };
+
+
+export const normalizeHour = (str: string) => {
+  const match = str.match(/^(\d{1,2})h(\d{0,2})$/);
+  if (!match) return str; // déjà au bon format
+  const h = match[1].padStart(2, '0');
+  const m = match[2] || '00';
+  return `${h}:${m}`;
+};

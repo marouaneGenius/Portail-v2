@@ -5,7 +5,7 @@ import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, Button } from "@mui/material";
 import { HiOutlineBadgeCheck } from "react-icons/hi";
-import { tiers } from "../mocks/SchoolSubjects";
+import { tiers } from "../mocks/mocks";
 import { GradientCard } from "../components/GardientCard";
 
 type TierId = typeof tiers[number]["id"];
