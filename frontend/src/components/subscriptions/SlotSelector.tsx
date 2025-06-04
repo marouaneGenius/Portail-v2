@@ -14,9 +14,6 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
 
   const maxSlots = parseInt(form_values.session_per_week || '0', 10);
 
-
-  console.log(form_values.session_per_week)
-
   const addSlot = () => {
     if (!day || !hour) return;
 

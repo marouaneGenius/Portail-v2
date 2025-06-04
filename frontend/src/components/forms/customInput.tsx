@@ -3,6 +3,28 @@ import SlotSelector from "../subscriptions/SlotSelector";
 import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
 import VacationWeekSelector from "../subscriptions/WeeksAvailiabilityPicker";
 import GroupedInputs from "./GroupedInputs";
+export interface RenderFieldProps {
+  f: any;
+  values: any | null;
+  setValues: any | null;
+  removeValueFromField: (field: string, value: any)  => void;
+  handleChange: (item:any) => void;
+  fieldName: any;
+  tutors?:any,
+  title?:any
+}
+
+interface MultiSelectWrapperProps {
+  field: {
+    name: string;
+    label?: string;
+    options?: { value: string; label: string }[];
+  };
+  values: Record<string, any>;
+  // setValues: (fn: (prev: Record<string, any>) => Record<string, any>) => void;
+  onChange: (newValues: string[]) => void;
+  removeValueFromField: (fieldName: string, value: any) => void;
+}
 
 export function MultiSelectNoCtrl({
     options,
@@ -60,29 +82,6 @@ export function MultiSelectNoCtrl({
     );
 }
 
-export interface RenderFieldProps {
-  f: any;
-  values: any | null;
-  setValues: any | null;
-  removeValueFromField: (field: string, value: any)  => void;
-  handleChange: (item:any) => void;
-  fieldName: any;
-  tutors?:any,
-  title?:any
-}
-
-interface MultiSelectWrapperProps {
-  field: {
-    name: string;
-    label?: string;
-    options?: { value: string; label: string }[];
-  };
-  values: Record<string, any>;
-  // setValues: (fn: (prev: Record<string, any>) => Record<string, any>) => void;
-  onChange: (newValues: string[]) => void;
-  removeValueFromField: (fieldName: string, value: any) => void;
-}
-
 export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any) => (
   <>
     {f.options && (
@@ -121,7 +120,6 @@ export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:
     </div>
   </>
 );
-
 
 export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
   field,
@@ -176,9 +174,7 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
 };
 
 export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
-
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
   if(title === 'Annuel'){
     if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
       return  <TutorAvailabilityPicker
@@ -186,7 +182,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
                   onSelect={(slots: any[]) => {
                     setValues((prev: any) => ({
                       ...prev,
-                      favorite_slots: slots // <- tableau complet des créneaux
+                      favorite_slots: slots
                     }));
                   }}
                 />

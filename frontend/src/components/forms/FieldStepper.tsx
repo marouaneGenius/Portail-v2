@@ -10,22 +10,27 @@ interface Props {
   title: string;
   fields: FormField[];
   onBack: () => void;
-  onNext: (values: Record<string, any>) => void;
+  // onNext: (values: Record<string, any>) => void;
+  onNext: (section: string, values: Record<string, any>) => void;
   initialValues?: Record<string, any>;
   isLast: boolean;
 }
 
 const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialValues = {}, isLast }) => {
-    const [loading, setLoading] = useState(false);
-    const [index, setIndex] = useState(0);
-    const [values, setValues] = useState<Record<string, any>>(initialValues);
-    const [touched, setTouched] = useState(false); // pour afficher le message seulement si l'utilisateur a interagi
-    const current = fields[index];
-    const isFirst = index === 0;
-    const isFinalField = index === fields.length - 1;
-    const value = values[current.name];
-    const isRequiredAndEmpty = current.required && (!value || value === '');
-    const [showError, setShowError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [values, setValues] = useState<Record<string, any>>(initialValues);
+  const [touched, setTouched] = useState(false); // pour afficher le message seulement si l'utilisateur a interagi
+  if (index >= fields.length) {
+    setIndex(0);
+    return null;           // le temps que l’état se mette à jour
+  }
+  const current = fields[index];
+  const isFirst = index === 0;
+  const isFinalField = index === fields.length - 1;
+  const value = values[current.name];
+  const isRequiredAndEmpty = current.required && (!value || value === '');
+  const [showError, setShowError] = useState(false);
 
   const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked,  options }:any = e.target ;
@@ -44,14 +49,17 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     }));
   };
 
+
   useEffect(() => {
-    console.log("🧾 Valeurs du formulaire:", values);
-  }, [values]);
+    if(index && values && Object.keys(values).length > 0) {
+      setIndex(0)
+    }
+  }, [fields])
 
   const next = () => {
     if (isRequiredAndEmpty) return;
     if (isFinalField) {
-      onNext(values);
+      onNext(title, values);
     } else {
       setIndex((i) => i + 1);
       setTouched(false); // reset touched for next field

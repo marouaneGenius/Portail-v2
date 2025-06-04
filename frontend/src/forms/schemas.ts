@@ -92,7 +92,6 @@ export const tutorScheduleFields: (FormField|ArrayField)[] = [
   },
 ];
 
-// subscription_start_date, paiment_mode, date_caution
 export const AnnuelFields: FormField[] = [
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   { name: 'favorite_slots', label: 'Tuteur planing', type: 'select',  multiple: true, required: true },
@@ -106,6 +105,7 @@ export const AnnuelFields: FormField[] = [
   { name: 'subscription_end_date', label: 'Finis le', type: 'date'},
   { name: 'first_debit_date', label: 'Date du premier prélèvement', type: 'date'},
   { name: 'membership_fee', label: 'Frais d\'inscription', type: 'text', value:'90'},
+  { name: 'offer_amount', label: 'Offre', type: 'text'},
 
   // { name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    options: [
   //   { value: '5', label: '5 du mois' },
@@ -113,8 +113,6 @@ export const AnnuelFields: FormField[] = [
   //   { value: '28', label: '28 du mois' },
   // ]},
   // { name: 'subscription_start_date', label: 'On commaence le', type: 'date'},
-
-  { name: 'offer_amount', label: 'Offre', type: 'text'},
   // { name: 'offer_type', label: 'Type d\'Offre', type: 'text'},
   // { name: 'discount', label: 'Reduction', type: 'text',  },
 ];
@@ -122,12 +120,7 @@ export const AnnuelFields: FormField[] = [
 export const StageFields: FormField[] = [
   { name: 'week_count', label: 'Nombre de semaines', type: 'select', required: true, options:WeeksOptions},
   { name: 'subscription_start_date', label: 'On commaence le', type: 'date'},
-  // { name: 'known_weeks', label: 'semaines choisis', type: 'select', required: true, options: [
-  //   { value: 'known', label: 'Je connais toutes mes semaines' },
-  //   { value: 'unknown', label: 'Dates non connues pour le moment' },
-  //   { value: 'partial', label: 'Une partie connue, le reste à définir plus tard' },
-  // ] },
-  { name: 'installement_count', label: 'Échelonnement du paiement ', type: 'select', required: true,
+  { name: 'installment_count', label: 'Échelonnement du paiement ', type: 'select', required: true,
     options: [ 
       { value: '1', label: 'Paiement en une seule fois' }, 
       { value: '2', label: 'Paiement en 2 fois (mensuel)' }, 
@@ -136,9 +129,13 @@ export const StageFields: FormField[] = [
   { name: 'first_debit_date', label: 'Date du premier paiement ', type: 'date'},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   { name: 'discount', label: 'Reduction', type: 'text',  },
+  // { name: 'known_weeks', label: 'semaines choisis', type: 'select', required: true, options: [
+  //   { value: 'known', label: 'Je connais toutes mes semaines' },
+  //   { value: 'unknown', label: 'Dates non connues pour le moment' },
+  //   { value: 'partial', label: 'Une partie connue, le reste à définir plus tard' },
+  // ] },
 ]
 
-// caution(oui, non), Préférences de créneaux (json)
 export const PreinscriptionFields: FormField[] = [
   { name: 'session_per_week', label: 'Durée de cours par semaine :', type: 'select', required: true,
     options: [
@@ -148,6 +145,7 @@ export const PreinscriptionFields: FormField[] = [
       { value: '4', label: '6h' },
     ]
   },
+
   { name: 'subscription_start_date', label: 'On commence le', type: 'date'},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   { name: 'first_debit_date', label: 'Date de paiement', type: 'date'},

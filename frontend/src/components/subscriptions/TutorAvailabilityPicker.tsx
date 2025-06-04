@@ -26,7 +26,6 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
   const [availabilitys, setAvailabilitys] = useState<any[]>([]);
   const [hoursList, setHoursList] = useState<any[]>(HoursOptions);
   const [isSlotExist, setIsSlotExist] = useState<boolean>(false);
-
   const { id } = useParams();
 
   //get all tutors by school subjects

@@ -20,13 +20,11 @@ const SubscriptionsFormView: React.FC<any> = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate(); 
-
   // 🔍 Récupère les types valides présents dans les query params
   const selectedTypes = Array.from(searchParams.keys()).filter((key) =>
     Object.keys(schemaMap).includes(key)
   );
   const [currentFields, setFields] = useState<any>();
-
   // Concatène tous les champs associés aux types présents
   const fields = selectedTypes.flatMap(type => schemaMap[type]);
 
@@ -50,36 +48,119 @@ const SubscriptionsFormView: React.FC<any> = () => {
       setFields(updatedSchemaMap);
     }
   }, [searchParams]);
-  
 
-  const handleSubmit = (values: Record<string, any>) => {
-    if(values) {
-      if(selectedTypes.length === 1) {
+  // const handleSubmit = (values: Record<string, any>) => {
+  //   if(values) {
+  //     if(selectedTypes.length === 1) {
+  //       let formatedValues:any = {};
+  //       const newValues = values.annuel;
 
-        const formatedValues =  
-        {...values, offer_type: selectedTypes[0], student_id: id, created_by: user?.email};
-        console.log(formatedValues)
-        try{
-          api.post(`/api/subs`, formatedValues)
-          .then((response) => {
-            console.log("✅ Formulaire soumis avec succès :", response.data);
-            alert("Formulaire soumis avec succès !");
-          })
-        } catch (error) {
-          console.error("❌ Erreur lors de la soumission du formulaire :", error);
-        }
-      } else {
-        alert("plusieurs form ==  plusieurs insertions !");
+  //       if(Object.keys(values)[0] === 'annuel'){
+  //         formatedValues = {...newValues, subscription_type: selectedTypes[0], student_id: id, created_by: user?.email, session_per_week: newValues.favorite_slots.length };
+  //       } else {
+  //         formatedValues = {...newValues, subscription_type: selectedTypes[0], student_id: id, created_by: user?.email};
+  //       }
 
-      }
+  //       try{
+  //         api.post(`/api/subs`, formatedValues)
+  //         .then((response) => {
+  //           console.log("✅ Formulaire soumis avec succès :", response.data);
+  //           alert("Formulaire soumis avec succès !");
+  //         })
+  //       } catch (error) {
+  //         console.error("❌ Erreur lors de la soumission du formulaire :", error);
+  //       }
+  //     } else {
+  //       console.log(values)
+
+  //       Object.keys(values).map((key) => {
+
+  //         console.log(key, values[key]);
+  //       })
+
+
+  //     }
+  //   }
+  // };
+
+
+  function buildPayload(
+    type: string,
+    raw : Record<string, any>,
+    studentId: any | number,
+    author   : string | undefined
+  ) {
+    const common = {
+      ...raw,
+      subscription_type: type,
+      student_id      : studentId,
+      created_by      : author,
+    };
+
+    if (type === 'annuel') {
+      return {
+        ...common,
+        session_per_week: Array.isArray(raw.favorite_slots)
+                          ? raw.favorite_slots.length
+                          : undefined,
+      };
     }
+
+    return common; // stage / preinscription
+  }
+
+
+  const handleSubmit = (allValues: Record<string, any>) => {
+    if (!allValues) return;
+
+    const formKeys = Object.keys(allValues);              // ['annuel'] ou ['stage','annuel']
+    if (formKeys.length === 0) return;
+
+    /* ---------------- CAS 1 : un seul formulaire ------------------- */
+    if (formKeys.length === 1) {
+      const type    = formKeys[0];
+      const payload = buildPayload(type, allValues[type], id, user?.email);
+
+      api.post('/api/subs', payload)
+        .then((r:any) => {
+          console.log(`✅ ${type} OK`, r.data);
+          alert('Formulaire soumis avec succès !');
+        })
+        .catch((e:any) => {
+          console.error(`❌ ${type} KO`, e);
+          alert('Erreur lors de la soumission du formulaire.');
+        });
+
+      return;
+    }
+
+    /* --------------- CAS 2 : plusieurs formulaires ------------------ */
+    Promise.all(
+      formKeys.map(type => {
+        const raw     = allValues[type];
+        const payload = buildPayload(type, raw, id, user?.email);
+
+        return api.post('/api/subs', payload)
+                  .then(r => ({ type, ok: true , data: r.data }))
+                  .catch(e => ({ type, ok: false, err : e      }));
+      })
+    ).then(results => {
+        const fails = results.filter(r => !r.ok);
+
+        if (fails.length) {
+          console.error('🚨  Certains appels ont échoué :', fails);
+          alert('Une ou plusieurs insertions ont échoué. Vérifiez la console.');
+        } else {
+          console.log('🎉  Tous les abonnements ont été créés :', results);
+          alert('Tous les formulaires ont été enregistrés avec succès !');
+        }
+    });
   };
 
 
   if (loading) {
     return <p>Chargement…</p>;
   }
-
 
 
   return (
