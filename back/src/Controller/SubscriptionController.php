@@ -58,7 +58,9 @@ class SubscriptionController extends AbstractController
         $subscription->setUpdatedAt(null);
         $subscription->setSubscriptionStartDate(isset($data['subscription_start_date']) ? new \DateTime($data['subscription_start_date']) : null);
         $subscription->setSubscriptionEndDate(isset($data['subscription_end_date']) ? new \DateTime($data['subscription_end_date']) : null);
-        $subscription->setFirstDebitDate(new \DateTime($data['first_debit_date'] ?? 'now'));
+
+        $subscription->setFirstDebitDate(isset($data['first_debit_date'])  ? new \DateTime($data['first_debit_date'] ): null);
+
         $subscription->setRecurrentDebitDate(isset($data['recurrent_debit_date']) ? $data['recurrent_debit_date']: null);
         $subscription->setDateCaution(isset($data['date_caution']) ? new \DateTime($data['date_caution']) : null);
         // Champs simples

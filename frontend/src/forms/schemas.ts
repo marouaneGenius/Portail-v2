@@ -104,7 +104,7 @@ export const AnnuelFields: FormField[] = [
   },
   { name: 'subscription_end_date', label: 'Finis le', type: 'date'},
   { name: 'first_debit_date', label: 'Date du premier prélèvement', type: 'date'},
-  { name: 'membership_fee', label: 'Frais d\'inscription', type: 'text', value:'90'},
+  { name: 'membership_fee', label: '', type: 'text', value:'90'},
   { name: 'offer_amount', label: 'Offre', type: 'text'},
 
   // { name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    options: [
@@ -118,17 +118,17 @@ export const AnnuelFields: FormField[] = [
 ];
 
 export const StageFields: FormField[] = [
-  { name: 'week_count', label: 'Nombre de semaines', type: 'select', required: true, options:WeeksOptions},
-  { name: 'subscription_start_date', label: 'On commaence le', type: 'date'},
+  { name: 'week_count', label: '', type: 'select', required: true, options:WeeksOptions},
+  { name: 'subscription_start_date', label: '', type: 'date'},
   { name: 'installment_count', label: 'Échelonnement du paiement ', type: 'select', required: true,
     options: [ 
       { value: '1', label: 'Paiement en une seule fois' }, 
       { value: '2', label: 'Paiement en 2 fois (mensuel)' }, 
       { value: '3', label: 'Paiement en 3 fois (mensuel)' }, 
     ] },
-  { name: 'first_debit_date', label: 'Date du premier paiement ', type: 'date'},
+  { name: 'first_debit_date', label: ' ', type: 'date'},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  { name: 'discount', label: 'Reduction', type: 'text',  },
+  { name: 'discount', label: '', type: 'text',  },
   // { name: 'known_weeks', label: 'semaines choisis', type: 'select', required: true, options: [
   //   { value: 'known', label: 'Je connais toutes mes semaines' },
   //   { value: 'unknown', label: 'Dates non connues pour le moment' },
@@ -145,17 +145,18 @@ export const PreinscriptionFields: FormField[] = [
       { value: '4', label: '6h' },
     ]
   },
-
-  { name: 'subscription_start_date', label: 'On commence le', type: 'date'},
+  { name: 'recurrent_debit_date', label: ' ', type: 'select',    options: [
+    { value: '5', label: '5 du mois' },
+    { value: '15', label: '15 du mois' },
+    { value: '28', label: '28 du mois' },
+  ]},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  { name: 'first_debit_date', label: 'Date de paiement', type: 'date'},
   { name: 'caution', label: 'caution', type: 'select' , 
     options: [
       { value: 'yes', label: 'Oui, déposer un chèque de caution' },
       { value: 'no', label: 'Non, pas de chèque de caution' },
     ]
   },
-  { name: 'discount', label: 'Reduction', type: 'text',  },
   { name: 'favorite_slots', label: 'Préférences de créneaux', type: 'radio', required: true, 
     options: [
       { value: 'known', label: 'Je connais tous mes créneaux' },
@@ -163,5 +164,7 @@ export const PreinscriptionFields: FormField[] = [
       { value: 'partial', label: 'Créneaux non connues pour le moment' },
     ] 
   },
-
+  // { name: 'subscription_start_date', label: 'On commence le', type: 'date'},
+  // { name: 'first_debit_date', label: 'Date de paiement', type: 'date'},
+  // { name: 'discount', label: '', type: 'text',  },
 ]

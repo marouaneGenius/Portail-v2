@@ -1,0 +1,1 @@
+export const FIXED_END_DATE = import.meta.env.VITE_FIXED_END_DATE as string;

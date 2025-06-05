@@ -13,15 +13,6 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
 
-  // const handleNextStep = (stepValues: Record<string, any>) => {
-  //   setCollectedValues((prev) => ({ ...prev, ...stepValues }));
-  //   if (isLastStep) {
-  //     onSubmit({ ...collectedValues, ...stepValues });
-  //   } else {
-  //     setStepIndex((i) => i + 1);
-  //   }
-  // };
-
   const handleNextStep = (section: string, stepValues: Record<string, any>) => {
     setCollectedValues(prev => ({
       ...prev,

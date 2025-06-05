@@ -1,3 +1,4 @@
+import { FIXED_END_DATE } from "../../mocks/constants";
 import { WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
 import SlotSelector from "../subscriptions/SlotSelector";
 import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
@@ -174,6 +175,7 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
 };
 
 export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
+  const todayISO = new Date().toISOString().split('T')[0];
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Annuel'){
     if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
@@ -198,6 +200,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               type: 'date',
               value: values.subscription_start_date,
               onChange: handleChange,
+              min: todayISO,
+              max: FIXED_END_DATE, // max value for annual subscription
             },
             {
               name: 'subscription_end_date',
@@ -205,6 +209,9 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               type: 'date',
               value: values.subscription_end_date,
               onChange: handleChange,
+              defaultValue: FIXED_END_DATE, // default value for annual subscription
+              disabled: true, // disable this field  
+              // disabled: true, 
             },
           ]}
         />
@@ -228,6 +235,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               type: 'date',
               value: values.first_debit_date,
               onChange: handleChange,
+              min: todayISO,
             },
           ]}
         />
@@ -237,10 +245,13 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
     if (f.name === 'offer_amount' || f.name === 'offer_type' || f.name === 'discount') {
       return (
         <GroupedInputs
+          defaultOpen={true}  
+
           fields={[
             {  name: 'offer_amount', label: 'Offre', type: 'text',
               value: values.offer_amount,
               onChange: handleChange,
+              defaultValue: '0',   
             },
             { name: 'offer_type', label: 'Type d\'Offre',
               type: 'text',
@@ -251,7 +262,23 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               type: 'text',
               value: values.discount,
               onChange: handleChange,
+              defaultValue: '0',   
             }
+          ]}
+        />
+      );
+    }
+
+    if (f.name === 'membership_fee' ) {
+      return (
+        <GroupedInputs
+          fields={[
+            {  name: 'membership_fee', label: 'Frais d\'inscription', type: 'text',
+              value: values.membership_fee,
+              onChange: handleChange,
+              defaultValue: '90',   
+            },
+       
           ]}
         />
       );
@@ -273,22 +300,89 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
         }}
       />
     }
+
+    if(f.name === 'subscription_start_date') {
+      return <GroupedInputs
+      fields={[
+        {
+          name: 'subscription_start_date',
+          label: 'On commence le',
+          type: 'date',
+          value: values.subscription_start_date,
+          onChange: handleChange,
+          min: todayISO,
+        },
+      ]}
+    />
+    }
+
+    if(f.name === 'first_debit_date') {
+      return <GroupedInputs
+        fields={[
+          {
+            name: 'first_debit_date',
+            label: 'Date du premier paiement',
+            type: 'date',
+            value: values.first_debit_date,
+            onChange: handleChange,
+            min: todayISO,
+          },
+        ]}
+      />
+    }
+
+    if(f.name === 'discount') {
+      return <GroupedInputs
+        fields={[
+          { name: 'discount', label: 'Reduction',
+            type: 'text',
+            value: values.discount,
+            onChange: handleChange,
+            defaultValue: '0',   
+          }
+        ]}
+      />
+    }
+
+
+
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Pré-inscription ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Preinscription'){
     if(f.name === 'favorite_slots'){
       return <SlotSelector
-      form_values={values}
-      onSelect={(data:any) => {
-        setValues((prev:any) => ({
-          ...prev,
-          favorite_slots_mode: data.mode,
-          favorite_slots: data.slots,
-        }));
-      }}
+        form_values={values}
+        onSelect={(data:any) => {
+          setValues((prev:any) => ({
+            ...prev,
+            favorite_slots_mode: data.mode,
+            favorite_slots: data.slots,
+          }));
+        }}
+      />
+    }
+
+    if(f.name === 'recurrent_debit_date') {
+      return <GroupedInputs
+      fields={[
+        {  name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    
+          options: [
+            { value: '5', label: '5 du mois' },
+            { value: '15', label: '15 du mois' },
+            { value: '28', label: '28 du mois' },
+          ],
+          value: values.recurrent_debit_date,
+          onChange: handleChange,
+        },
+    
+      ]}
     />
     }
+
+
+
+    
   }
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

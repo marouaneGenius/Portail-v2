@@ -34,7 +34,7 @@ class Subscription
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $subscription_end_date = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $first_debit_date = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -189,7 +189,7 @@ class Subscription
         return $this->first_debit_date;
     }
 
-    public function setFirstDebitDate(\DateTimeInterface $first_debit_date): static
+    public function setFirstDebitDate(?\DateTimeInterface $first_debit_date): static
     {
         $this->first_debit_date = $first_debit_date;
 

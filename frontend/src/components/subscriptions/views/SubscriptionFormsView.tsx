@@ -7,6 +7,8 @@ import { SchoolSubjects } from '../../../mocks/mocks';
 import api from '../../../api/aixos';
 import { useAuth } from '../../../Hooks/auth';
 import { HiChevronDoubleLeft, HiChevronLeft, HiOutlineArrowCircleLeft } from 'react-icons/hi';
+import { FIXED_END_DATE } from '../../../mocks/constants';
+import { formatDateToYYYYMMDD } from '../../../services/functions';
 
 const schemaMap: Record<string, FormField[]> = {
   annuel: AnnuelFields,
@@ -49,46 +51,11 @@ const SubscriptionsFormView: React.FC<any> = () => {
     }
   }, [searchParams]);
 
-  // const handleSubmit = (values: Record<string, any>) => {
-  //   if(values) {
-  //     if(selectedTypes.length === 1) {
-  //       let formatedValues:any = {};
-  //       const newValues = values.annuel;
-
-  //       if(Object.keys(values)[0] === 'annuel'){
-  //         formatedValues = {...newValues, subscription_type: selectedTypes[0], student_id: id, created_by: user?.email, session_per_week: newValues.favorite_slots.length };
-  //       } else {
-  //         formatedValues = {...newValues, subscription_type: selectedTypes[0], student_id: id, created_by: user?.email};
-  //       }
-
-  //       try{
-  //         api.post(`/api/subs`, formatedValues)
-  //         .then((response) => {
-  //           console.log("✅ Formulaire soumis avec succès :", response.data);
-  //           alert("Formulaire soumis avec succès !");
-  //         })
-  //       } catch (error) {
-  //         console.error("❌ Erreur lors de la soumission du formulaire :", error);
-  //       }
-  //     } else {
-  //       console.log(values)
-
-  //       Object.keys(values).map((key) => {
-
-  //         console.log(key, values[key]);
-  //       })
-
-
-  //     }
-  //   }
-  // };
-
-
   function buildPayload(
     type: string,
     raw : Record<string, any>,
     studentId: any | number,
-    author   : string | undefined
+    author   : string | undefined,
   ) {
     const common = {
       ...raw,
@@ -103,24 +70,24 @@ const SubscriptionsFormView: React.FC<any> = () => {
         session_per_week: Array.isArray(raw.favorite_slots)
                           ? raw.favorite_slots.length
                           : undefined,
+        subscription_end_date: formatDateToYYYYMMDD(FIXED_END_DATE)
+
       };
     }
 
-    return common; // stage / preinscription
+    return common; 
   }
 
 
   const handleSubmit = (allValues: Record<string, any>) => {
     if (!allValues) return;
 
-    const formKeys = Object.keys(allValues);              // ['annuel'] ou ['stage','annuel']
+    const formKeys = Object.keys(allValues);              
     if (formKeys.length === 0) return;
 
-    /* ---------------- CAS 1 : un seul formulaire ------------------- */
     if (formKeys.length === 1) {
       const type    = formKeys[0];
       const payload = buildPayload(type, allValues[type], id, user?.email);
-
       api.post('/api/subs', payload)
         .then((r:any) => {
           console.log(`✅ ${type} OK`, r.data);
@@ -174,14 +141,13 @@ const SubscriptionsFormView: React.FC<any> = () => {
             {selectedTypes.join(', ')}
         </h1>
       </div>
-
-            {currentFields && <MultiStepForm
-                steps={selectedTypes.map((type) => ({
-                    title: type.charAt(0).toUpperCase() + type.slice(1), // capitalise le titre
-                    fields: currentFields[type],
-                }))}
-                onSubmit={handleSubmit}
-            />}
+        {currentFields && <MultiStepForm
+            steps={selectedTypes.map((type) => ({
+                title: type.charAt(0).toUpperCase() + type.slice(1), // capitalise le titre
+                fields: currentFields[type],
+            }))}
+            onSubmit={handleSubmit}
+        />}
       </div>
     </div>
   );

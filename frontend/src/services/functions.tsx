@@ -244,3 +244,14 @@ export const normalizeHour = (str: string) => {
   const m = match[2] || '00';
   return `${h}:${m}`;
 };
+
+export function formatDateToYYYYMMDD(dateString:any) {
+  const date = new Date(dateString);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
+// Utilisation :
