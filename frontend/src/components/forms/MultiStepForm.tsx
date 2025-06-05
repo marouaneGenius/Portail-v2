@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FormField } from '../FormGenerator';
 import FieldStepper from './FieldStepper';
+import ReviewStep from '../subscriptions/ReviewStep';
 
 interface MultiStepFormProps {
   steps: { title: string; fields: FormField[] }[];
@@ -12,26 +13,68 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   const [collectedValues, setCollectedValues] = useState<Record<string, any>>({});
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
+  const [showReview, setShowReview] = useState(false);
+  
+
+  // const handleNextStep = (section: string, stepValues: Record<string, any>) => {
+  //   setCollectedValues(prev => ({
+  //     ...prev,
+  //     [section.toLowerCase()]: stepValues    // Annuel ➜ prev.annuel = {...}
+  //   }));
+
+  //   if (isLastStep) {
+  //     onSubmit({
+  //       ...collectedValues,                  // ce qu’on avait déjà
+  //       [section.toLowerCase()]: stepValues  // + la toute dernière étape
+  //     });
+  //   } else {
+  //     setStepIndex(i => i + 1);
+  //   }
+  // };
 
   const handleNextStep = (section: string, stepValues: Record<string, any>) => {
-    setCollectedValues(prev => ({
+    /* on range les valeurs par section (annuel / stage…) */
+    setCollectedValues((prev) => ({
       ...prev,
-      [section.toLowerCase()]: stepValues    // Annuel ➜ prev.annuel = {...}
+      [section.toLowerCase()]: stepValues,
     }));
 
     if (isLastStep) {
-      onSubmit({
-        ...collectedValues,                  // ce qu’on avait déjà
-        [section.toLowerCase()]: stepValues  // + la toute dernière étape
-      });
+      setShowReview(true);              // on passe à l’écran récap
     } else {
-      setStepIndex(i => i + 1);
+      setStepIndex((i) => i + 1);
     }
   };
+
+  const handleEdit = (section: string) => {
+    const newIdx = steps.findIndex(
+      (s) => s.title.toLowerCase() === section.toLowerCase()
+    );
+    if (newIdx !== -1) {
+      setStepIndex(newIdx);
+      setShowReview(false);
+    }
+  };
+
+  const handleConfirm = () => {
+    onSubmit(collectedValues);          // POST final
+  };
+
 
   const handleBack = () => {
     setStepIndex((i) => Math.max(i - 1, 0));
   };
+
+  if (showReview) {
+    return (
+      <ReviewStep
+        values={collectedValues}
+        order={steps.map((s) => s.title.toLowerCase())}
+        onEdit={handleEdit}
+        onConfirm={handleConfirm}
+      />
+    );
+  }
 
   return (
     <>

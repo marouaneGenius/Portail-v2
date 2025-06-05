@@ -8,7 +8,7 @@ import api from '../../../api/aixos';
 import { useAuth } from '../../../Hooks/auth';
 import { HiChevronDoubleLeft, HiChevronLeft, HiOutlineArrowCircleLeft } from 'react-icons/hi';
 import { FIXED_END_DATE } from '../../../mocks/constants';
-import { formatDateToYYYYMMDD } from '../../../services/functions';
+import { formatDateToYYYYMMDD, uuid } from '../../../services/functions';
 
 const schemaMap: Record<string, FormField[]> = {
   annuel: AnnuelFields,
@@ -56,12 +56,14 @@ const SubscriptionsFormView: React.FC<any> = () => {
     raw : Record<string, any>,
     studentId: any | number,
     author   : string | undefined,
+    combined? : string 
   ) {
     const common = {
       ...raw,
       subscription_type: type,
       student_id      : studentId,
       created_by      : author,
+      combined_id       : combined ?? null,
     };
 
     if (type === 'annuel') {
@@ -90,6 +92,7 @@ const SubscriptionsFormView: React.FC<any> = () => {
       const payload = buildPayload(type, allValues[type], id, user?.email);
       api.post('/api/subs', payload)
         .then((r:any) => {
+          navigate(`/students`);
           console.log(`✅ ${type} OK`, r.data);
           alert('Formulaire soumis avec succès !');
         })
@@ -101,11 +104,14 @@ const SubscriptionsFormView: React.FC<any> = () => {
       return;
     }
 
+
+    const token = uuid(); 
+
     /* --------------- CAS 2 : plusieurs formulaires ------------------ */
     Promise.all(
       formKeys.map(type => {
         const raw     = allValues[type];
-        const payload = buildPayload(type, raw, id, user?.email);
+        const payload = buildPayload(type, raw, id, user?.email, token);
 
         return api.post('/api/subs', payload)
                   .then(r => ({ type, ok: true , data: r.data }))
@@ -118,6 +124,7 @@ const SubscriptionsFormView: React.FC<any> = () => {
           console.error('🚨  Certains appels ont échoué :', fails);
           alert('Une ou plusieurs insertions ont échoué. Vérifiez la console.');
         } else {
+          navigate(`/students`);
           console.log('🎉  Tous les abonnements ont été créés :', results);
           alert('Tous les formulaires ont été enregistrés avec succès !');
         }

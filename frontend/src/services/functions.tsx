@@ -254,4 +254,10 @@ export function formatDateToYYYYMMDD(dateString:any) {
   ].join('-');
 }
 
+export function uuid () {
+  // n’importe quel générateur unique : crypto, nanoid, Date.now()+Math…
+  return (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now());
+}
+
+
 // Utilisation :
