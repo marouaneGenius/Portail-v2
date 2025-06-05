@@ -74,7 +74,7 @@ class Subscription
     private ?float $membership_fee = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $combined_id = null;
+    private ?string $combined_id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $subscription_type = null;
@@ -340,12 +340,12 @@ class Subscription
         return $this;
     }
 
-    public function getCombinedId(): ?int
+    public function getCombinedId(): ?string
     {
         return $this->combined_id;
     }
 
-    public function setCombinedId(?int $combined_id): static
+    public function setCombinedId(?string $combined_id): static
     {
         $this->combined_id = $combined_id;
 
