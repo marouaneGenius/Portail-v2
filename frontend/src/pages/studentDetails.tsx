@@ -41,50 +41,52 @@ interface StudentItem {
     }, [resource, id]);
   
     return (
-      <div className="min-h-screen flex justify-center items-center   ">
-        <GradientCard className=" w-2/5 " innerClassName="p-4 space-y-6">
-            {
-                student ?        
-                <>
-                    <div className="flex flex-col items-center space-y-4 ">
-                        <div className="p-3 rounded-full gardient shadow-lg">
-                            <Avatar
-                                src={"/images/avatar.svg"}
-                                sx={{ width: 150, height: 150 }}
-                                className="bg-gray-300"
-                            />
-                        </div>
-                        <h1 className="text-3xl font-bold text-center ">{student.firstname} {student.lastname}</h1>
-                        <p className="text-gray-500 text-center ">{student.email}</p>
-                        <div className="w-5/6 flex justify-between">
-                            {student.center && (
-                            <span className="inline-block bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm shadow-lg">
-                                {student.center.name}
-                            </span>
-                            )}
-                            {student.class && (
-                            <span className="inline-block bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm shadow-lg">
-                                {student.class}
-                            </span>
-                            )}
 
-                            {student.created_at && (
-                            <small className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full shadow-lg">
-                                crée le: {getDate(student.created_at)}
-                            </small>
-                            )}
+        <div className=" flex justify-center p-4">
+            <GradientCard className=" w-2/5 " innerClassName="p-4 space-y-6">
+                {
+                    student ?        
+                    <>
+                        <div className="flex flex-col items-center space-y-4 ">
+                            <div className="p-3 rounded-full gardient shadow-lg">
+                                <Avatar
+                                    src={"/images/avatar.svg"}
+                                    sx={{ width: 150, height: 150 }}
+                                    className="bg-gray-300"
+                                />
+                            </div>
+                            <h1 className="text-3xl font-bold text-center ">{student.firstname} {student.lastname}</h1>
+                            <p className="text-gray-500 text-center ">{student.email}</p>
+                            <div className="w-5/6 flex justify-between">
+                                {student.center && (
+                                <span className="inline-block bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm shadow-lg">
+                                    {student.center.name}
+                                </span>
+                                )}
+                                {student.class && (
+                                <span className="inline-block bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm shadow-lg">
+                                    {student.class}
+                                </span>
+                                )}
+
+                                {student.created_at && (
+                                <small className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full shadow-lg">
+                                    crée le: {getDate(student.created_at)}
+                                </small>
+                                )}
+                            </div>
                         </div>
+                        <ActionGrid studentId={student.id} />
+                    </>  
+                    : 
+                    <div className="space-y-2 bg-re-500">
+                        <h2 className="text-xl font-semibold">Chargement ...</h2>
+                        <ul className="list-disc list-inside text-gray-700">
+                        </ul>
                     </div>
-                    <ActionGrid studentId={student.id} />
-                </>  
-                : 
-                <div className="space-y-2 bg-re-500">
-                    <h2 className="text-xl font-semibold">Un probleme est servenu lors de recuperation des donnees</h2>
-                    <ul className="list-disc list-inside text-gray-700">
-                    </ul>
-                </div>
-            }
-        </GradientCard>
-      </div>
+                }
+            </GradientCard>
+        </div>
+
     );
   };

@@ -109,11 +109,22 @@ export const ClassesOptions = [
     { value: '7', label: '7 semaines' },
     { value: '8', label: '8 semaines' }];
 
-    export const WeeksOptionss = ['1 semaine' ,
-       '2 semaines' ,
-        '3 semaines' ,
-       '4 semaines' ,
-      '5 semaines' ,
-      '6 semaines' ,
-       '7 semaines' ,
-      '8 semaines' ];
+  export const WeeksOptionss = [
+    '1 semaine' ,
+    '2 semaines' ,
+    '3 semaines' ,
+    '4 semaines' ,
+    '5 semaines' ,
+    '6 semaines' ,
+    '7 semaines' ,
+    '8 semaines' ];
+
+
+  export const nbSeancesMap = [
+    '1h30/semaine',
+    '3h00/semaine',
+    '4h30/semaine',
+    '6h00/semaine',
+  ]
+
+export const StandardDays = [5, 15, 28];

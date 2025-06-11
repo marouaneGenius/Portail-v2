@@ -11,7 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vite/client"]       // pour typer import.meta.env
+    "types": ["vite/client"],       // pour typer import.meta.env
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": ["src", "vite-env.d.ts"]  // et/ou 'src/vite-env.d.ts'
 }

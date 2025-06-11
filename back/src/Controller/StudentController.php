@@ -139,6 +139,9 @@ class StudentController extends AbstractController
                 'lastname'  => $p->getLastname(),
                 'email'     => $p->getEmail(),
                 'phone'     => $p->getPhone(),
+                'address'  => $p->getAddress(),
+                'city'     => $p->getCity(),
+                'zip_code' => $p->getZipCode()
             ];
         })->toArray();
 

@@ -21,6 +21,15 @@ class SubscriptionRepository extends ServiceEntityRepository
         parent::__construct($registry, Subscription::class);
     }
 
+    public function findByCombinedId(string $combinedId): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.combined_id = :cid')
+            ->setParameter('cid', $combinedId)
+            ->getQuery()
+            ->getResult();
+    }
+
 //    /**
 //     * @return Subscription[] Returns an array of Subscription objects
 //     */

@@ -102,9 +102,107 @@ class SubscriptionController extends AbstractController
         return new JsonResponse([
             'id' => $subscription->getId(),
             'student' => $subscription->getIdStudent()?->getId(),
-            'school_subjects' => $subscription->getSchoolSubjects(),
-            'session_schedule' => $subscription->getSessionSchedule(),
+            'combined_id' => $subscription->getCombinedId(),
         ], JsonResponse::HTTP_CREATED);
     }
+    #[Route('/{id}', name: 'subscription_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(int $id): JsonResponse
+    {
+        /** @var Subscription|null $subscription */
+        $subscription = $this->subscriptionRepository->find($id);
 
+        if (!$subscription) {
+            return new JsonResponse(
+                ['error' => 'Subscription not found'],
+                JsonResponse::HTTP_NOT_FOUND
+            );
+        }
+
+        /* -----------  Préparation de la réponse  ----------- */
+        $student   = $subscription->getIdStudent();
+        $sessions  = $subscription->getSessions();
+
+        return new JsonResponse([
+            'id'                     => $subscription->getId(),
+            'combined_id'            => $subscription->getCombinedId(),
+            'subscription_type'      => $subscription->getSubscriptionType(),
+            'is_valide'              => $subscription->isIsValide(),
+            'payment_mode'           => $subscription->getPaymentMode(),
+            'subscription_start_date'=> $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+            'subscription_end_date'  => $subscription->getSubscriptionEndDate()?->format('Y-m-d'),
+            'first_debit_date'       => $subscription->getFirstDebitDate()?->format('Y-m-d'),
+            'recurrent_debit_date'   => $subscription->getRecurrentDebitDate(),
+            'installment_count'      => $subscription->getInstallmentCount(),
+            'session_per_week'       => $subscription->getSessionPerWeek(),
+            'week_count'             => $subscription->getWeekCount(),
+            'selected_weeks'         => $subscription->getSelectedWeeks(),
+            'known_weeks'            => $subscription->getKnownWeeks(),
+            'discount'               => $subscription->getDiscount(),
+            'offer_amount'           => $subscription->getOfferAmount(),
+            'offer_type'             => $subscription->getOfferType(),
+            'membership_fee'         => $subscription->getMembershipFee(),
+            'school_subjects'        => $subscription->getSchoolSubjects(),
+            'favorite_slots'         => $subscription->getFavoriteSlots(),
+
+            'student' => $student ? [
+                'id'        => $student->getId(),
+                'firstname' => $student->getFirstname(),
+                'lastname'  => $student->getLastname(),
+            ] : null,
+            'sessions' => array_map(fn($s) => [
+                'id'         => $s->getId(),
+                'start_time' => $s->getStartTime()?->format('Y-m-d H:i:s'),
+                'end_time'   => $s->getEndTime()?->format('Y-m-d H:i:s'),
+            ], $sessions->toArray()),
+
+            'created_at' => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),
+            'created_by' => $subscription->getCreatedBy(),
+            'updated_at' => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'updated_by' => $subscription->getUpdatedBy(),
+        ], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/combined/{combinedId}', name: 'subs_by_combined', methods: ['GET'])]
+    public function byCombined(string $combinedId): JsonResponse   // <-- même nom, string
+    {
+        $subs = $this->subscriptionRepository->findByCombinedId($combinedId);
+
+        if (!$subs) {
+            return new JsonResponse(
+                ['message' => 'Aucun abonnement trouvé pour ce combined_id'],
+                JsonResponse::HTTP_NOT_FOUND
+            );
+        }
+
+        // On ne retourne que ce qui est utile au front (id, type, etc.)
+        $data = array_map(fn($subscription) => [
+            'id'                     => $subscription->getId(),
+            'combined_id'            => $subscription->getCombinedId(),
+            'subscription_type'      => $subscription->getSubscriptionType(),
+            'is_valide'              => $subscription->isIsValide(),
+            'payment_mode'           => $subscription->getPaymentMode(),
+            'subscription_start_date'=> $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+            'subscription_end_date'  => $subscription->getSubscriptionEndDate()?->format('Y-m-d'),
+            'first_debit_date'       => $subscription->getFirstDebitDate()?->format('Y-m-d'),
+            'recurrent_debit_date'   => $subscription->getRecurrentDebitDate(),
+            'installment_count'      => $subscription->getInstallmentCount(),
+            'session_per_week'       => $subscription->getSessionPerWeek(),
+            'week_count'             => $subscription->getWeekCount(),
+            'selected_weeks'         => $subscription->getSelectedWeeks(),
+            'known_weeks'            => $subscription->getKnownWeeks(),
+            'discount'               => $subscription->getDiscount(),
+            'offer_amount'           => $subscription->getOfferAmount(),
+            'offer_type'             => $subscription->getOfferType(),
+            'membership_fee'         => $subscription->getMembershipFee(),
+            'school_subjects'        => $subscription->getSchoolSubjects(),
+            'favorite_slots'         => $subscription->getFavoriteSlots(),
+            'created_at' => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),
+            'created_by' => $subscription->getCreatedBy(),
+            'updated_at' => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'updated_by' => $subscription->getUpdatedBy(),
+            // ajoute les champs nécessaires…
+        ], $subs);
+
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
 }

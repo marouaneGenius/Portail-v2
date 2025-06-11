@@ -32,3 +32,7 @@
       @apply hover:bg-green-300
     }
   }
+
+  .contract-preview-div {
+    opacity: 1;
+  }

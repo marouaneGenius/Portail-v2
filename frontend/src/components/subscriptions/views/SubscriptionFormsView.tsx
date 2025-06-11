@@ -92,7 +92,8 @@ const SubscriptionsFormView: React.FC<any> = () => {
       const payload = buildPayload(type, allValues[type], id, user?.email);
       api.post('/api/subs', payload)
         .then((r:any) => {
-          navigate(`/students`);
+          const path = `/contract/${r.data.id}/${r.data.student}`;
+          navigate(path);
           console.log(`✅ ${type} OK`, r.data);
           alert('Formulaire soumis avec succès !');
         })
@@ -103,7 +104,6 @@ const SubscriptionsFormView: React.FC<any> = () => {
 
       return;
     }
-
 
     const token = uuid(); 
 
@@ -117,14 +117,16 @@ const SubscriptionsFormView: React.FC<any> = () => {
                   .then(r => ({ type, ok: true , data: r.data }))
                   .catch(e => ({ type, ok: false, err : e      }));
       })
-    ).then(results => {
-        const fails = results.filter(r => !r.ok);
+    ).then((results:any) => {
+        const fails = results.filter((r:any) => !r.ok);
 
         if (fails.length) {
           console.error('🚨  Certains appels ont échoué :', fails);
           alert('Une ou plusieurs insertions ont échoué. Vérifiez la console.');
         } else {
-          navigate(`/students`);
+          const data = results[0].data;
+          const path = `/contract/${data.id}/${data.student}/${data.combined_id}`;
+          navigate(path);
           console.log('🎉  Tous les abonnements ont été créés :', results);
           alert('Tous les formulaires ont été enregistrés avec succès !');
         }
