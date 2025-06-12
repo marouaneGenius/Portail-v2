@@ -6,7 +6,7 @@ import React from "react";
  * Composant **statique** : le texte est figé et aucune prop n’est nécessaire,
  * puisque ce bloc ne contient plus de variables ni de calculs.
  */
-const AbsenceNotice: React.FC = () => (
+const AbsencesComponent: React.FC = () => (
   <div className="space-y-4">
     <strong className="poppins-title-bold">Absences&nbsp;:</strong>
 
@@ -31,4 +31,4 @@ const AbsenceNotice: React.FC = () => (
   </div>
 );
 
-export default AbsenceNotice;
+export default AbsencesComponent;

@@ -5,6 +5,7 @@ export interface ContractHeaderProps {
   student?: any;
   subscriptionType?: string;
   subscription?: any;
+  price?:any
 }
 
 const ContractHeader: React.FC<ContractHeaderProps> = ({ student, subscription,  subscriptionType, }) => {
@@ -61,7 +62,7 @@ const ContractHeader: React.FC<ContractHeaderProps> = ({ student, subscription, 
           {' '}
 
           {
-            subscriptionType === 'stage' && 'Stage de soutien scolaire' 
+            subscriptionType === 'stage' && `Stage de ${subscription.week_count} semaines à raison de 3 heures de cours par jour du lundi au vendredi`
           }
           {
             subscriptionType === 'annuel' && `Abonnement annuel à raison de (${nbSeances})` 

@@ -4,12 +4,19 @@ import { Preview, print } from 'react-html2pdf';
 import ModificationAnnulationNotice from './ModificationAnnulationComponent';
 import NonPaiementMensualitesNotice from './NonPaiementMensualitesModifieesComponent';
 import AbsenceNotice from './AbsencesComponent';
-import { BehaviorNotice } from './ComportementComponent';
 import UrssafNotice from './CreationGestionCompteURSSAFComponent';
 import DisponibiliteAssistanceNotice from './DisponibiliteEtAssistanceDomicileComponent';
 import EngagementPaiementNotice from './EngagementDePaiementComponent';
 import HeaderComponent from './HeaderComponent';
 import TarificationCalculator from './TarificationCalculator';
+import FraisInscriptionComponent from './FraisInscriptionComponent';
+import { ComportementComponent } from './ComportementComponent';
+import DisponibiliteEtAssistanceDomicileComponent from './DisponibiliteEtAssistanceDomicileComponent';
+import AbsencesComponent from './AbsencesComponent';
+import CreationGestionCompteURSSAFComponent from './CreationGestionCompteURSSAFComponent';
+import ChequeDeCautionComponent from './ChequeDeCautionComponent';
+import { getNiveauScolaire, getPrice } from '../SubscriptionFunctions';
+import { nbSeancesperWeek } from '../../../mocks/mocks';
 
 export interface FullContractProps {
     Student:any;
@@ -20,17 +27,22 @@ export interface FullContractProps {
 
 const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subscription, SubscriptionType}) => {
     const [student, setStudent] = useState(Student);
-    // const [subscription, setSubscription] = useState(Subscription);
-    // const [subscriptionType, setSubscriptionType] = useState<any>(SubscriptionType);
-    // const [center, setCenter] = useState<any>();
-    // const [parent, setParent] = useState();
-    // const [listeSeances, setListeSeances] = useState();
-    // const [abonnementTitle, setAbonnementTitle] = useState(SubscriptionType);
-    // const [showContractStart, setShowContractStart] = useState(false);
-    // const [contractStartWeek, setContractStartWeek] = useState('');
-    // const [contractDeadlineText, setContractDeadlineText] = useState('');
-    // const [subjects, setSubjects] = useState('');
-    // const [isLoading, setIsLoading] = useState(true);
+    const [price, setPrice] = useState(0);
+
+    useEffect(() => {
+        if(SubscriptionType && typeof SubscriptionType  === 'string'){
+            const isCombined = Array.isArray(Subscription);
+            const isMember = false //getIfStudentIsMember(student, SubscriptionType);
+            const niveau:any = getNiveauScolaire(student.class);
+            let formule = nbSeancesperWeek[Subscription.session_per_week -1];
+            const newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
+            setPrice(newPrice)
+        }   
+
+
+        // const chequeMontant = Tarifs[niveau][formule]?.prix * 3;
+    } ,[Student, Subscription, SubscriptionType]);
+
 
 
 
@@ -42,13 +54,25 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
                     Student &&
                     <HeaderComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
                 }
-
                 {
                     Student && Subscription &&
-                    <TarificationCalculator data={Subscription} />
+                    <TarificationCalculator data={Subscription} price={price} />
                 }
-
-
+                    <FraisInscriptionComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription}  price={price} />
+                    <EngagementPaiementNotice />
+                {
+                    SubscriptionType !== 'stage'&&
+                    <>
+                        {
+                            price !== 0 && 
+                            <ChequeDeCautionComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} price={price}  />
+                        }
+                        <ComportementComponent />
+                        <DisponibiliteEtAssistanceDomicileComponent />
+                        <AbsencesComponent />
+                        <CreationGestionCompteURSSAFComponent />
+                    </>
+                }
             </div>
         </div>
     );

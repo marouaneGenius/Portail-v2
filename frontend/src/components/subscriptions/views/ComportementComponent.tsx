@@ -5,7 +5,7 @@ import React from "react";
  * --------------
  * Bloc statique « Comportement » sans variable.
  */
-export const BehaviorNotice: React.FC = () => (
+export const ComportementComponent: React.FC = () => (
   <div className="space-y-4">
     <strong className="poppins-title-bold">Comportement&nbsp;:</strong>
 

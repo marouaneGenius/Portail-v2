@@ -5,7 +5,7 @@ import React from "react";
  * ------------------------------
  * Bloc statique : détails sur la disponibilité de l’assistance pédagogique à domicile.
  */
-const DisponibiliteAssistanceNotice: React.FC = () => (
+const DisponibiliteEtAssistanceDomicileComponent: React.FC = () => (
   <div className="space-y-4">
     <strong className="poppins-title-bold">Disponibilité et Assistance à Domicile&nbsp;:</strong>
 
@@ -20,4 +20,4 @@ const DisponibiliteAssistanceNotice: React.FC = () => (
   </div>
 );
 
-export default DisponibiliteAssistanceNotice;
+export default DisponibiliteEtAssistanceDomicileComponent;

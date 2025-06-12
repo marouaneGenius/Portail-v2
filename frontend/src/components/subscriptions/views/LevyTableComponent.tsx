@@ -389,8 +389,10 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
             <td>{ligne.description}</td>
             <td>{ligne.datePrelevement}</td>
             <td className="text-right">{ligne.nbSeances}</td>
-            <td className="text-right">{ligne.tarifAvant.toLocaleString("fr-FR")} €</td>
-            <td className="text-right">{ligne.tarifApres.toLocaleString("fr-FR")} €</td>
+            {/* <td className="text-right">{ligne.tarifAvant.toLocaleString("fr-FR")} €</td>
+            <td className="text-right">{ligne.tarifApres.toLocaleString("fr-FR")} €</td> */}
+            <td className="text-right">{ligne.tarifAvant} €</td>
+            <td className="text-right">{ligne.tarifApres} €</td>
           </tr>
         ))}
       </tbody>
@@ -400,7 +402,9 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
           <th colSpan={4} className="text-right font-semibold">
             Total après réduction :
           </th>
-          <th className="text-right">{totalApresReduction.toLocaleString("fr-FR")} €</th>
+          <th className="text-right">{totalApresReduction} €</th>
+          {/* <th className="text-right">{totalApresReduction.toLocaleString("fr-FR")} €</th> */}
+
         </tr>
         <tr>
           <th colSpan={4} className="text-right font-semibold">

@@ -125,6 +125,15 @@ export const ClassesOptions = [
     '3h00/semaine',
     '4h30/semaine',
     '6h00/semaine',
+  ];
+
+  export const nbSeancesperWeek = [
+    '1h30',
+    '3h00',
+    '4h30',
+    '6h00',
   ]
 
-export const StandardDays = [5, 15, 28];
+  export const MEMEBERSHIP_FEE = 90;
+
+  export const StandardDays = [5, 15, 28];

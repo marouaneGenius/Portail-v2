@@ -75,7 +75,7 @@ const ContractGenerator: React.FC = () => {
         .then(([stuRes, subRes]) => {
         setStudent(stuRes.data);
         const combinedId = subRes.data.combined_id;   
-        console.log(combinedId)
+        // console.log(combinedId)
         if (!combinedId) {
             setSubscription(subRes.data);
             return null;
@@ -113,7 +113,7 @@ const ContractGenerator: React.FC = () => {
   const [done, setDone] = useState(false);
 
 
-  useEffect(() => { console.log(subscription)},[subscription])
+  // useEffect(() => { console.log(subscription)},[subscription])
 
   /* -----------------------------------------------------------------
    * Render helpers

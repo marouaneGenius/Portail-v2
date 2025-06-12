@@ -14,15 +14,18 @@ export interface ContractData {
   is_combined_stage: boolean;
   remise?: number;     
   first_debit_date?:any       // en pourcentage, optionnel
+  subscription_type?:any;
+  week_count?: number; // Nombre de semaines pour les stages
 }
 
 interface CalculatorProps {
   data: ContractData;
+  price:any
 }
 
 /** Composant wrapper : calcule puis affiche la table */
-const TarificationCalculator: React.FC<CalculatorProps> = ({ data }) => {
-  const { lignes, totalApresReduction, coutHoraire } = computeTarification(data);
+const TarificationCalculator: React.FC<CalculatorProps> = ({ data, price }) => {
+  const { lignes, totalApresReduction, coutHoraire } = computeTarification(data, price);
   return (
     <TarificationTable
       lignes={lignes}

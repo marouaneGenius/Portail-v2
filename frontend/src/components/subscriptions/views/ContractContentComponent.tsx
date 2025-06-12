@@ -9,7 +9,6 @@ export interface FullContractProps {
   }
 
 const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subscription}) => {
-    const [student, setStudent] = useState(Student);
     const [subscription, setSubscription] = useState(Subscription);
     const [subscriptionType, setSubscriptionType] = useState<any[]>([]);
 
@@ -26,7 +25,7 @@ const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subsc
     <div className="space-y-8 bg-red-500">
         <div className="bg-white p-6 text-sm text-gray-800">
             {
-                Array.isArray(subscription) ?
+                Array.isArray(Subscription) ?
                 <MultiSubscriptionsContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />
                 :
                 <SingleSubscriptionContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />

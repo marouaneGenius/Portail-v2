@@ -5,7 +5,7 @@ import React from "react";
  * -------------
  * Bloc d'information statique concernant la création et gestion du compte URSSAF.
  */
-const UrssafNotice: React.FC = () => (
+const CreationGestionCompteURSSAFComponent: React.FC = () => (
   <div className="space-y-4">
     <strong className="poppins-title-bold">Création et gestion du compte URSSAF&nbsp;:</strong>
 
@@ -29,4 +29,4 @@ const UrssafNotice: React.FC = () => (
   </div>
 );
 
-export default UrssafNotice;
+export default CreationGestionCompteURSSAFComponent;
