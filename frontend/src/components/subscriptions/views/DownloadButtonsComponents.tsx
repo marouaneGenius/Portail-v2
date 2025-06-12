@@ -1,54 +1,27 @@
 import React from "react";
+import { ContractHeaderProps } from "./HeaderComponent";
 
-export interface NavBarDevisProps {
-  centreId: string;
-  eleveId: string;
-  devisId: string;
-  /** Identifiant de l’abonnement prépayé, si applicable */
-  idPre?: string;
-  /** Identifiant de l’abonnement stage, si applicable */
-  idStage?: string;
-  /** Rang de l’utilisateur ("1" pour administrateur) */
-  rang: string;
-  /** Nombre de devis déjà liés (0 = aucun) */
-  linkedDevisCount: number;
-  /** Indique si le (ou les) contrat(s) est(ent) déjà validé(s) */
-  isContractValid: boolean;
-  /** Callback lancé lorsqu’on clique sur “Ajouter Identifiant” */
-  onAddIdentifiant: () => void;
-}
-
-const NavBarDevis: React.FC<NavBarDevisProps> = ({
-  centreId,
-  eleveId,
-  devisId,
-  idPre,
-  idStage,
-  rang,
-  linkedDevisCount,
-  isContractValid,
-  onAddIdentifiant,
-}) => {
+const DownloadButtonsComponents: React.FC<any> =  ({ subscriptionType, subscription, previewId,onGenerate,pdfUrl, }) => {
   // construit l’URL de détail en fonction des paramètres
   const buildDetailsUrl = () => {
-    const params = new URLSearchParams();
-    params.set("centre", centreId);
-    params.set("id", devisId);
-    if (idPre) params.set("id_pre", idPre);
-    if (idStage) params.set("id_stage", idStage);
-    params.set("eleve", eleveId);
-    return `/details_dates${idPre && !idStage ? "_annuel_pre" : ""}.php?${params.toString()}`;
+    // const params = new URLSearchParams();
+    // params.set("centre", centreId);
+    // params.set("id", devisId);
+    // if (idPre) params.set("id_pre", idPre);
+    // if (idStage) params.set("id_stage", idStage);
+    // params.set("eleve", eleveId);
+    // return `/details_dates${idPre && !idStage ? "_annuel_pre" : ""}.php?${params.toString()}`;
   };
 
   // construit l’URL de validation de contrat
   const buildValidateUrl = () => {
-    const params = new URLSearchParams();
-    params.set("centre", centreId);
-    params.set("id", devisId);
-    if (idPre) params.set("id_pre", idPre);
-    if (idStage) params.set("id_stage", idStage);
-    params.set("eleve", eleveId);
-    return `/validate_contract.php?${params.toString()}`;
+    // const params = new URLSearchParams();
+    // params.set("centre", centreId);
+    // params.set("id", devisId);
+    // if (idPre) params.set("id_pre", idPre);
+    // if (idStage) params.set("id_stage", idStage);
+    // params.set("eleve", eleveId);
+    // return `/validate_contract.php?${params.toString()}`;
   };
 
   return (
@@ -56,20 +29,26 @@ const NavBarDevis: React.FC<NavBarDevisProps> = ({
       <div className="container mx-auto px-4 flex flex-wrap items-center justify-between py-2">
         <span className="font-semibold text-lg">Devis</span>
         <div className="space-x-2">
-          <a
-            href={`../fiche-eleve.php?id=${eleveId}&centre=${centreId}`}
-            className="inline-block px-3 py-1 border border-gray-500 rounded hover:bg-gray-200"
-          >
-            Retour à la fiche élève
-          </a>
-          <button
-            onClick={() => window.print()}
-            className="inline-block px-3 py-1 border border-gray-500 rounded hover:bg-gray-200"
-          >
-            Imprimer
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={onGenerate}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Générer et Prévisualiser
+            </button>
+
+            {pdfUrl && (
+              <a
+                href={pdfUrl}
+                download="contrat-genius.pdf"
+                className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Télécharger le PDF
+              </a>
+            )}
+          </div>
           {/* Bouton “Afficher les détails” selon contexte */}
-          {!idPre && !idStage && devisId && (
+          {/* {!idPre && !idStage && devisId && (
             <a
               href={buildDetailsUrl()}
               className="inline-block px-3 py-1 border border-green-500 text-green-500 rounded hover:bg-green-50"
@@ -85,7 +64,6 @@ const NavBarDevis: React.FC<NavBarDevisProps> = ({
               Afficher les détails
             </a>
           )}
-          {/* Ajouter Identifiant */}
           {linkedDevisCount === 0 && (
             <button
               onClick={onAddIdentifiant}
@@ -94,7 +72,6 @@ const NavBarDevis: React.FC<NavBarDevisProps> = ({
               Ajouter Identifiant
             </button>
           )}
-          {/* Valider le contrat (rang=1) */}
           {rang === "1" && (
             <a
               href={buildValidateUrl()}
@@ -106,11 +83,11 @@ const NavBarDevis: React.FC<NavBarDevisProps> = ({
             >
               {isContractValid ? "Contrat validé" : "Valider le contrat"}
             </a>
-          )}
+          )} */}
         </div>
       </div>
     </nav>
   );
 };
 
-export default NavBarDevis;
+export default DownloadButtonsComponents;

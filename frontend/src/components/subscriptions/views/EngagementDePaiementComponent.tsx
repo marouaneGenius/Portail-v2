@@ -5,7 +5,7 @@ interface EngagementPaiementNoticeProps {
 }
 
 const EngagementPaiementNotice: React.FC<EngagementPaiementNoticeProps> = ({ remise = 0 }) => (
-  <div className="space-y-4">
+  <div className="space-y-4  m-1 py-2">
     <strong className="poppins-title-bold">Engagement de paiement&nbsp;:</strong>
 
     <ul className="list-disc list-inside space-y-2">

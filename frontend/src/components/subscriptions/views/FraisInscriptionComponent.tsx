@@ -17,7 +17,7 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
   const fraisInscriptionEndDate:any = endDateFeePrelevement(subscription, subscriptionType)
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4 m-1 py-2">
       <h6 className="font-semibold">Application du taux de TVA en vigueur.</h6>
  
       {MEMEBERSHIP_FEE && (

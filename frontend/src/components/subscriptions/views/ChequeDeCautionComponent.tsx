@@ -17,7 +17,7 @@ const ChequeDeCautionComponent: React.FC<ContractHeaderProps> = ({student, subsc
   const chequeMontant = price ? price * 3 : 'N/C';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4  m-1 py-2">
       <strong className="poppins-title-bold">Chèque de caution&nbsp;:</strong>
       <ul className="list-disc list-inside space-y-2">
         <li>

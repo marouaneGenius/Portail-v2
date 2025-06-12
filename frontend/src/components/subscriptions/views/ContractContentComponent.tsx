@@ -1,12 +1,12 @@
 // ContractPdfExporter.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import MultiSubscriptionsContent from './MultiSubscriptionsContent';
 import SingleSubscriptionContent from './SingleSubscriptionContent';
+import DownloadButtonsComponents from './DownloadButtonsComponents';
 
 export interface FullContractProps {
     Student:any;
     Subscription:any;
-  }
+}
 
 const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subscription}) => {
     const [subscription, setSubscription] = useState(Subscription);
@@ -22,11 +22,18 @@ const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subsc
 
 
   return (
-    <div className="space-y-8 bg-red-500">
+    <div className="space-y-8">
+        
         <div className="bg-white p-6 text-sm text-gray-800">
             {
                 Array.isArray(Subscription) ?
-                <MultiSubscriptionsContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />
+                <>
+                    {
+                        subscription.map((sub:any) => {
+                        return <SingleSubscriptionContent Student={Student} Subscription={sub} SubscriptionType={sub.subscription_type} />
+                        })
+                    }
+                </>
                 :
                 <SingleSubscriptionContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />
             }

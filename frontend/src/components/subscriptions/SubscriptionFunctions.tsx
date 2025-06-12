@@ -80,31 +80,7 @@ import { ContractData } from "./views/TarificationCalculator";
   };
 
   function getTarifsStage(data: ContractData): TarifsStage {
-    // Si c'est une pré-inscription avec stage
-    // if (data.id_pre) {
-    //   return {
-    //     tarifs_semaines: {
-    //       1: 280,
-    //       2: 500,
-    //       3: 800
-    //     },
-    //     tarif_semaine_supplementaire: 200
-    //   };
-    // }
-    
-    // // Pour les membres
-    // if (data.is_member) {
-    //   return {
-    //     tarifs_semaines: {
-    //       1: 280,
-    //       2: 500,
-    //       3: 800
-    //     },
-    //     tarif_semaine_supplementaire: 200
-    //   };
-    // }
-    
-    // Pour les non-membres (par défaut)
+
     return {
       tarifs_semaines: {
         1: 350,
@@ -389,7 +365,6 @@ import { ContractData } from "./views/TarificationCalculator";
   
     return { lignes, totalApresReduction, coutHoraire };
   }
-
 
   export function computePreInscription(
     data: any,

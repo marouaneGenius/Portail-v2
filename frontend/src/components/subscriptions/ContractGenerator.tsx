@@ -104,20 +104,8 @@ const ContractGenerator: React.FC = () => {
         .finally(() => setLoading(false));
       
       }, [studentId, subscriptionId]);
-      
-
-  /* ----------------------------------------------------------------- n
-   * Génération du contrat (appel backend → PDF/DocX)
-   * -----------------------------------------------------------------*/
-  const [generating, setGenerating] = useState(false);
-  const [done, setDone] = useState(false);
 
 
-  // useEffect(() => { console.log(subscription)},[subscription])
-
-  /* -----------------------------------------------------------------
-   * Render helpers
-   * -----------------------------------------------------------------*/
   if (loading)
     return (
       <Card className="max-w-xl mx-auto mt-8 text-center">
@@ -138,9 +126,9 @@ const ContractGenerator: React.FC = () => {
     );
 
   return (
-    <div className="p-2 h-full bg-gray-200 ">
-      <div className="bg-red-300  p-2 rounded flex flex-col items-center gap-1 shadow-md">
-        <p>Récapitulatif du contrat</p>
+    <div className="p-0 h-full bg-gray-200 ">
+      <div className="  p-2 rounded flex flex-col items-center shadow-md">
+        <h1>Contrat</h1>
         <ContractPdfExporter 
         Student={student}
         Subscription={subscription}

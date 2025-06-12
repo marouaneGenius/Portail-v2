@@ -17,12 +17,14 @@ import CreationGestionCompteURSSAFComponent from './CreationGestionCompteURSSAFC
 import ChequeDeCautionComponent from './ChequeDeCautionComponent';
 import { getNiveauScolaire, getPrice } from '../SubscriptionFunctions';
 import { nbSeancesperWeek } from '../../../mocks/mocks';
+import ProcedureResiliationNotice from './ProcedureResiliationComponent';
+import SignatureComponent from './SignatureComponent';
+import DownloadButtonsComponents from './DownloadButtonsComponents';
 
 export interface FullContractProps {
     Student:any;
     Subscription:any;
     SubscriptionType: any;
-
   }
 
 const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subscription, SubscriptionType}) => {
@@ -30,30 +32,25 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
     const [price, setPrice] = useState(0);
 
     useEffect(() => {
+        const isCombined = Array.isArray(Subscription);
+        const isMember = false //getIfStudentIsMember(student, SubscriptionType);
+        const niveau:any = getNiveauScolaire(student.class);
+
         if(SubscriptionType && typeof SubscriptionType  === 'string'){
-            const isCombined = Array.isArray(Subscription);
-            const isMember = false //getIfStudentIsMember(student, SubscriptionType);
-            const niveau:any = getNiveauScolaire(student.class);
-            let formule = nbSeancesperWeek[Subscription.session_per_week -1];
+            // let formule = nbSeancesperWeek[Subscription.session_per_week -1];
             const newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
             setPrice(newPrice)
-        }   
-
-
-        // const chequeMontant = Tarifs[niveau][formule]?.prix * 3;
+        }  
     } ,[Student, Subscription, SubscriptionType]);
 
-
-
-
-
     return (
-        <div className="space-y-8 bg-red-500">
-            <div className="bg-white p-6 text-sm text-gray-800">
+        <div className="space-y-8 ">
+            <div className="p-0 text-sm ">
                 {
                     Student &&
                     <HeaderComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
                 }
+                {/* <div className="page-break" /> */}
                 {
                     Student && Subscription &&
                     <TarificationCalculator data={Subscription} price={price} />
@@ -71,18 +68,15 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
                         <DisponibiliteEtAssistanceDomicileComponent />
                         <AbsencesComponent />
                         <CreationGestionCompteURSSAFComponent />
+                        <ModificationAnnulationNotice />
+                        <ProcedureResiliationNotice subscriptionType={SubscriptionType} subscription={Subscription} />
+                        <NonPaiementMensualitesNotice />
                     </>
                 }
+                    <SignatureComponent student={student} subscription={Subscription} />
             </div>
         </div>
     );
 };
 
 export default SingleSubscriptionContent;
-                {/* <AbsenceNotice /> */}
-                {/* <BehaviorNotice /> */}
-                {/* <UrssafNotice />
-                <ModificationAnnulationNotice />
-                <NonPaiementMensualitesNotice />
-                <DisponibiliteAssistanceNotice />
-                <EngagementPaiementNotice /> */}
