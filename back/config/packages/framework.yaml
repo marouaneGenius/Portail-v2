@@ -12,6 +12,9 @@ framework:
         cookie_samesite: lax
         storage_factory_id: session.storage.factory.native
 
+    # request:
+    #     max_content_length: 22000000
+
     #esi: true
     #fragments: true
     php_errors:

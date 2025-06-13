@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: portail_v2
     volumes:
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - .:/var/www
     working_dir: /var/www
     depends_on:

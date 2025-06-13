@@ -85,6 +85,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $school_subjects = null;
 
+    #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: SubscriptionURL::class)]
+    private Collection $subscriptionURLs;
+
 
 
     public function __construct()
@@ -94,6 +97,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->tutorSchedules = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->centres        = new ArrayCollection();
+        $this->subscriptionURLs = new ArrayCollection();
     }
 
     public function getUserIdentifier(): string
@@ -458,6 +462,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSchoolSubjects(?array $school_subjects): static
     {
         $this->school_subjects = $school_subjects;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SubscriptionURL>
+     */
+    public function getSubscriptionURLs(): Collection
+    {
+        return $this->subscriptionURLs;
+    }
+
+    public function addSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if (!$this->subscriptionURLs->contains($subscriptionURL)) {
+            $this->subscriptionURLs->add($subscriptionURL);
+            $subscriptionURL->setIdUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if ($this->subscriptionURLs->removeElement($subscriptionURL)) {
+            // set the owning side to null (unless already changed)
+            if ($subscriptionURL->getIdUser() === $this) {
+                $subscriptionURL->setIdUser(null);
+            }
+        }
 
         return $this;
     }

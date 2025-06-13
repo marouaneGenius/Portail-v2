@@ -84,12 +84,16 @@ class Student
     #[ORM\Column(nullable: true)]
     private ?array $school_subjects = null;
 
+    #[ORM\OneToMany(mappedBy: 'student', targetEntity: SubscriptionURL::class)]
+    private Collection $subscriptionURLs;
+
     public function __construct()
     {
         $this->id_parent = new ArrayCollection();
         $this->subscriptions = new ArrayCollection();
         $this->sessions = new ArrayCollection();
         $this->reports = new ArrayCollection();
+        $this->subscriptionURLs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -432,6 +436,36 @@ class Student
     public function setSchoolSubjects(?array $school_subjects): static
     {
         $this->school_subjects = $school_subjects;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SubscriptionURL>
+     */
+    public function getSubscriptionURLs(): Collection
+    {
+        return $this->subscriptionURLs;
+    }
+
+    public function addSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if (!$this->subscriptionURLs->contains($subscriptionURL)) {
+            $this->subscriptionURLs->add($subscriptionURL);
+            $subscriptionURL->setStudent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if ($this->subscriptionURLs->removeElement($subscriptionURL)) {
+            // set the owning side to null (unless already changed)
+            if ($subscriptionURL->getStudent() === $this) {
+                $subscriptionURL->setStudent(null);
+            }
+        }
 
         return $this;
     }

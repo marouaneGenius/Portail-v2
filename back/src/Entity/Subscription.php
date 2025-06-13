@@ -100,9 +100,13 @@ class Subscription
     #[ORM\Column(nullable: true)]
     private ?array $favorite_slots = null;
 
+    #[ORM\OneToMany(mappedBy: 'subscription', targetEntity: SubscriptionURL::class)]
+    private Collection $subscriptionURLs;
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
+        $this->subscriptionURLs = new ArrayCollection();
     }
 
 
@@ -459,6 +463,36 @@ class Subscription
     public function setFavoriteSlots(?array $favorite_slots): static
     {
         $this->favorite_slots = $favorite_slots;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SubscriptionURL>
+     */
+    public function getSubscriptionURLs(): Collection
+    {
+        return $this->subscriptionURLs;
+    }
+
+    public function addSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if (!$this->subscriptionURLs->contains($subscriptionURL)) {
+            $this->subscriptionURLs->add($subscriptionURL);
+            $subscriptionURL->setSubscription($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubscriptionURL(SubscriptionURL $subscriptionURL): static
+    {
+        if ($this->subscriptionURLs->removeElement($subscriptionURL)) {
+            // set the owning side to null (unless already changed)
+            if ($subscriptionURL->getSubscription() === $this) {
+                $subscriptionURL->setSubscription(null);
+            }
+        }
 
         return $this;
     }
