@@ -18,10 +18,6 @@ const Profile: React.FC = () => {
   const [errorMesssage, setErrorMesssage] = useState('');
   const [enableSaveButton, setEnableSaveButton] = useState(true);
 
-
-  console.log(user)
-
-
   const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked }:any = e.target;
     const newValues:any = { ...values, [name]: type === "checkbox" ? checked : value };
@@ -43,7 +39,6 @@ const Profile: React.FC = () => {
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
-
 
   const safeNeWProfileUserData = async(e: FormEvent) => {
     e.preventDefault();

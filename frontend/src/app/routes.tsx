@@ -18,6 +18,7 @@ import { StudentDetails } from "../pages/studentDetails";
 import { Planing } from "../pages/Planing";
 import SubscriptionsFormView from "../components/subscriptions/views/SubscriptionFormsView";
 import ContractGenerator from "../components/subscriptions/ContractGenerator";
+import StudentSubscriptions from "../pages/StudentSubscriptions";
 
 export const router = createBrowserRouter([
     {
@@ -43,7 +44,7 @@ export const router = createBrowserRouter([
             { path: '/planing', element: <Planing/>},
             { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
             { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
-            
+            { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
           ],
         },
       ],

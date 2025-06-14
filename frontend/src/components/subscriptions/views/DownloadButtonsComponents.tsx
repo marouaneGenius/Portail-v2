@@ -1,28 +1,50 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ContractHeaderProps } from "./HeaderComponent";
+import api from "../../../api/aixos";
+import axios from "axios";
+import { useAuth } from "../../../Hooks/auth";
+import { urlToBlob } from "../SubscriptionFunctions";
 
-const DownloadButtonsComponents: React.FC<any> =  ({ subscriptionType, subscription, previewId,onGenerate,pdfUrl, }) => {
-  // construit l’URL de détail en fonction des paramètres
-  const buildDetailsUrl = () => {
-    // const params = new URLSearchParams();
-    // params.set("centre", centreId);
-    // params.set("id", devisId);
-    // if (idPre) params.set("id_pre", idPre);
-    // if (idStage) params.set("id_stage", idStage);
-    // params.set("eleve", eleveId);
-    // return `/details_dates${idPre && !idStage ? "_annuel_pre" : ""}.php?${params.toString()}`;
-  };
+const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGenerate, pdfUrl, }) => {
 
-  // construit l’URL de validation de contrat
-  const buildValidateUrl = () => {
-    // const params = new URLSearchParams();
-    // params.set("centre", centreId);
-    // params.set("id", devisId);
-    // if (idPre) params.set("id_pre", idPre);
-    // if (idStage) params.set("id_stage", idStage);
-    // params.set("eleve", eleveId);
-    // return `/validate_contract.php?${params.toString()}`;
-  };
+  useEffect(() => {
+    if (!pdfUrl) return;
+    (async () => {
+      try {
+        const pdfBlob = await urlToBlob(pdfUrl);
+        if (!pdfBlob || pdfBlob.size === 0) {
+          throw new Error('Le fichier PDF est vide ou invalide');
+        }
+        // 2. Préparation du FormData
+        const formData = new FormData();
+        formData.append('file', pdfBlob, 'contrat.pdf');
+        formData.append('user_id', String(student.id));
+        formData.append('subscription_id', String(subscription.id));
+        formData.append('url', `${student.id}-${subscription.id}-${Date.now()}.pdf`);
+
+        for (const [key, value] of formData.entries()) {
+          console.log(key, value instanceof Blob ? 
+            `Blob (${value.type}, ${value.size} bytes)` : 
+            value
+          );
+        }
+        const apiUrl = `${import.meta.env.VITE_API_URL_DEV}api/subscription-url`;
+        const authToken = useAuth.getState().accessToken;
+        await axios.post(apiUrl, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+      } catch (error) {
+        console.error('Erreur complète:', {
+          message: error instanceof Error ? error.message : 'Erreur inconnue',
+          stack: error instanceof Error ? error.stack : undefined,
+          response: axios.isAxiosError(error) ? error.response?.data : undefined
+        });
+      }
+    })();
+  }, [pdfUrl, student.id, subscription.id]);
 
   return (
     <nav className="bg-gray-100 print:hidden">
@@ -47,43 +69,6 @@ const DownloadButtonsComponents: React.FC<any> =  ({ subscriptionType, subscript
               </a>
             )}
           </div>
-          {/* Bouton “Afficher les détails” selon contexte */}
-          {/* {!idPre && !idStage && devisId && (
-            <a
-              href={buildDetailsUrl()}
-              className="inline-block px-3 py-1 border border-green-500 text-green-500 rounded hover:bg-green-50"
-            >
-              Afficher le détail
-            </a>
-          )}
-          {(idPre || idStage) && (
-            <a
-              href={buildDetailsUrl()}
-              className="inline-block px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50"
-            >
-              Afficher les détails
-            </a>
-          )}
-          {linkedDevisCount === 0 && (
-            <button
-              onClick={onAddIdentifiant}
-              className="inline-block px-3 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50"
-            >
-              Ajouter Identifiant
-            </button>
-          )}
-          {rang === "1" && (
-            <a
-              href={buildValidateUrl()}
-              className={`inline-block px-3 py-1 rounded ${
-                isContractValid
-                  ? "border border-green-500 text-green-500 bg-green-50 cursor-not-allowed opacity-50"
-                  : "border border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-              }`}
-            >
-              {isContractValid ? "Contrat validé" : "Valider le contrat"}
-            </a>
-          )} */}
         </div>
       </div>
     </nav>

@@ -1,11 +1,7 @@
 // ContractPdfExporter.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Preview, print } from 'react-html2pdf';
 import ModificationAnnulationNotice from './ModificationAnnulationComponent';
 import NonPaiementMensualitesNotice from './NonPaiementMensualitesModifieesComponent';
-import AbsenceNotice from './AbsencesComponent';
-import UrssafNotice from './CreationGestionCompteURSSAFComponent';
-import DisponibiliteAssistanceNotice from './DisponibiliteEtAssistanceDomicileComponent';
 import EngagementPaiementNotice from './EngagementDePaiementComponent';
 import HeaderComponent from './HeaderComponent';
 import TarificationCalculator from './TarificationCalculator';
@@ -16,10 +12,8 @@ import AbsencesComponent from './AbsencesComponent';
 import CreationGestionCompteURSSAFComponent from './CreationGestionCompteURSSAFComponent';
 import ChequeDeCautionComponent from './ChequeDeCautionComponent';
 import { getNiveauScolaire, getPrice } from '../SubscriptionFunctions';
-import { nbSeancesperWeek } from '../../../mocks/mocks';
 import ProcedureResiliationNotice from './ProcedureResiliationComponent';
 import SignatureComponent from './SignatureComponent';
-import DownloadButtonsComponents from './DownloadButtonsComponents';
 
 export interface FullContractProps {
     Student:any;
@@ -37,7 +31,6 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
         const niveau:any = getNiveauScolaire(student.class);
 
         if(SubscriptionType && typeof SubscriptionType  === 'string'){
-            // let formule = nbSeancesperWeek[Subscription.session_per_week -1];
             const newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
             setPrice(newPrice)
         }  

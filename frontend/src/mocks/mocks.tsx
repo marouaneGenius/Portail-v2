@@ -17,6 +17,7 @@ export const ClassesOptions = [
 
 
    export const actions: Action[] = [
+    { label: "Mes Abonnements", to: (id) => `/student/subscriptions/${id}` },
     { label: 'Ajouter un Abonnement', to: (id) => `/abonnements/${id}` },
     { label: "Créer une séance d'essai", to: (id) => `/students/${id}/trial-session` },
     { label: 'Voir plus de détails', to: (id) => `/student/${id}` },

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
 import { TarificationLigne } from "./views/LevyTableComponent";
 import { ContractData } from "./views/TarificationCalculator";
@@ -457,89 +458,188 @@ import { ContractData } from "./views/TarificationCalculator";
 
 
 
-export function getPrice(subscriptionType:string, hoursOrWeeks:any, level:any, options:any = {}) {
-  // Tarifs pour "preinscription"
-  const pre:any = {
-    primaire: {
-      '1': { prix: 125, seances: 4 },
-      '2': { prix: 215, seances: 8 },
-      '3': { prix: 250, seances: 12 },
-      '4': { prix: 320, seances: 16 },
-    },
-    college: {
-      '1': { prix: 150, seances: 4 },
-      '2': { prix: 240, seances: 8 },
-      '3': { prix: 290, seances: 12 },
-      '4': { prix: 370, seances: 16 },
-    },
-  };
+  export function getPrice(subscriptionType:string, hoursOrWeeks:any, level:any, options:any = {}) {
+    // Tarifs pour "preinscription"
+    const pre:any = {
+      primaire: {
+        '1': { prix: 125, seances: 4 },
+        '2': { prix: 215, seances: 8 },
+        '3': { prix: 250, seances: 12 },
+        '4': { prix: 320, seances: 16 },
+      },
+      college: {
+        '1': { prix: 150, seances: 4 },
+        '2': { prix: 240, seances: 8 },
+        '3': { prix: 290, seances: 12 },
+        '4': { prix: 370, seances: 16 },
+      },
+    };
 
-  // Tarifs pour "annuel"
-  const annuelCombined = {
-    primaire: { ...pre.primaire },
-    college:  { ...pre.college  },
-  };
-  const annuelSingle = {
-    primaire: {
-      '1': { prix: 160, seances: 4 },
-      '2': { prix: 250, seances: 8 },
-      '3': { prix: 310, seances: 12 },
-      '4': { prix: 370, seances: 16 },
-    },
-    college: {
-      '1': { prix: 180, seances: 4 },
-      '2': { prix: 290, seances: 8 },
-      '3': { prix: 340, seances: 12 },
-      '4': { prix: 410, seances: 16 },
-    },
-  };
+    // Tarifs pour "annuel"
+    const annuelCombined = {
+      primaire: { ...pre.primaire },
+      college:  { ...pre.college  },
+    };
+    const annuelSingle = {
+      primaire: {
+        '1': { prix: 160, seances: 4 },
+        '2': { prix: 250, seances: 8 },
+        '3': { prix: 310, seances: 12 },
+        '4': { prix: 370, seances: 16 },
+      },
+      college: {
+        '1': { prix: 180, seances: 4 },
+        '2': { prix: 290, seances: 8 },
+        '3': { prix: 340, seances: 12 },
+        '4': { prix: 410, seances: 16 },
+      },
+    };
 
-  // Tarifs pour "stage" (semaines)
-  const stageMember =    { 1: 280, 2: 500, 3: 800 };
-  const stageNonMember = { 1: 350, 2: 620, 3: 930 };
-  const extraMember      = 200;  // euros / semaine supplémentaire
-  const extraNonMember   = 300;
-
-
-  if(subscriptionType !== null && subscriptionType !== undefined) {
-
-    switch (subscriptionType) {
-      case 'preinscription':
-        console.log(pre[level][hoursOrWeeks].prix )
-
-        if (!level || !pre[level] || !pre[level][hoursOrWeeks]) {
-          return null;
-        } 
+    // Tarifs pour "stage" (semaines)
+    const stageMember =    { 1: 280, 2: 500, 3: 800 };
+    const stageNonMember = { 1: 350, 2: 620, 3: 930 };
+    const extraMember      = 200;  // euros / semaine supplémentaire
+    const extraNonMember   = 300;
 
 
-        return pre[level][hoursOrWeeks].prix;
-  
-      case 'annuel':
-        if (!level) return null;
-        const isCombined = Boolean(options.combined);
-        const tableAnnuel:any = isCombined ? annuelCombined : annuelSingle;
-        if (!tableAnnuel[level] || !tableAnnuel[level][hoursOrWeeks]) return null;
-        return tableAnnuel[level][hoursOrWeeks].prix;
-  
-      case 'stage':
-        const weeks = Number(hoursOrWeeks);
-        const isMember = Boolean(options.isMember);
-        const baseTable:any = isMember ? stageMember : stageNonMember;
-        const extraRate = isMember ? extraMember : extraNonMember;
-        if (weeks <= 0) return null;
-        if (weeks <= 3) {
-          return baseTable[weeks] || null;
-        }
-        // plus de 3 semaines : tarif pour 3 + extras
-        return baseTable[3] + extraRate * (weeks - 3);
-  
-      // default:
-      //   return null;
+    if(subscriptionType !== null && subscriptionType !== undefined) {
+
+      switch (subscriptionType) {
+        case 'preinscription':
+          console.log(pre[level][hoursOrWeeks].prix )
+
+          if (!level || !pre[level] || !pre[level][hoursOrWeeks]) {
+            return null;
+          } 
+
+
+          return pre[level][hoursOrWeeks].prix;
+    
+        case 'annuel':
+          if (!level) return null;
+          const isCombined = Boolean(options.combined);
+          const tableAnnuel:any = isCombined ? annuelCombined : annuelSingle;
+          if (!tableAnnuel[level] || !tableAnnuel[level][hoursOrWeeks]) return null;
+          return tableAnnuel[level][hoursOrWeeks].prix;
+    
+        case 'stage':
+          const weeks = Number(hoursOrWeeks);
+          const isMember = Boolean(options.isMember);
+          const baseTable:any = isMember ? stageMember : stageNonMember;
+          const extraRate = isMember ? extraMember : extraNonMember;
+          if (weeks <= 0) return null;
+          if (weeks <= 3) {
+            return baseTable[weeks] || null;
+          }
+          // plus de 3 semaines : tarif pour 3 + extras
+          return baseTable[3] + extraRate * (weeks - 3);
+    
+        // default:
+        //   return null;
+      }
     }
+
+
+
   }
 
+  /**
+   * Convertit une URL (data URL ou blob URL) en Blob
+   */
+  export const urlToBlob = async (url: string): Promise<Blob> => {
+    // Cas d'une blob URL (commence par blob:)
+    if (url.startsWith('blob:')) {
+      const response = await fetch(url);
+      return await response.blob();
+    }
+    
+    // Cas d'un data URL (base64)
+    if (url.startsWith('data:')) {
+      const [header, base64Data] = url.split(',');
+      const mimeType = header.match(/:(.*?);/)?.[1];
+      
+      if (!base64Data || !mimeType) {
+        throw new Error('Format de data URL invalide');
+      }
 
+      const byteCharacters = atob(base64Data);
+      const byteArrays = [];
 
-}
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
 
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        byteArrays.push(new Uint8Array(byteNumbers));
+      }
+
+      return new Blob(byteArrays, { type: mimeType });
+    }
+
+    throw new Error('Format d\'URL non supporté');
+  };
+
+  export const dataUrlToBlob = (dataUrl: string): any => {
+
+    console.log
+
+    // const [header, base64Data] = dataUrl.split(',');
+    // const mimeType = header.match(/:(.*?);/)?.[1];
+    
+    // if (!base64Data || !mimeType) {
+    //   throw new Error('Format de data URL invalide');
+    // }
+  
+    // const byteCharacters = atob(base64Data);
+    // const byteArrays = [];
+  
+    // for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    //   const slice = byteCharacters.slice(offset, offset + 512);
+    //   const byteNumbers = new Array(slice.length);
+  
+    //   for (let i = 0; i < slice.length; i++) {
+    //     byteNumbers[i] = slice.charCodeAt(i);
+    //   }
+  
+    //   byteArrays.push(new Uint8Array(byteNumbers));
+    // }
+  
+    // return new Blob(byteArrays, { type: mimeType });
+  };
+  
+  /**
+   * Crée un FormData avec le fichier et les métadonnées
+   */
+  export const createUploadFormData = (
+      fileBlob: Blob,
+      fileName: string,
+      metadata: Record<string, string>
+    ): FormData => {
+    const formData = new FormData();
+    formData.append('file', fileBlob, fileName);
+  
+    Object.entries(metadata).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+  
+    return formData;
+  };
+  
+  /**
+   * Envoie les données au serveur
+   */
+  export const uploadToServer = async (url: string, formData: FormData, authToken: any) => {
+    const response = await axios.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+    return response.data;
+  };
+  
+  
 
