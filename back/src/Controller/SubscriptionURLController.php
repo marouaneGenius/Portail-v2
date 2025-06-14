@@ -93,6 +93,29 @@ class SubscriptionURLController extends AbstractController
         ], JsonResponse::HTTP_CREATED);
     }
     
+    #[Route('/student/{studentId}', name: 'list_by_student', methods: ['GET'])]
+    public function listByStudent(int $studentId): JsonResponse
+    {
+        $student = $this->studentRepo->find($studentId);
+        if (!$student) {
+            return $this->json([
+                'error' => 'Étudiant introuvable.'
+            ], JsonResponse::HTTP_NOT_FOUND);
+        }
 
-    
+        /** @var SubscriptionURL[] $urls */
+        $urls = $this->em
+            ->getRepository(SubscriptionURL::class)
+            ->findBy(['student' => $student]);
+
+        // 3) Préparer le tableau de réponse
+        $data = array_map(fn(SubscriptionURL $su) => [
+            'id'               => $su->getId(),
+            'subscription_id'  => $su->getSubscription()->getId(),
+            'url'              => $su->getUrl(),
+        ], $urls);
+
+        // 4) Retourner en JSON
+        return $this->json($data, JsonResponse::HTTP_OK);
+    }
 }
