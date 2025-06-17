@@ -1,70 +1,98 @@
 // src/components/Sidebar.tsx
-import { useState } from 'react';
+import {
+  Users,
+  Building,
+  GraduationCap,
+  UserCheck,
+  Calendar,
+  User,
+  LogOut,
+  Zap,
+} from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { HiUsers, HiOfficeBuilding, HiUserCircle, HiMenu, HiX, HiOutlineUsers, HiCubeTransparent, HiAcademicCap, HiViewGridAdd, HiViewGrid, HiCalendar } from 'react-icons/hi';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarHeader,
+} from '@/components/ui/sidebar';
 import { useAuth } from '../Hooks/auth';
 
-const Sidebar: React.FC = () => {
-  const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+const menuItems = [
+  { title: 'Utilisateurs', url: '/users', icon: Users },
+  { title: 'Centres', url: '/centers', icon: Building },
+  { title: 'Étudiants', url: '/students', icon: GraduationCap },
+  { title: 'Parents', url: '/parents', icon: UserCheck },
+  { title: 'Séances', url: '/sessions', icon: Calendar },
+  { title: 'Mon profil', url: '/profile', icon: User },
+];
 
+const CustomSidebar: React.FC = () => {
+  const { user, logout } = useAuth();
   if (!user) return null;
 
-  const menu = [
-    { to: '/users', icon: <HiUsers className='h-7 w-7' />, label: 'Utilisateurs' },
-    { to: '/centers', icon: <HiOfficeBuilding className='h-7 w-7' />, label: 'Centres' },
-    { to: '/students', icon: <HiAcademicCap className='h-7 w-7' />, label: 'Étudiants' },
-    { to: '/parents', icon: <HiOutlineUsers className='h-7 w-7 ' />, label: 'Parents' },
-    { to: '/sessions', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Séances' },
-    { to: '/profile', icon: <HiUserCircle className='h-7 w-7 ' />, label: 'Mon profil' },
-    // { to: '/abonnements', icon: <HiViewGridAdd className='h-7 w-7 ' />, label: 'Abonnements' },
-    // { to: '/tutor-schedule', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Dispo Tuteur' },
-  ];
-
   return (
-    <aside
-      className={`
-        flex flex-col
-        bg-white shadow-md
-        ${collapsed ? 'w-16' : 'w-64'}
-        transition-width duration-200
-        overflow-hidden
-      `}
-    >
-      <div className="flex items-center justify-between p-4 border-b">
-        {!collapsed && 
-            <h2 className="flex items-center space-x-3 text-2xl font-bold">
-              <img
-                src="/logo/GENIUS-THUNDERBOLD-BIG.png"
-                alt="Logo Genius"
-                className="h-8 w-8 object-contain"
-              />
-            </h2>
-        }
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 text-gray-600 hover:text-gray-800 focus:outline-none"
-        >
-          {collapsed ? <HiMenu size={24} /> : <HiX size={24} />}
+    <Sidebar className="border-r border-fading-grey bg-white">
+      <SidebarHeader className="border-b border-fading-grey p-4 sm:p-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img
+            src="/logo/GENIUS-THUNDERBOLD-BIG.png"
+            alt="Logo Genius"
+            className="h-8 w-8 object-contain"
+          />
+          <div className="hidden sm:block">
+            <h2 className="text-base sm:text-lg font-bold text-mister-anthracite">Genius</h2>
+            <p className="text-xs sm:text-sm text-mister-anthracite/70">Soutien scolaire</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="px-3 sm:px-4 py-4 sm:py-6">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-mister-anthracite/70 text-xs font-semibold uppercase tracking-wider mb-2 sm:mb-3 hidden sm:block">
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {menuItems.map(({ url, icon: Icon, title }) => (
+                <SidebarMenuItem key={url}>
+                  <NavLink
+                    to={url}
+                    className={({ isActive }) =>
+                      `
+                      flex items-center gap-2 sm:gap-3 w-full p-2 sm:p-3 text-left rounded-lg transition-all duration-200 group
+                      ${isActive
+                        ? 'bg-hello-yellow/20 text-hello-yellow font-semibold'
+                        : 'hover:bg-hello-yellow/10 hover:text-mister-anthracite text-mister-anthracite/70'
+                      }
+                    `
+                    }
+                  >
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-hello-yellow transition-colors" />
+                    <span className="text-sm sm:text-base hidden sm:inline">{title}</span>
+                  </NavLink>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-3 sm:p-4 border-t border-fading-grey">
+        <button className="flex items-center gap-2 sm:gap-3 w-full p-2 sm:p-3 text-left hover:bg-crazy-magenta/10 transition-all duration-200 rounded-lg group" onClick={() => logout()}>
+          <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-crazy-magenta" />
+          <span className="text-sm sm:text-base text-mister-anthracite font-medium group-hover:text-crazy-magenta transition-colors hidden sm:inline">
+            Déconnexion
+          </span>
         </button>
-      </div>
-      <nav className="flex-1 p-2 space-y-1 ">
-        {menu.map(({ to, icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center p-2 rounded hover-bg transition-colors text-center bg-border items-center border-b-2
-              ${isActive ? 'bg-green-300 font-semibold' : 'text-gray-700'}`
-            }
-          >
-              <span className="text-lg text-center ">{icon}</span>
-            {!collapsed && <span className="ml-3">{label}</span>}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
-export default Sidebar;
+export default CustomSidebar;

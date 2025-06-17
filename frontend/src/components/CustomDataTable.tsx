@@ -1,278 +1,290 @@
-// src/components/DataTable.tsx
-import { useEffect, useMemo, useState } from 'react';
-import api from '../api/aixos';
-import { HiEye, HiOutlineUser, HiOutlineUserAdd, HiOutlineUserCircle, HiPencil, HiTrash } from 'react-icons/hi';
-import { InputText } from 'primereact/inputtext';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { TranslateHeaderNames } from '../services/functions';
+import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GradientCard } from './GardientCard';
+import api from '../api/aixos';
+import {
+  Plus, Search, Eye, Pencil, Trash2,
+  ShieldCheck, UserRound, GraduationCap
+} from 'lucide-react';
+
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Card, CardHeader, CardTitle, CardContent,
+} from '@/components/ui/card';
+import {
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
+} from '@/components/ui/table';
 
 interface DataTableProps {
-  endpoint: string;          // 'users' | 'centers' | 'students' | ...
-  pageSize?: number;         // optionnel, taille de page
+  endpoint: string;
+  title?: string;
+  addLabel?: string; // <- Texte personnalisable pour le bouton "Ajouter"
 }
 
 interface Center {
-    id: number;
-    name: string;
-    address: string;
-    city: string;
-  }
-  
-  interface Row {
-    id: number;
-    id_center: number;
-  }
+  id: number;
+  name: string;
+}
 
-const CustomDataTable: React.FC<DataTableProps> = ({ endpoint, pageSize = 10 }) => {
-    const [data, setData] = useState<any[]>([]);
-    const [columns, setColumns] = useState<string[]>([]);
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [globalFilter, setGlobalFilter] = useState<string>('');
-    const [centerMap, setCenterMap] = useState<Record<number, string>>({});
-      const navigate = useNavigate(); 
-    
+export default function CustomDataTable({
+  endpoint,
+  title = '',
+  addLabel = 'Ajouter',
+}: DataTableProps) {
+  const [data, setData] = useState<any[]>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [centerMap, setCenterMap] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const navigate = useNavigate();
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const { data: response } = await api.get<{
-            data?: any[];
-            total?: number;
-            }>(`/api/${endpoint}?page=${page}&limit=${pageSize}`);
-            const items: any = Array.isArray(response)
-            ? response
-            : response.data;
-            const filteredData = items.map(({ is_deleted, ...rest }:any) => rest);
-            
-            setData(filteredData);
-            setTotal(response.total ?? null);
-            if (items.length && columns.length === 0) {
-            setColumns(Object.keys(items[0]));
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: response } = await api.get(`/api/${endpoint}`);
+      const items = Array.isArray(response) ? response : response.data;
+      const cleaned = items.map(({ is_deleted, ...rest }: any) => rest);
+      setData(cleaned);
+    } catch (err) {
+      console.error('Erreur fetchData:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint]);
 
-    useEffect(() => {
-        api.get<Center[]>('/api/center').then((res) => {
-          const map: Record<number,string> = {};
-          res.data.forEach((c) => {
-            map[c.id] = c.name;
-          });
-          setCenterMap(map);
-        });
-    }, []);
+  const fetchCenters = useCallback(async () => {
+    try {
+      const res = await api.get<Center[]>('/api/center');
+      const map: Record<number, string> = {};
+      res.data.forEach((c) => {
+        map[c.id] = c.name;
+      });
+      setCenterMap(map);
+    } catch (err) {
+      console.error('Erreur fetchCenters:', err);
+    }
+  }, []);
 
-    useEffect(() => {
-        fetchData();
-    }, [endpoint, page, pageSize]);
+  useEffect(() => {
+    fetchData();
+    fetchCenters();
+  }, [fetchData, fetchCenters]);
 
-    const handleSelect = (row: any) => {
-        if(row.data && row.data.class) {
-            navigate(`/studentDetails/${row.data.id}`);
-        }
-    };
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Confirmer la suppression ?')) return;
+    try {
+      await api.delete(`/api/${endpoint}/${id}`);
+      fetchData();
+    } catch (err) {
+      console.error('Erreur delete:', err);
+      alert('Erreur lors de la suppression');
+    }
+  };
 
-    const columns_ = useMemo(() => {
-        if (!data.length) return [];
-        return Object.keys(data[0])
-          .filter((k) => k !== 'is_deleted')
-          .map((key) => {
-            const header = key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-            const body = (row: any) => {
-              const v = row[key];
-                if (key === 'created_at') {
-                    return v
-                    ? new Date(v).toLocaleString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        })
-                    : '—';
-                }
+  const filteredData = useMemo(() => {
+    return data.filter((item) =>
+      Object.values(item).some((val) =>
+        String(val).toLowerCase().includes(globalFilter.toLowerCase())
+      )
+    );
+  }, [data, globalFilter]);
 
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredData.slice(start, start + rowsPerPage);
+  }, [filteredData, currentPage, rowsPerPage]);
 
-                if (key === 'id_center' && centerMap) {
-                    return `${centerMap[row.id_center]}`
-                }
-                if (key === 'is_active') {
-                    return row.is_active ? (
-                        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">Activé</span>
-                    ) : (<span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset">Désactivé</span>)
-                }
-                if (key === 'google_id') {
-                    return row.google_id ? (
-                        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">
-                        <img src="logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
-                            GOOGLE</span>
-                    ) : (<span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-orange-600/10 ring-inset">Auth</span>)
-               
-                }
-                if(key === 'roles'){
-                    if (row.roles[0] === 'ROLE_ADMIN') {
-                        return  <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-green-600/10 ring-inset">
-                                    <HiOutlineUserAdd className="h-5 w-5"  /> Admin
-                                </span>
-                    } else if(row.roles[0] === 'ROLE_USER') {
-                        return  <span className="inline-flex items-center rounded-md bg px-2 py-1 text-xs font-medium text-color ring-1 ring-green-600/10 ring-inset">
-                                    <HiOutlineUser className="h-5 w-5"  /> User
-                                </span>
-                    } else {
-                        return  <span className="inline-flex items-center rounded-md bg-white-50 px-2 py-1 text-xs font-medium text-black-700 ring-1 ring-green-600/10 ring-inset">
-                                    <HiOutlineUserCircle className="h-5 w-5"  /> Tuteur
-                                </span>
-                    }
-                }
+  const handlePageChange = (direction: 'next' | 'prev') => {
+    setCurrentPage((prev) => {
+      if (direction === 'next') return Math.min(prev + 1, totalPages);
+      if (direction === 'prev') return Math.max(prev - 1, 1);
+      return prev;
+    });
+  };
 
-              return v == null ? '—' : String(v);
-            };
-            return {
-              field: key,
-              header,
-              body,
-              headerClassName: 'bg-gray-100 text-gray-700',  // style header
-              bodyClassName: 'text-gray-800',                // style cellules
-            };
-          })
-          .concat({
-            field: 'actions',
-            header: 'Actions',
-            body: (row: any) => (
-                <div className="flex space-x-2">
-                        <a
-                            href={`/${endpoint}/${row.id}`}
-                            className="text-blue-600 hover:underline"
-                        >
-                            <HiEye className="h-5 w-5 text-blue-600" />
-                        </a>
-                        <a
-                            href={`/${endpoint}/${row.id}/edit`}
-                            className="text-green-600 hover:underline"
-                        >
-                            <HiPencil className="h-5 w-5 text-green-600" />
-                        </a>
-                        <button
-                            onClick={() => handleDelete(row.id)}
-                            className="text-red-600 hover:underline"
-                        >
-                            <HiTrash className="h-5 w-5 text-red-600" />
-                        </button>
-                </div>
-            ),
-            headerClassName: 'bg-gray-100 text-gray-700',
-            bodyClassName: 'text-gray-800',
-        });
-    }, [data]);
-    
-    const header = (
-        <div className="flex justify-between items-center p-3 bg-white border-b bg">
-            <span className="p-input-icon-left w-full  py-1">
-            <InputText
+  const handleRowsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-mister-anthracite">{title}</h1>
+        <Button
+          className="bg-hello-yellow text-mister-anthracite hover:bg-hello-yellow/90 transition"
+          onClick={() => navigate(`/form/${endpoint}`)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {addLabel}
+        </Button>
+      </div>
+
+      <Card className="border-fading-grey shadow-sm">
+        <CardHeader>
+          <div className="flex justify-between items-center gap-4 flex-wrap">
+            <CardTitle className="text-xl text-mister-anthracite">Résultats</CardTitle>
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mister-anthracite/50 w-4 h-4" />
+              <Input
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
-                placeholder="Rechercher..."
-                className="border color-border border-2 rounded px-2 py-1 w-full h-12 "
-            />
-            </span>
-        </div>
-    );
-    
-    const handleDelete = async (id:any) => {
-        if (!window.confirm('Confirmer la suppression de cet utilisateur ?')) {
-          return;
-        }
-        try {
-            await api.delete(`/api/${endpoint}/${id}`);
-            fetchData();
-        } catch (err) {
-          console.error(err);
-          alert('Erreur lors de la suppression');
-        }
-    };
-
-    if (loading) return <p>Chargement…</p>;
-    if (!data.length) return <p>Aucune donnée.</p>;
-
-    return (
-        <div  className="overflow-x-auto ">
-            <div className='py-3'>
-                <button   className="bg-white hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow">
-                    <a href={`/form/${endpoint}/`}  className="text-color  hover:underline" >
-                        Ajouter +
-                    </a>
-                </button>
+                placeholder="Rechercher…"
+                className="pl-10 border-fading-grey"
+              />
             </div>
+          </div>
+        </CardHeader>
 
-            <GradientCard className=" w-5/5" innerClassName="p-4 space-y-6">
-                <div className="bg-white p-4 rounded-lg shadow-md rounded shadow">
-                    <DataTable
-                        showGridlines
-                        value={data}
-                        header={header}                       
-                        globalFilter={globalFilter}
-                        onRowClick={(params) => {
-                            handleSelect(params)
-                        }}
-                        paginator
-                        rows={10}
-                        onClick={handleSelect}
-                        rowsPerPageOptions={[10,25,50]}
-                        className="shadow-lg rounded-lg overflow-hidden"
-                        tableClassName="min-w-full "
-                        rowClassName={(_, i:any) => i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                        paginatorClassName="bg-white border-t border-gray-200 p-3 flex justify-between items-center "
-                        currentPageReportTemplate="Page {first}–{last} / {totalRecords}"
-                        paginatorTemplate=" 
-                        RowsPerPageDropdown 
-                        CurrentPageReport 
-                        PrevPageLink 
-                        PageLinks 
-                        NextPageLink
-                        "
-                    >
-                    {columns_.map((col) => {
-                        const styleOfTable:any = {
-                            backgroundColor: 'rgba(36, 153, 46, 0.36)',  // Indigo 800
-                            color: 'black',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            fontSize: '0.75rem',           
-                            padding: '0.75rem 1.5rem',     
-                            paddingBlock: '1rem'
-                        }
-                        let header_name:any = '';
-                        header_name = TranslateHeaderNames(col.field.toLowerCase())
-                        return (  
-                        <Column
-                            key={col.field}
-                            field={col.field}
-                            header={header_name}
-                            body={col.body}
-                            sortable
-                            filter={col.field !== 'actions'}
-                            style={{ width: '25%' }}
-                            bodyClassName="px-4 py-2 border-b border-gray-200 text-gray-800 "
-                            headerStyle={styleOfTable}
-                            className=' hover:bg-gray-100 cursor-pointer'
-                        />
-                        )
-                    } )}
-                </DataTable>
+        <CardContent>
+          {loading ? (
+            <div className="text-sm text-mister-anthracite/70 py-8 text-center">Chargement des données…</div>
+          ) : filteredData.length === 0 ? (
+            <div className="text-sm text-mister-anthracite/70 py-8 text-center">Aucune donnée trouvée.</div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-fading-grey">
+                    {Object.keys(paginatedData[0]).map((key) => (
+                      <TableHead key={key} className="text-mister-anthracite uppercase text-xs">
+                        {key === 'id_center' ? 'Centre' : key.replace(/_/g, ' ')}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-mister-anthracite uppercase text-xs">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-fading-grey/50">
+                      {Object.keys(row).map((key) => {
+                        const value = row[key];
+
+                        return (
+                          <TableCell key={key} className="text-mister-anthracite text-sm">
+                            {(() => {
+                              // Role badge + icon
+                              if (key === 'roles' && Array.isArray(value)) {
+                                const role = value[0];
+                                const roleMap: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+                                  ROLE_ADMIN: {
+                                    label: 'Admin',
+                                    color: 'bg-crazy-magenta/10 text-crazy-magenta',
+                                    icon: <ShieldCheck className="w-3 h-3 mr-1" />,
+                                  },
+                                  ROLE_USER: {
+                                    label: 'Utilisateur',
+                                    color: 'bg-fading-grey text-mister-anthracite',
+                                    icon: <UserRound className="w-3 h-3 mr-1" />,
+                                  },
+                                  ROLE_TUTOR: {
+                                    label: 'Tuteur',
+                                    color: 'bg-blue-100 text-blue-600',
+                                    icon: <GraduationCap className="w-3 h-3 mr-1" />,
+                                  },
+                                };
+                                const roleStyle = roleMap[role] || roleMap.ROLE_USER;
+                                return (
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleStyle.color}`}>
+                                    {roleStyle.icon} {roleStyle.label}
+                                  </span>
+                                );
+                              }
+
+                              if (key === 'is_active') {
+                                return value ? (
+                                  <span className="inline-flex items-center rounded-full bg-green-100 text-green-600 text-xs font-medium px-2 py-1">
+                                    Actif
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded-full bg-red-100 text-red-600 text-xs font-medium px-2 py-1">
+                                    Désactivé
+                                  </span>
+                                );
+                              }
+
+                              if (key === 'google_id') {
+                                return value ? (
+                                  <span className="inline-flex items-center rounded-md bg-[#F2F2F2] px-2 py-1 text-xs font-medium text-[#333333] ring-1 ring-[#FFB800]/20 ring-inset">
+                                    <img src="/logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
+                                    GOOGLE
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded-md bg-[#FFB800]/10 px-2 py-1 text-xs font-medium text-[#FFB800] ring-1 ring-[#FFB800]/20 ring-inset">
+                                    Auth
+                                  </span>
+                                );
+                              }
+
+                              if (key === 'created_at' && value) {
+                                return new Date(value).toLocaleDateString('fr-FR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                });
+                              }
+
+                              if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+
+                              if (key === 'id_center') return centerMap[value] || '—';
+
+                              return value || '—';
+                            })()}
+                          </TableCell>
+                        );
+                      })}
+
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}`)}>
+                            <Eye className="w-4 h-4 text-mister-anthracite/70" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}/edit`)}>
+                            <Pencil className="w-4 h-4 text-hello-yellow" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
+                            <Trash2 className="w-4 h-4 text-crazy-magenta" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-4">
+                <div className="flex items-center gap-2 text-sm text-mister-anthracite/70">
+                  <label htmlFor="rows">Afficher</label>
+                  <select
+                    id="rows"
+                    value={rowsPerPage}
+                    onChange={handleRowsChange}
+                    className="border border-fading-grey rounded px-2 py-1 text-sm"
+                  >
+                    <option value={20}>20 lignes</option>
+                    <option value={50}>50 lignes</option>
+                    <option value={100}>100 lignes</option>
+                  </select>
                 </div>
-            </GradientCard>
-        </div>
-    );
-};
-
-export default CustomDataTable;
+                <div className="flex items-center gap-4">
+                  <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => handlePageChange('prev')}>
+                    Précédent
+                  </Button>
+                  <span className="text-sm text-mister-anthracite/70">
+                    Page {currentPage} / {totalPages || 1}
+                  </span>
+                  <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => handlePageChange('next')}>
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
