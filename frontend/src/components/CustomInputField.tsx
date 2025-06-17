@@ -8,19 +8,19 @@ interface DetailProps {
   }
   
   export const Detail: React.FC<DetailProps> = ({ label, value, onUpdate, handleChange, fieldName, spanClass }) => (
-    <div  className={`space-y-1 bg-gray-100 rounded ${spanClass}`}>
-      <h3 className="text-sm font-semibold text-slate-900  bg p-3 border-b-2 color-border">
+    <div  className={`space-y-2  ${spanClass}`}>
+      <h3 className="text-sm font-medium text-gray-600 flex items-center">
         {label} 
       </h3>
   
       {onUpdate  ?
-            <input className="text-base text-slate-900 dark:text-slate-200 break-all p-2 w-full bg-gray-100 border-2 border-gray-400 rounded"
+            <input className="text-base text-slate-900 dark:text-slate-200 break-all p-2 w-full  border-2 rounded"
               defaultValue={value}
               onChange={handleChange}  
               name={fieldName} 
             />
         :
-        <p className="text-base text-slate-900 dark:text-slate-200 break-all p-2">
+        <p className="p-3 bg-gray-50 rounded-lg border">
         {value}
         </p>
       }

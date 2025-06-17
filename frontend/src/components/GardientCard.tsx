@@ -1,31 +1,28 @@
-import { Navigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useAuth } from "../Hooks/auth";
 import clsx from "clsx";
 import React from "react";
 
 
 /** GradientCard – wrapper avec bordure dégradée réutilisable */
-export interface GradientCardProps {
+
+interface GradientBorderProps {
   children: React.ReactNode;
-  gradient?: string;
+  gradient?: string; // ignoré ici mais laissé pour compatibilité
+
   className?: string;
   innerClassName?: string;
 }
-export const GradientCard: React.FC<GradientCardProps> = ({
+export const GradientCard: React.FC<any> = ({
   children,
-  gradient = "from-purple-500 via-pink-500 to-red-500",
   className = "",
   innerClassName = "",
 }) => (
   <div
     className={clsx(
-      "relative p-[1px] rounded-2xl bg-gradient-to-br shadow-lg",
-      gradient,
+      "relative p-[1px] rounded-2xl bg-[#333333]", // Mister Anthracite
       className
     )}
   >
-    <div className={clsx("rounded-2xl bg-white dark:bg-zinc-900", innerClassName)}>
+    <div className={clsx("rounded-2xl bg-[#FFFFFF]", innerClassName)}> {/* Dat White */}
       {children}
     </div>
   </div>

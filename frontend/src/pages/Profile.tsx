@@ -7,6 +7,8 @@ import Modal from '../components/Modal';
 import Alert, { AlertMessage } from "../components/Alert";
 import { Detail } from "../components/CustomInputField";
 import { validatePasswords } from "../services/functions";
+import RoleBadge from "../components/RoleBadge";
+import { Edit, Key, Save, Ban } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -88,6 +90,17 @@ const Profile: React.FC = () => {
               {user.firstname || "Utilisateur"} {user.lastname}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+              {/* Roles spanning both cols */}
+              {user.roles && user.roles.length > 0 && (
+                <div className="md:col-span-2 flex flex-wrap items-center gap-2  p-2 rounded">
+              {/* Titre plein largeur */}
+                {/* Badges */}
+                {user.roles.map((role: string) => (
+                  
+                  <RoleBadge role={role} />
+                ))}
+              </div>
+              )}
           </div>
 
           <form onSubmit={safeNeWProfileUserData}>
@@ -109,88 +122,80 @@ const Profile: React.FC = () => {
                 </>
               }
                { passwordErrorMesssage &&  <AlertMessage message={errorMesssage} /> }
-              {/* Roles spanning both cols */}
-              {user.roles && user.roles.length > 0 && (
-                <div className="md:col-span-2 flex flex-wrap items-center gap-2  p-2 rounded">
-              {/* Titre plein largeur */}
-                <h3 className="basis-full text-sm font-semibold text-slate-500 dark:text-slate-400">
-                  Rôles
-                </h3>
-                {/* Badges */}
-                {user.roles.map((role: string) => (
-                  <span
-                    key={role}
-                    className="inline-block rounded-full bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow"
-                  >
-                    {role}
-                  </span>
-                ))}
-              </div>
-              )}
             </div>
-            <div className=" flex mt-4">
-              {
-                  updateMode && !updatePasswordMode &&
-                  <>
-                    <button
-                      type="submit"
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Enregistrer
-                    </button>
-                  
-                    <button
-                      type="button"
-                      onClick={() => setUpdateMode(false)}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 bg   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Annuler
-                    </button>
-                  </>
-                }
-                {
-                  !updateMode && !updatePasswordMode &&
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              {/* Mode édition profil */}
+              {updateMode && !updatePasswordMode && (
+                <>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 rounded-lg transition"
+                  >
+                    <Save className="h-4 w-4" />
+                    Enregistrer
+                  </button>
+
                   <button
                     type="button"
-                    onClick={()=> setUpdateMode(true)}
-                    className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                    onClick={() => setUpdateMode(false)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-lg transition"
                   >
+                    <Ban className="h-4 w-4" />
+                    Annuler
+                  </button>
+                </>
+              )}
+
+              {/* Mode édition mot de passe */}
+              {!updateMode && updatePasswordMode && (
+                <>
+                  <button
+                    type="submit"
+                    disabled={enableSaveButton}
+                    className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
+                      enableSaveButton
+                        ? 'bg-orange-200 text-white cursor-not-allowed'
+                        : 'bg-orange-600 text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300'
+                    }`}
+                  >
+                    <Save className="h-4 w-4" />
+                    Enregistrer le mot de passe
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setUpdatePasswordMode(false)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-lg transition"
+                  >
+                    <Ban className="h-4 w-4" />
+                    Annuler
+                  </button>
+                </>
+              )}
+
+              {/* Mode lecture */}
+              {!updateMode && !updatePasswordMode && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setUpdateMode(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-700 border border-orange-300 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 rounded-lg transition"
+                  >
+                    <Edit className="h-4 w-4" />
                     Modifier
                   </button>
-                }
 
-                {
-                  !updateMode && updatePasswordMode &&
-                  <>
-                    <button
-                      type="submit"
-                      disabled={enableSaveButton}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Enregistrer le mot de passe
-                    </button>
-                  
-                    <button
-                      type="button"
-                      onClick={() => setUpdatePasswordMode(false)}
-                      className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border   rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Annuler
-                    </button>
-                  </>
-                }
-                {
-                  !updateMode && !updatePasswordMode &&
                   <button
                     type="button"
-                    onClick={()=> setUpdatePasswordMode (true)}
-                    className="ml-auto py-2.5 px-5 text-sm font-medium text-color border-2 color-border  rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+                    onClick={() => setUpdatePasswordMode(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-700 border border-orange-300 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 rounded-lg transition"
                   >
+                    <Key className="h-4 w-4" />
                     Modifier le mot de passe
                   </button>
-                }
-             
-              </div>
+                </>
+              )}
+            </div>
           </form>
           <Alert 
               title="Alert!" 
