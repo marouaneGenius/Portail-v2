@@ -11,7 +11,7 @@ import DisponibiliteEtAssistanceDomicileComponent from './DisponibiliteEtAssista
 import AbsencesComponent from './AbsencesComponent';
 import CreationGestionCompteURSSAFComponent from './CreationGestionCompteURSSAFComponent';
 import ChequeDeCautionComponent from './ChequeDeCautionComponent';
-import { getNiveauScolaire, getPrice } from '../SubscriptionFunctions';
+import { getNiveauScolaire, getPrice, getStagePrice, showSubscriptionPrice } from '../SubscriptionFunctions';
 import ProcedureResiliationNotice from './ProcedureResiliationComponent';
 import SignatureComponent from './SignatureComponent';
 
@@ -19,21 +19,39 @@ export interface FullContractProps {
     Student:any;
     Subscription:any;
     SubscriptionType: any;
-  }
+}
 
 const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subscription, SubscriptionType}) => {
     const [student, setStudent] = useState(Student);
     const [price, setPrice] = useState(0);
+    const [showFraisInscriptionComponent, setshowFraisInscriptionComponent] = useState(true);
+    const [isCombined, setIsCombined] = useState(Subscription.combined_id ? true : false);
 
     useEffect(() => {
-        const isCombined = Array.isArray(Subscription);
         const isMember = false //getIfStudentIsMember(student, SubscriptionType);
         const niveau:any = getNiveauScolaire(student.class);
+        let newPrice;
 
-        if(SubscriptionType && typeof SubscriptionType  === 'string'){
-            const newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
-            setPrice(newPrice)
-        }  
+        if(SubscriptionType === 'stage'){
+             newPrice = getStagePrice(Subscription.week_count, isCombined, isMember)
+        } else {
+             newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
+        }
+        
+        setPrice(newPrice)
+
+        if(isCombined) {
+            showSubscriptionPrice(Subscription).then((res) => {
+                if(res.includes('annuel') && SubscriptionType == 'annuel') {
+                    setshowFraisInscriptionComponent(true)
+                } else if(!res.includes('annuel') && res.includes('preinscription') && SubscriptionType == 'preinscription'){
+                    setshowFraisInscriptionComponent(true)
+                } else {
+                    setshowFraisInscriptionComponent(false)
+                }
+            })
+        }
+
     } ,[Student, Subscription, SubscriptionType]);
 
     return (
@@ -43,18 +61,21 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
                     Student &&
                     <HeaderComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
                 }
-                {/* <div className="page-break" /> */}
                 {
                     Student && Subscription &&
                     <TarificationCalculator data={Subscription} price={price} />
                 }
+
+                {
+                    SubscriptionType && showFraisInscriptionComponent &&
                     <FraisInscriptionComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription}  price={price} />
+                }
                     <EngagementPaiementNotice />
                 {
-                    SubscriptionType !== 'stage'&&
+                    SubscriptionType !== 'stage' &&
                     <>
                         {
-                            price !== 0 && 
+                            price  && 
                             <ChequeDeCautionComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} price={price}  />
                         }
                         <ComportementComponent />

@@ -8,7 +8,6 @@ export interface ContractData {
   date_debut_abo: string;     // ISO string
   subscription_end_date: Date;       // ISO string
   payment_mode: "annuel" | "trimestriel" | "mensuel";
-  classe: string;             // ex. "CP", "CM1", etc.
   session_per_week: string;      // "Lundi | Mercredi", etc.
   is_combined: boolean;
   is_combined_stage: boolean;
@@ -31,6 +30,7 @@ const TarificationCalculator: React.FC<CalculatorProps> = ({ data, price }) => {
       lignes={lignes}
       totalApresReduction={totalApresReduction}
       coutHoraire={coutHoraire}
+      subscription_type={data.subscription_type}
     />
   );
 };

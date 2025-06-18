@@ -80,7 +80,7 @@ class Subscription
     private ?string $subscription_type = null;
 
     #[ORM\Column]
-    private ?bool $is_valide = null;
+    private ?bool $is_valide = false;
 
     #[ORM\ManyToMany(targetEntity: Session::class, mappedBy: 'id_subscription')]
     private Collection $sessions;

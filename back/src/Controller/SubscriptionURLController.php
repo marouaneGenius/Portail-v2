@@ -37,11 +37,12 @@ class SubscriptionURLController extends AbstractController
         if (!$file instanceof UploadedFile) {
             throw new BadRequestHttpException('Le fichier PDF est requis.');
         }
-    
+
         // 2) Récupérer les autres champs
         $studentId      = $request->request->getInt('user_id');
         $subscriptionId = $request->request->getInt('subscription_id');
-    
+        $is_combined = $request->request->getBoolean('is_combined');
+
         if (!$studentId || !$subscriptionId) {
             throw new BadRequestHttpException('user_id et subscription_id sont requis.');
         }
@@ -49,6 +50,7 @@ class SubscriptionURLController extends AbstractController
         // 3) Charger Student et Subscription
         $student = $this->studentRepo->find($studentId);
         $sub     = $this->subRepo->find($subscriptionId);
+
         if (!$student || !$sub) {
             return $this->json(['error' => 'Student ou Subscription introuvable.'], JsonResponse::HTTP_NOT_FOUND);
         }
@@ -61,11 +63,14 @@ class SubscriptionURLController extends AbstractController
     
         // 5) Générer un nom de fichier unique
         $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
         $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $baseName);
+
+
         $filename = sprintf('%s_%s.%s',
             $safeName,
             uniqid(),
-            $file->guessExtension() ?: 'pdf'
+            'pdf'
         );
     
         // 6) Déplacer le fichier dans public/contrats
@@ -78,6 +83,7 @@ class SubscriptionURLController extends AbstractController
         $subscriptionUrl = new SubscriptionURL();
         $subscriptionUrl
             ->setStudent($student)
+            ->setIsCombined($is_combined )
             ->setSubscription($sub)
             ->setUrl($publicUrl);
     

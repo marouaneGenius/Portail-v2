@@ -5,7 +5,7 @@ export interface ContractHeaderProps {
   student?: any;
   subscriptionType?: string;
   subscription?: any;
-  price?:any
+  price?:any;
 }
 
 const ContractHeader: React.FC<ContractHeaderProps> = ({ student, subscription,  subscriptionType, }) => {
@@ -18,13 +18,8 @@ const ContractHeader: React.FC<ContractHeaderProps> = ({ student, subscription, 
   useEffect(() => {
     if(subscriptionType && subscriptionType === 'stage') {
       setshowStageData(true);
-      console.log(subscription)
     }
   },[subscriptionType])
-
-  // Mot de passe : première partie du prénom + "genius" + id
-  // const prenomKey = student.firstName.split(/[\s-]+/)[0];
-  // const password = `${prenomKey.toLowerCase()}genius${student.id}`;
 
   return (
     <div className="space-y-8 text-sm">

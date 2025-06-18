@@ -22,12 +22,13 @@ class SubscriptionURL
     #[ORM\ManyToOne(inversedBy: 'subscriptionURLs')]
     private ?Student $student = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $is_combined = null;
+
     public function getId(): ?int
     {
         return $this->id;
     }
-
-
 
     public function getSubscription(): ?Subscription
     {
@@ -61,6 +62,18 @@ class SubscriptionURL
     public function setStudent(?Student $student): static
     {
         $this->student = $student;
+
+        return $this;
+    }
+
+    public function isIsCombined(): ?bool
+    {
+        return $this->is_combined;
+    }
+
+    public function setIsCombined(?bool $is_combined): static
+    {
+        $this->is_combined = $is_combined;
 
         return $this;
     }
