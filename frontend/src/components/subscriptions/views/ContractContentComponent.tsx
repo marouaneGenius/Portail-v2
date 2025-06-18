@@ -22,21 +22,22 @@ const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subsc
 
 
   return (
-    <div className="space-y-8">
-        
-        <div className="bg-white p-6 text-sm text-gray-800">
-            {
-                Array.isArray(Subscription) ?
-                <>
-                    {
-                        subscription.map((sub:any) => {
-                        return <SingleSubscriptionContent Student={Student} Subscription={sub} SubscriptionType={sub.subscription_type} />
-                        })
-                    }
-                </>
-                :
-                <SingleSubscriptionContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />
-            }
+    <div className="space-y-8 flex ">
+        <div className='mx-auto w-5/6 rounded'>
+            <div className="bg-white p-2 text-sm text-gray-800">
+                {
+                    Array.isArray(Subscription) ?
+                    <>
+                        {
+                            subscription.map((sub:any) => {
+                            return <SingleSubscriptionContent Student={Student} Subscription={sub} SubscriptionType={sub.subscription_type} />
+                            })
+                        }
+                    </>
+                    :
+                    <SingleSubscriptionContent Student={Student} Subscription={Subscription} SubscriptionType={subscriptionType} />
+                }
+            </div>
         </div>
     </div>
   );

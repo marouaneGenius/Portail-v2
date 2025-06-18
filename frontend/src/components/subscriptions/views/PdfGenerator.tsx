@@ -12,9 +12,6 @@ export interface FullContractProps {
 const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) => {
   const previewId = 'contract-preview';
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [showGeneratedPdf, setShowGeneratedPdf] = useState<boolean>(false);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
-
 
   useEffect(() => {
     const el = document.getElementById(previewId);
@@ -35,7 +32,6 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
     if (!el) return;
 
     try {
-      // dynamic import to get the real default export at runtime
       const { default: html2pdf } = await import('html2pdf.js');
       const worker = html2pdf().set(pdfOptions).from(el);
       const blob: Blob = await worker.outputPdf('blob');
@@ -45,46 +41,53 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
     }
   };
 
+  // const seeContract = async () => {
+  //   const el = document.getElementById(previewId);
+  //   if (!el) return;
+
+  //   try {
+  //     const { default: html2pdf } = await import('html2pdf.js');
+  //     const worker = html2pdf().set(pdfOptions).from(el);
+  //     const blob: Blob = await worker.outputPdf('blob');
+  //     setPdfUrl(URL.createObjectURL(blob));
+  //   } catch (err) {
+  //     console.error('Erreur génération PDF :', err);
+  //   }
+  // };
+
   return (
-    <div className="space-y-8 w-full">
+    <div className="space-y-0  ">
+        <DownloadButtonsComponents 
+          student={Student}  
+          subscription={Subscription}    
+          previewId={previewId}
+          onGenerate={generatePdf}
+          // seeContract={seeContract}
+          pdfUrl={pdfUrl} />
 
-      <DownloadButtonsComponents 
-        student={Student}  
-        subscription={Subscription}    
-        previewId={previewId}
-        onGenerate={generatePdf}
-        pdfUrl={pdfUrl} />
-
-      <style>{`
-        .page-break { page-break-before: always; }
-        #${previewId} { width: 210mm; }
-      `}</style>
-      {
-        !pdfUrl &&
-        <div className="bg-white p-0">
-          
-        <Preview id={previewId}>
-          <ContractContentComponent Student={Student} Subscription={Subscription} />
-        </Preview>
-      </div>
-      }
-     {pdfUrl && (
-        <div className="mt-6 w-full h-[1000px] border">
-          {/* <iframe
-            src={pdfUrl}
-            title="Aperçu du contrat PDF"
-            width="100%"
-            height="100%"
-          /> */}
-          <RPConfig>
-            <RPProvider src={pdfUrl} >
-              <RPDefaultLayout style={{ height: '660px' }}>
-                <RPPages />
-              </RPDefaultLayout>
-            </RPProvider>
-          </RPConfig>
-        </div>
-      )}
+        <style>{`
+          .page-break { page-break-before: always; }
+          #${previewId} { width: 900px; }
+        `}</style>
+        {
+          !pdfUrl &&
+          <div className="p-0 ">
+            <Preview id={previewId}>
+              <ContractContentComponent Student={Student} Subscription={Subscription} />
+            </Preview>
+          </div>
+        }
+        {pdfUrl && (
+            <div className="mt-0 w-full h-[1000px] border">
+              <RPConfig>
+                <RPProvider src={pdfUrl} >
+                  <RPDefaultLayout style={{ height: '660px' }}>
+                    <RPPages />
+                  </RPDefaultLayout>
+                </RPProvider>
+              </RPConfig>
+            </div>
+          )}
     </div>
   );
 };

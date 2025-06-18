@@ -2,6 +2,7 @@ import axios from "axios";
 import { nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
 import { TarificationLigne } from "./views/LevyTableComponent";
 import { ContractData } from "./views/TarificationCalculator";
+import api from "../../api/aixos";
 
   interface StageData {
     start_date: Date;
@@ -65,6 +66,85 @@ import { ContractData } from "./views/TarificationCalculator";
     }
   };
 
+
+  export const getStagePrice = (    week_count: any,
+    hasPreinscription: boolean,
+    isMember: boolean) => {
+     
+    const baseTarifs:any = hasPreinscription || isMember
+    ? { 1: 280, 2: 500, 3: 800 }
+    : { 1: 350, 2: 620, 3: 930 };
+
+    return baseTarifs[week_count];
+  }
+
+
+  export function computeStageTarification(
+    data: any,
+    hasPreinscription: boolean,
+    isMember: boolean
+  ) {
+    // 1) Base tarifs
+    const baseTarifs:any = hasPreinscription || isMember
+      ? { 1: 280, 2: 500, 3: 800 }
+      : { 1: 350, 2: 620, 3: 930 };
+    const suppl = hasPreinscription || isMember ? 200 : 300;
+  
+    // 2) Prix total avant remise
+    const nbSemaines = data.week_count;
+    const prixTotalAvantRemise =
+      nbSemaines <= 3
+        ? baseTarifs[nbSemaines] ?? baseTarifs[1]
+        : baseTarifs[3] + (nbSemaines - 3) * suppl;
+  
+    // 3) Appliquer la remise
+    const prixReduit = Math.round(
+      prixTotalAvantRemise * (1 - (data.discount ?? 0) / 100)
+    );
+  
+    // 4) Déterminer le nombre d’échéances
+    const nbEcheances =
+      data.installment_count && data.installment_count > 0
+        ? data.installment_count
+        : data.selected_weeks.length;
+  
+    // 5) Répartition
+
+    const prixAvantEch = Math.round((prixReduit * 2) / nbEcheances);
+    const prixApresEch = Math.round(prixAvantEch / 2);
+  
+    const rawDatesIso = buildPaymentDates(
+      data.first_debit_date,   // ta première date de prélèvement
+      nbEcheances              // le nombre d’échéances calculé
+    );
+  
+    // 7) Formatage FR
+    const frenchDays = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+    const frenchMonths = ['janvier','février','mars','avril','mai','juin','juillet',
+                          'août','septembre','octobre','novembre','décembre'];
+    const formatFR = (iso: string) => {
+      const d = new Date(iso);
+      return `${frenchDays[d.getDay()]} ${String(d.getDate()).padStart(2,'0')} `
+           + `${frenchMonths[d.getMonth()]} ${d.getFullYear()}`;
+    };
+
+    // 8) Construire les lignes
+    const lignes: any[] = rawDatesIso.map((iso:any, idx:any) => ({
+      description: `Échéance ${idx + 1}`,
+      datePrelevement: formatFR(iso),
+      tarifAvant: prixAvantEch,
+      tarifApres: prixApresEch,
+    }));
+  
+    // 9) Totaux
+    const totalApresReduction = prixApresEch * nbEcheances;
+    const totalHeures = nbSemaines * 5 * 3; // 3h/jour, 5j/sem
+    const coutHoraire =
+      totalHeures > 0 ? Number((totalApresReduction / totalHeures).toFixed(2)) : 0;
+  
+    return { lignes, totalApresReduction, coutHoraire };
+  }
+
   const CLASSES_COLLEGE_LYCEE = [
     '6ème', '5ème', '4ème', '3ème', 
     '2nd', '1ère', 'Term'
@@ -80,77 +160,6 @@ import { ContractData } from "./views/TarificationCalculator";
     '6h00': 1.5
   };
 
-  function getTarifsStage(data: ContractData): TarifsStage {
-
-    return {
-      tarifs_semaines: {
-        1: 350,
-        2: 620,
-        3: 930
-      },
-      tarif_semaine_supplementaire: 300
-    };
-  }
-
-  export function computeStageTarification(data: StageData) {
-    const {
-      start_date,
-      end_date,
-      hours_per_day,
-      days_per_week,
-      weeks,
-      unit_price_before,
-      unit_price_after,
-      discount = 0
-    } = data;
-
-    // Calcul du nombre total d'heures
-    const total_hours = weeks * days_per_week * hours_per_day;
-
-    // Calcul des dates de prélèvement (ex: chaque lundi)
-    const payment_dates: Date[] = [];
-    const current_date = new Date(start_date);
-    
-    // Trouve le premier lundi
-    while (current_date.getDay() !== 1) {
-      current_date.setDate(current_date.getDate() + 1);
-    }
-
-    // Génère les dates de paiement
-    for (let i = 0; i < weeks; i++) {
-      const payment_date = new Date(current_date);
-      payment_date.setDate(current_date.getDate() + (i * 7));
-      payment_dates.push(payment_date);
-    }
-
-    // Formatage des dates en français
-    const french_months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-    const french_days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-
-    // Création des lignes du tableau
-    const lignes = payment_dates.map((date, index) => {
-      const formatted_date = `${french_days[date.getDay()]} ${date.getDate()} ${french_months[date.getMonth()]} ${date.getFullYear()}`;
-      
-      return {
-        description: `Échéance ${index + 1}`,
-        datePrelevement: formatted_date,
-        nbSeances: days_per_week * hours_per_day,
-        tarifAvant: unit_price_before,
-        tarifApres: unit_price_after,
-      };
-    });
-
-    // Calcul des totaux
-    const total_apres_reduction = unit_price_after * weeks;
-    const cout_horaire = total_hours > 0 ? total_apres_reduction / total_hours : 0;
-
-    return { 
-      lignes, 
-      totalApresReduction: total_apres_reduction, 
-      coutHoraire: cout_horaire,
-      totalHeures: total_hours
-    };
-  }
 
   export function getClosestStandardDate(date: Date): Date {
     const day = date.getDate();
@@ -175,11 +184,10 @@ import { ContractData } from "./views/TarificationCalculator";
   }
   
   /** Génère le tableau de tarification et totaux */
-  export function computeTarification(data: ContractData, price:any) {
+  export function computeTarification(data: any, price:any) {
     const {
       subscription_start_date,
       payment_mode,
-      classe,
       session_per_week,
       is_combined,
       is_combined_stage,
@@ -191,14 +199,6 @@ import { ContractData } from "./views/TarificationCalculator";
   
     // 1. Détermination du tarif unitaire selon la classe et le combo
     let priceByClass: Record<number, number>;
-    const baseKey = is_combined || is_combined_stage
-      ? [ "CP","CE1","CE2","CM1","CM2" ].includes(classe)
-        ? {1:125,2:215,3:250,4:320}
-        : {1:150,2:240,3:290,4:370}
-      : [ "CP","CE1","CE2","CM1","CM2" ].includes(classe)
-        ? {1:160,2:250,3:310,4:370}
-        : {1:180,2:290,3:340,4:410};
-    priceByClass = baseKey;
   
     // 2. Nombre de séances par semaine
     const seancesParSemaine:any = session_per_week;
@@ -211,7 +211,7 @@ import { ContractData } from "./views/TarificationCalculator";
     let totalHeures = 0;
   
     const prelevementDate = new Date(subscription_start_date);
-  
+
     // Helper pour formater FR
     const fmtFR = (d: Date) =>
       d.toLocaleDateString("fr-FR", {
@@ -222,39 +222,13 @@ import { ContractData } from "./views/TarificationCalculator";
       });
 
     if (data.subscription_type === 'stage') {
-      const tarifs = getTarifsStage(data);
-      const nb_semaines = data.week_count || 0;
-      
-      // Calcul du prix avant réduction
-      let prix_avant = 0;
-      
-      // Semaines standard (1-3)
-      if (nb_semaines <= 3) {
-        prix_avant = tarifs.tarifs_semaines[nb_semaines] || 0;
-      } 
-      // Semaines supplémentaires (>3)
-      else {
-        const semaines_supp = nb_semaines - 3;
-        prix_avant = tarifs.tarifs_semaines[3] + (semaines_supp * tarifs.tarif_semaine_supplementaire);
-      }
-      
-      // Application de la réduction
-      const prix_apres = prix_avant * (1 - (data.remise || 0) / 100);
-
-      return computeStageTarification({
-        start_date: new Date(data.subscription_start_date),
-        end_date: new Date(data.subscription_end_date),
-        hours_per_day: 3, // 3h par jour comme dans ton PHP
-        days_per_week: 5, // 5 jours par semaine
-        weeks: data.week_count || 0,
-        unit_price_before: prix_avant,
-        unit_price_after: prix_apres,
-        discount: data.remise
-      });
+      const is_member = false;
+      const r = computeStageTarification(data, data.combined_id, is_member)
+      return r
     }
 
     if(data.subscription_type === 'preinscription') {
-       return computePreInscription(data, classe, price);
+       return computePreInscription(data, data.student.class, price);
     }
   
     if (payment_mode === "annuel") {
@@ -263,9 +237,6 @@ import { ContractData } from "./views/TarificationCalculator";
       while (debut.getDay() !== 1) debut.setDate(debut.getDate() + 1);
       let fin = new Date(subscription_end_date);
       while (fin.getDay() !== 0) fin.setDate(fin.getDate() - 1);
-
-
-
   
       const nbWeeks = debut <= fin ? weeksBetween(debut, fin) : 0;
       const nbSeances = seancesParSemaine * nbWeeks;
@@ -363,8 +334,8 @@ import { ContractData } from "./views/TarificationCalculator";
     const coutHoraire = totalHeures > 0
       ? totalApresReduction / totalHeures
       : 0;
-  
-    return { lignes, totalApresReduction, coutHoraire };
+
+    return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }
 
   export function computePreInscription(
@@ -372,8 +343,6 @@ import { ContractData } from "./views/TarificationCalculator";
     classe: string,
     price:any
   ):any
-  // : PreInscriptionResult
-   
   {
     // Déterminer le niveau (primaire ou collège/lycée)
     const niveau = CLASSES_COLLEGE_LYCEE.includes(classe) ? 'college' : 'primaire';
@@ -405,13 +374,13 @@ import { ContractData } from "./views/TarificationCalculator";
     const lignes = prelevementDates.map((date, idx) => {
       const nbSemaines = 4;
       const montant = price * (1 - (data.remise || 0) / 100);
-      const tarifApres = price /2;
+      const tarifApres = price ;
     
       return {
         description: `${idx + 1}${idx === 0 ? 'er' : 'ème'} mensualité`,
         datePrelevement: `${jourNames[date.getDay()]} ${date.getDate()} ${moisNames[idx]} ${date.getFullYear()}`,
         nbSeances: nbSeancesMois,
-        tarifAvant :montant,
+        tarifAvant :montant * 2,
         tarifApres
       };
     });
@@ -428,7 +397,6 @@ import { ContractData } from "./views/TarificationCalculator";
       coutHoraire
     };
   }
-
 
   export function getNiveauScolaire(classe:string) {
     const primaire = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
@@ -455,8 +423,6 @@ import { ContractData } from "./views/TarificationCalculator";
       return new Date(year, 8, 15);
     }
   }
-
-
 
   export function getPrice(subscriptionType:string, hoursOrWeeks:any, level:any, options:any = {}) {
     // Tarifs pour "preinscription"
@@ -506,13 +472,9 @@ import { ContractData } from "./views/TarificationCalculator";
 
       switch (subscriptionType) {
         case 'preinscription':
-          console.log(pre[level][hoursOrWeeks].prix )
-
           if (!level || !pre[level] || !pre[level][hoursOrWeeks]) {
             return null;
           } 
-
-
           return pre[level][hoursOrWeeks].prix;
     
         case 'annuel':
@@ -533,14 +495,8 @@ import { ContractData } from "./views/TarificationCalculator";
           }
           // plus de 3 semaines : tarif pour 3 + extras
           return baseTable[3] + extraRate * (weeks - 3);
-    
-        // default:
-        //   return null;
       }
     }
-
-
-
   }
 
   /**
@@ -582,34 +538,6 @@ import { ContractData } from "./views/TarificationCalculator";
     throw new Error('Format d\'URL non supporté');
   };
 
-  export const dataUrlToBlob = (dataUrl: string): any => {
-
-    console.log
-
-    // const [header, base64Data] = dataUrl.split(',');
-    // const mimeType = header.match(/:(.*?);/)?.[1];
-    
-    // if (!base64Data || !mimeType) {
-    //   throw new Error('Format de data URL invalide');
-    // }
-  
-    // const byteCharacters = atob(base64Data);
-    // const byteArrays = [];
-  
-    // for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    //   const slice = byteCharacters.slice(offset, offset + 512);
-    //   const byteNumbers = new Array(slice.length);
-  
-    //   for (let i = 0; i < slice.length; i++) {
-    //     byteNumbers[i] = slice.charCodeAt(i);
-    //   }
-  
-    //   byteArrays.push(new Uint8Array(byteNumbers));
-    // }
-  
-    // return new Blob(byteArrays, { type: mimeType });
-  };
-  
   /**
    * Crée un FormData avec le fichier et les métadonnées
    */
@@ -640,6 +568,26 @@ import { ContractData } from "./views/TarificationCalculator";
     });
     return response.data;
   };
-  
-  
 
+  export const showSubscriptionPrice = async (Sub:any) => {
+    const combinedId = Sub.combined_id;
+    return api.get(`/api/subs/combined/${combinedId}`)
+    .then(res => {
+      return res.data.map((sub:any) => sub.subscription_type)
+    });
+  }
+
+
+
+  function buildPaymentDates(firstDateIso: string, count: number): string[] {
+    const dates: string[] = [];
+    const first = new Date(firstDateIso);
+  
+    for (let i = 0; i < count; i++) {
+      const d = new Date(first);
+      d.setMonth(first.getMonth() + i);
+      // retransforme en ISO court YYYY-MM-DD pour plus de sécurité
+      dates.push(d.toISOString().slice(0, 10));
+    }
+    return dates;
+  }

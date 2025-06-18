@@ -21,11 +21,11 @@ class SubscriptionRepository extends ServiceEntityRepository
         parent::__construct($registry, Subscription::class);
     }
 
-    public function findByCombinedId(string $combinedId): array
+    public function findByCombinedId(string $combined_id): array
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.combined_id = :cid')
-            ->setParameter('cid', $combinedId)
+            ->setParameter('cid', $combined_id)
             ->getQuery()
             ->getResult();
     }

@@ -22,12 +22,10 @@ const SubscriptionsFormView: React.FC<any> = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate(); 
-  // 🔍 Récupère les types valides présents dans les query params
   const selectedTypes = Array.from(searchParams.keys()).filter((key) =>
     Object.keys(schemaMap).includes(key)
   );
   const [currentFields, setFields] = useState<any>();
-  // Concatène tous les champs associés aux types présents
   const fields = selectedTypes.flatMap(type => schemaMap[type]);
 
   useEffect(() => {
@@ -79,7 +77,6 @@ const SubscriptionsFormView: React.FC<any> = () => {
 
     return common; 
   }
-
 
   const handleSubmit = (allValues: Record<string, any>) => {
     if (!allValues) return;
@@ -133,11 +130,9 @@ const SubscriptionsFormView: React.FC<any> = () => {
     });
   };
 
-
   if (loading) {
     return <p>Chargement…</p>;
   }
-
 
   return (
     <div className="p-4 flex items-center justify-center">

@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ContractHeaderProps } from "./HeaderComponent";
 import { MEMEBERSHIP_FEE, nbSeancesperWeek } from "../../../mocks/mocks";
-import { endDateFeePrelevement, getNiveauScolaire } from "../SubscriptionFunctions";
+import { endDateFeePrelevement, getNiveauScolaire, getPrice } from "../SubscriptionFunctions";
 
 const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subscription, subscriptionType, price}) => {
 
+
+  const [feePrice, setFeePrice] = useState()
   const formatDateFr = (date: Date | string) =>
     new Date(date).toLocaleDateString("fr-FR", {
       weekday: "long",
@@ -13,7 +15,19 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
       year: "numeric",
     });
 
-  const montantTrimestre = price * 3;
+    useEffect(() => {
+      let montantTrimestre;
+      if(!subscription.combined_id) {
+         montantTrimestre = price
+      } else {
+         montantTrimestre = subscriptionType === 'stage' ? price : ( price / 2 ) * 3  ;
+      }
+
+      setFeePrice(montantTrimestre)
+    }, [subscription, subscriptionType, price])
+
+
+   
   const fraisInscriptionEndDate:any = endDateFeePrelevement(subscription, subscriptionType)
 
   return (
@@ -34,7 +48,7 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
           </p>
           <br />
           <strong>
-            Uniquement sous réserve de la remise du chèque de caution ({montantTrimestre}€) d&apos;ici
+            Uniquement sous réserve de la remise du chèque de caution ({feePrice}€) d&apos;ici
             le {formatDateFr(fraisInscriptionEndDate)}.
           </strong>
              <p className="mt-2">

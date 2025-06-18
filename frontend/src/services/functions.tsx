@@ -179,7 +179,7 @@ export const TranslateHeaderNames = (value:String) => {
       case 'password':
         return 'Mot de passe'
       case 'school_subjects':
-        return 'Marières Scolaires'
+        return 'Matières Scolaires'
       case 'email':
         return 'E-mail'
       case 'roles':

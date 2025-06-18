@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../Hooks/auth";
 import api from "../api/aixos";
 import { GradientCard } from "../components/GardientCard";
@@ -21,7 +21,8 @@ export default function StudentSubscriptions() {
   const [selected, setSelected] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const navigate = useNavigate(); 
+  
   useEffect(() => {
     if (!id) return;
     setLoading(true);
@@ -34,7 +35,6 @@ export default function StudentSubscriptions() {
       .catch(() => setError("Impossible de charger les contrats."))
       .finally(() => setLoading(false));
   }, [id]);
-
 
   useEffect(() => {
     console.log("Student data loaded:", student, contracts);
@@ -52,32 +52,49 @@ export default function StudentSubscriptions() {
           Les contrats de {student.firstname} {student.lastname}
         </h1>
         }
-        {/* 1) Grille de vignettes */}
 
         {!selected && 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {contracts.map((c) => (
-            <div
-              key={c.id}
-              className="border rounded overflow-hidden flex flex-col"
-            >
-              {/* Aperçu réduit */}
-              <div className="flex-1 bg-gray-100">
-                <iframe
-                  src={c.url}
-                  title={`Contrat ${c.id}`}
-                  width="100%"
-                  height="150px"
-                  className="object-cover"
-                />
-              </div>
-              <button
-                onClick={() => setSelected(c)}
-                className="px-2 py-1 bg-blue-600 text-white text-sm hover:bg-blue-700"
+          {contracts.map((c:any) => (
+            <div className=" ">
+              <div
+                key={c.id}
+                className={c.is_valide ? 
+                  `border  rounded overflow-hidden flex flex-col border-4 border-green-500` 
+                  : `border rounded overflow-hidden flex flex-col border-4 border-orange-500 ` }
               >
-                Voir
-              </button>
+                <div className="flex-1 bg-gray-100">
+                  <iframe
+                    src={c.url}
+                    title={`Contrat ${c.id}`}
+                    width="100%"
+                    height="150px"
+                    className="object-cover"
+                  />
+                </div>
+
+                <div className="flex justify-between p-1">
+                  <button
+                    onClick={() => setSelected(c)}
+                    className="px-2 py-1 bg-blue-600 text-white text-sm hover:bg-blue-700 border-2 rounded"
+                  >
+                    Voir le pdf
+                  </button>
+
+                  <button
+                    onClick={() => navigate(`/contract/${c.subscription_id}/${student.id}`)}
+                    className="px-2 py-1 bg-blue-600 text-white text-sm hover:bg-blue-700 border-2"
+                  >
+                    Voir le contrat 
+                  </button>
+                </div>
+
+              </div>
+              <p className={c.is_valide ? `text-center text-sm mt-3 text-green-400` : `text-center text-sm mt-3 text-orange-400` }>
+                {c.is_valide ? `Contrat Validé` : `Contrat pas Validé` }
+              </p>
             </div>
+
           ))}
         </div> }
 
@@ -116,3 +133,15 @@ export default function StudentSubscriptions() {
     </div>
   );
 }
+
+
+
+// Seances
+
+/**
+ * refaire la bdd pour la partie subscription - session, c'est une many to one (une session est lie a un abonnement, un abonnement a plusieurs sessions)
+ * un bouton qui va programer toutes les sreances du contrat annuel / pre
+ * une seance sd on doit choisir/filtrer matiere, tuteuret date-heure
+ * 
+ * 
+ */

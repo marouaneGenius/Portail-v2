@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -58,9 +59,7 @@ class SubscriptionController extends AbstractController
         $subscription->setUpdatedAt(null);
         $subscription->setSubscriptionStartDate(isset($data['subscription_start_date']) ? new \DateTime($data['subscription_start_date']) : null);
         $subscription->setSubscriptionEndDate(isset($data['subscription_end_date']) ? new \DateTime($data['subscription_end_date']) : null);
-
         $subscription->setFirstDebitDate(isset($data['first_debit_date'])  ? new \DateTime($data['first_debit_date'] ): null);
-
         $subscription->setRecurrentDebitDate(isset($data['recurrent_debit_date']) ? $data['recurrent_debit_date']: null);
         $subscription->setDateCaution(isset($data['date_caution']) ? new \DateTime($data['date_caution']) : null);
         // Champs simples
@@ -73,12 +72,11 @@ class SubscriptionController extends AbstractController
         $subscription->setMembershipFee($data['membership_fee'] ?? null);
         $subscription->setCombinedId($data['combined_id'] ?? null);
         $subscription->setSubscriptionType($data['subscription_type'] ?? '');
-        $subscription->setIsValide($data['is_valide'] ?? true);
+        $subscription->setIsValide($data['is_valide'] ?? false);
         $subscription->setPaymentMode($data['payment_mode'] ?? null);
         $subscription->setCaution($data['caution'] ?? false);
         $subscription->setFavoriteSlots($data['favorite_slots'] ?? null);
         $subscription->setCreatedBy($data['created_by']);
-
         $subscription->setUpdatedBy(null);
         $subscription->setSessionPerWeek($data['session_per_week'] ?? null);
         $subscription->setWeekCount($data['week_count'] ?? null);
@@ -94,7 +92,6 @@ class SubscriptionController extends AbstractController
         //         }
         //     }
         // }
-    
     
         $this->em->persist($subscription);
         $this->em->flush();
@@ -148,6 +145,7 @@ class SubscriptionController extends AbstractController
                 'id'        => $student->getId(),
                 'firstname' => $student->getFirstname(),
                 'lastname'  => $student->getLastname(),
+                'class'    => $student->getClass(),
             ] : null,
             'sessions' => array_map(fn($s) => [
                 'id'         => $s->getId(),
@@ -174,6 +172,7 @@ class SubscriptionController extends AbstractController
             );
         }
 
+
         // On ne retourne que ce qui est utile au front (id, type, etc.)
         $data = array_map(fn($subscription) => [
             'id'                     => $subscription->getId(),
@@ -196,6 +195,12 @@ class SubscriptionController extends AbstractController
             'membership_fee'         => $subscription->getMembershipFee(),
             'school_subjects'        => $subscription->getSchoolSubjects(),
             'favorite_slots'         => $subscription->getFavoriteSlots(),
+            'student' => ($student = $subscription->getIdStudent()) ? [
+                'id'        => $student->getId(),
+                'firstname' => $student->getFirstname(),
+                'lastname'  => $student->getLastname(),
+                'class'     => $student->getClass(),
+            ] : null,
             'created_at' => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'created_by' => $subscription->getCreatedBy(),
             'updated_at' => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
@@ -204,5 +209,42 @@ class SubscriptionController extends AbstractController
         ], $subs);
 
         return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/{id}/validate', name: 'validate', methods: ['PATCH'])]
+    public function validate(int $id, Request $request): JsonResponse
+    {
+        // 1) Récupère l’abonnement
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            throw new NotFoundHttpException('Abonnement introuvable.');
+        }
+
+        // 2) Récupère l’email de qui valide
+        $data = json_decode($request->getContent(), true);
+        $updatedBy = $data['updated_by'] ?? null;
+        if (!$updatedBy) {
+            return new JsonResponse(
+                ['error' => 'Le champ "updated_by" est requis.'],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+
+        // 3) Met à jour les champs
+        $subscription->setIsValide(true);
+        $subscription->setUpdatedBy($updatedBy);
+        $subscription->setUpdatedAt(new \DateTimeImmutable());
+
+        // 4) Persiste
+        $this->em->persist($subscription);
+        $this->em->flush();
+
+        // 5) Retourne l’état mis à jour
+        return new JsonResponse([
+            'id'         => $subscription->getId(),
+            'is_valide'  => $subscription->isIsValide(),
+            'updated_by' => $subscription->getUpdatedBy(),
+            'updated_at' => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+        ], JsonResponse::HTTP_OK);
     }
 }
