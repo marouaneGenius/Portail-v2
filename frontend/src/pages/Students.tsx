@@ -16,7 +16,6 @@ const Students: React.FC = () => {
       <h1 className="text-3xl font-bold mb-0">Students</h1>
       {/* <div className='flex w-1/6'>       */}
         <CustomDataTable endpoint="student" pageSize={20} />
-
       {/* </div> */}
     </div>
   );

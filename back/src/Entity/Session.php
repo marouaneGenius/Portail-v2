@@ -58,6 +58,9 @@ class Session
     #[ORM\OneToMany(mappedBy: 'id_session', targetEntity: Report::class)]
     private Collection $reports;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $is_paid = null;
+
     public function __construct()
     {
         $this->id_student = new ArrayCollection();
@@ -276,6 +279,18 @@ class Session
                 $report->setIdSession(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isIsPaid(): ?bool
+    {
+        return $this->is_paid;
+    }
+
+    public function setIsPaid(?bool $is_paid): static
+    {
+        $this->is_paid = $is_paid;
 
         return $this;
     }

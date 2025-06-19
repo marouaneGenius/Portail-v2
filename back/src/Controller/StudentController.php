@@ -90,6 +90,8 @@ class StudentController extends AbstractController
                 'id_center' => $student->getIdCenter()->getId(),
                 'created_at'=> $student->getCreatedAt()->format(\DateTime::ATOM),
                 'created_by'=> $student->getCreatedBy(),
+                'stripe_key'=> $student->getStripeKey()
+
             ],
             JsonResponse::HTTP_CREATED
         );
@@ -152,16 +154,7 @@ class StudentController extends AbstractController
                 'session_type'   => $s->getSessionType(),
                 'is_canceled'    => $s->isIsCanceled(),
                 'tutor_id'       => $s->getIdTutor()?->getId(),
-            ];
-        })->toArray();
 
-        $subscriptions = $student->getSessions()->map(function(\App\Entity\Subscription $session) {
-            return [
-                'id'             => $session->getId(),
-                'offre_type'     =>$session->getOfferType(),
-                'is_multiple'    => $session->getCombinedId(),
-                'tutor'          => $session->getSchoolSubjects(),
-                'is_valid'          => $session->isIsValide(),
             ];
         })->toArray();
 
@@ -194,6 +187,8 @@ class StudentController extends AbstractController
                 : null,
             'parents'   => $parents,
             'sessions'  => $sessions,
+            'stripe_key'=> $student->getStripeKey()
+
             ]);
     }
 

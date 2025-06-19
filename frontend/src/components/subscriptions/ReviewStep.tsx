@@ -2,13 +2,9 @@ import React from "react";
 import { HiPencil, HiCheckCircle } from "react-icons/hi";
 
 export interface ReviewStepProps {
-  /** Toutes les valeurs collectées par MultiStepFormWrapper */
   values: Record<string, any>;
-  /** Liste des types d'abonnement (annuel, stage, ...) dans l'ordre choisi */
   order: string[];
-  /** Appelé quand l'utilisateur clique sur « Modifier » devant un abonnement */
   onEdit: (type: string) => void;
-  /** Appelé après validation finale  */
   onConfirm: () => void;
 }
 

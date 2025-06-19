@@ -1,4 +1,4 @@
-import { Avatar } from "@mui/material";
+import { Avatar, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import api from "../api/aixos";
 import { useParams } from "react-router-dom";
@@ -6,6 +6,7 @@ import { DetailPageParams } from "../components/ItemDetails";
 import { ActionGrid } from "../components/CustomAlert";
 import { getDate } from "../services/functions";
 import { GradientCard } from "../components/GardientCard";
+import { useAuth } from "@/Hooks/auth";
 
 interface StudentItem {
     id: string;
@@ -18,27 +19,61 @@ interface StudentItem {
         id:String;
         name:String;
     };
+    sessions?:any;
 }
   
   export const StudentDetails: React.FC = () => {
     const [loading, setLoading] = useState(false);
-    const { resource, id } = useParams<DetailPageParams>();
+    const { id } = useParams<DetailPageParams>();
     const [error, setError] = useState<string | null>(null);
     const [student, setStudent] = useState<StudentItem>();
+    const [trialSessions, setTrialSessions] = useState<any>([]);
+    const [studentId, setId] = useState<any>(id);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const { user }:any = useAuth();
+    
 
     useEffect(() => {
         // if (!resource || !id) return;
         setLoading(true);
-        api.get(`/api/student/${id}`)
+        api.get(`/api/student/${studentId}`)
           .then(({ data }:any) => {
             console.log(data)
+            const trial_sessions = data.sessions?.filter((s: any) => s.session_type === 'trial_session') || [];
+            setTrialSessions(trial_sessions)
             setStudent(data);
           })
           .catch((err:any) => {
             setError(err.response?.data?.message || 'Erreur de chargement');
           })
           .finally(() => setLoading(false));
-    }, [resource, id]);
+
+    }, [id, refreshKey]);
+
+    const sessionAction = async(session:any) => {
+        const values = {
+            is_canceled : session.is_canceled ? false : true,
+            canceled_by: user.id
+        }
+        try{
+            api.patch(`/api/sessions/${session.id}/action`, values).then((res)=>{
+                if(res) {
+                    alert('session modifié aves succees')
+                    setRefreshKey(prev => prev + 1); 
+                    setTrialSessions((prevSessions:any) => 
+                        prevSessions.map((s:any) => 
+                          s.id === session.id 
+                            ? { ...s, is_canceled: session.is_canceled } // Remet l'état original
+                        : s
+                        ))
+                }
+            })
+
+        }catch(e:any) {
+            console.error('Error =>>', e)
+        }
+
+    }
   
     return (
 
@@ -70,11 +105,44 @@ interface StudentItem {
                                 )}
 
                                 {student.created_at && (
-                                <small className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full shadow-lg">
-                                    crée le: {getDate(student.created_at)}
-                                </small>
+                                    <small className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full shadow-lg">
+                                        crée le: {getDate(student.created_at)}
+                                    </small>
                                 )}
                             </div>
+                        </div>
+                        <div className={trialSessions && trialSessions.length > 0 &&`"bg-gray-100 p-3 rounded w-full"`}>
+                        {trialSessions && trialSessions.length > 0 && (
+                            <div className="space-y-3">
+                                <h4 className="font-medium text-gray-700">Séances d'essai</h4>
+                                {trialSessions.map((session: any) => (
+                                <div key={session.id} className="bg-gray-50 p-3 rounded border flex justify-around">
+                                    <span> 
+                                        Seance d'essai le  :
+                                    { getDate(session.date_slot)} - 
+
+                                    </span>
+
+                                    <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                                        session.is_canceled 
+                                        ? 'bg-red-100 text-red-800' 
+                                        : 'bg-green-100 text-green-800'
+                                    }`}>
+                                        {session.is_canceled ? 'Annulée' : 'Active'}
+                                    </span>
+
+                                    <Button variant="outlined" color={session.is_canceled ? 'info': 'error'} size="small"  onClick={()=>sessionAction(session)} >
+                                        <span className="text-xs">
+                                            {session.is_canceled ? 'activer' : 'Annuler'}
+
+                                        </span>
+                                    </Button>
+                                </div>
+                                ))}
+                            </div>
+                        )}
+
+
                         </div>
                         <ActionGrid studentId={student.id} />
                     </>  

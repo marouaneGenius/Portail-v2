@@ -262,7 +262,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                               {label}
                               <button
                                 type="button"
-                                onClick={() => removeCenter(val)}
+                                // onClick={() => removeCenter(val)}
                                 className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
                               >
                                 &times;

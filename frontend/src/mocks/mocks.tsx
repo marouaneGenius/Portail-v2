@@ -19,13 +19,12 @@ export const ClassesOptions = [
    export const actions: Action[] = [
     { label: "Mes Abonnements", to: (id) => `/student/subscriptions/${id}` },
     { label: 'Ajouter un Abonnement', to: (id) => `/abonnements/${id}` },
-    { label: "Créer une séance d'essai", to: (id) => `/students/${id}/trial-session` },
+    { label: "Créer une séance d'essai", to: (id) => `/sessions/${id}` },
     { label: 'Voir plus de détails', to: (id) => `/student/${id}` },
     { label: 'Ajouter une facture', to: (id) => `/students/${id}/invoices/new` },
     { label: 'Rupture de contrat', to: (id) => `/students/${id}/terminate` },
     { label: "Modifier l'élève", to: (id) => `/student/${id}/edit` },
   ];
-
 
   export const Days = [
     { value: 'lundi', label: 'Lundi'  }, 

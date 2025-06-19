@@ -2,7 +2,7 @@ import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/aixos';
 import {
-  Plus, Search, Eye, Pencil, Trash2,
+  Plus, Search, Eye, Pencil, Trash2, File, Info, ClipboardList,
   ShieldCheck, UserRound, GraduationCap
 } from 'lucide-react';
 
@@ -239,8 +239,11 @@ export default function CustomDataTable({
 
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}`)}>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/studentDetails/${row.id}`)}>
                             <Eye className="w-4 h-4 text-mister-anthracite/70" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}`)}>
+                            <ClipboardList className="w-4 h-4 text-mister-anthracite/70" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}/edit`)}>
                             <Pencil className="w-4 h-4 text-hello-yellow" />
