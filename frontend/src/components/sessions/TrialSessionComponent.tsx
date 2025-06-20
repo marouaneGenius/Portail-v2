@@ -54,13 +54,11 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             date_slot: new Date().toISOString()
         }
 
-
-
         try {
             api.post('/api/sessions', newValues).then((res) => {
                 if(res) {
                     alert("Session d'essai cree avec succes")
-                    // navigate(`/studentDetails/${student.id}`);
+                    navigate(`/studentDetails/${student.id}`);
                 }
             })
         } catch(e:any) {
