@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Session;
+use App\Repository\SessionRepository;
 use App\Repository\UserRepository;
 use App\Repository\StudentRepository;
 use App\Repository\SubscriptionRepository;
@@ -27,6 +28,7 @@ class SessionController extends AbstractController
         private readonly UserRepository $userRepo,
         private readonly StudentRepository $studentRepo,
         private readonly SubscriptionRepository $subRepo,
+        private readonly SessionRepository $sessionRepo,
         private readonly StripeClient $stripe ,
         ZapierSmsSender $smsSender
     ) {
@@ -112,6 +114,22 @@ class SessionController extends AbstractController
     }
 
 
+
+    #[Route('/tutor/{id}', name: 'sessions_by_tutor', methods: ['GET'])]
+    public function forTutor(int $id, UserRepository $userRepo): JsonResponse
+    {
+        $tutor = $userRepo->find($id);
+        if (!$tutor) {
+            return new JsonResponse(['error' => 'Tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = $this->sessionRepo->getSessionsDataByTutor($tutor);
+        return new JsonResponse($data);
+    }
+
+
+
+
     #[Route('/{id}/action', name: 'action', methods: ['PATCH'])]
     public function cancel(Session $session, Request $request): JsonResponse
     {
@@ -135,7 +153,6 @@ class SessionController extends AbstractController
             'updated_at' => (new \DateTime())->format('Y-m-d H:i:s')
         ]);
     }
-
 
     #[Route('/{id}/payment-link', name: 'payment_link', methods: ['POST'])]
     public function createPaymentLink(Session $session, Request $request): JsonResponse
@@ -244,108 +261,106 @@ class SessionController extends AbstractController
     }
 
 
+    // #[Route('/{id}/test-sms', name: 'test_sms', methods: ['POST'])]
+    // public function testSms(Session $session): JsonResponse
+    // {
+    //     // On prend le premier étudiant lié
+    //     $student = $session->getIdStudent()->first();
+    //     if (!$student) {
+    //         return new JsonResponse(['error' => 'Aucun étudiant associé'], JsonResponse::HTTP_BAD_REQUEST);
+    //     }
 
+    //     // On prend le premier parent
+    //     $parent = $student->getIdParent()->first();
+    //     if (!$parent) {
+    //         return new JsonResponse(['error' => 'Aucun parent associé'], JsonResponse::HTTP_BAD_REQUEST);
+    //     }
 
-    #[Route('/{id}/test-sms', name: 'test_sms', methods: ['POST'])]
-    public function testSms(Session $session): JsonResponse
-    {
-        // On prend le premier étudiant lié
-        $student = $session->getIdStudent()->first();
-        if (!$student) {
-            return new JsonResponse(['error' => 'Aucun étudiant associé'], JsonResponse::HTTP_BAD_REQUEST);
-        }
+    //     // Préparez des données de test ou réutilisez les vraies valeurs
+    //     $phone       = $parent->getPhone();
+    //     $centre      = $student->getIdCenter()?->getCity() ?? 'Ville inconnue';
+    //     $dateCours   = $session->getDateSlot();
+    //     $heureDebut  = $session->getScheduledAt()
+    //                        ? $session->getScheduledAt()->format('H:i')
+    //                        : $session->getDateSlot()->format('H:i');
+    //     $ville       = $student->getIdCenter()?->getCity() ?? '';
+    //     $adresse     = $student->getIdCenter()?->getAddress() ?? '';
+    //     $prenom      = $student->getFirstname();
+    //     $link        = 'https://votre-testeur-de-lien.exemple/test';  // lien de test
 
-        // On prend le premier parent
-        $parent = $student->getIdParent()->first();
-        if (!$parent) {
-            return new JsonResponse(['error' => 'Aucun parent associé'], JsonResponse::HTTP_BAD_REQUEST);
-        }
+    //     try {
+    //         $ok = $this->smsSender->sendSessionPaymentLink(
+    //             $phone,
+    //             $centre,
+    //             $dateCours,
+    //             $heureDebut,
+    //             $ville,
+    //             $adresse,
+    //             $prenom,
+    //             $link
+    //         );
 
-        // Préparez des données de test ou réutilisez les vraies valeurs
-        $phone       = $parent->getPhone();
-        $centre      = $student->getIdCenter()?->getCity() ?? 'Ville inconnue';
-        $dateCours   = $session->getDateSlot();
-        $heureDebut  = $session->getScheduledAt()
-                           ? $session->getScheduledAt()->format('H:i')
-                           : $session->getDateSlot()->format('H:i');
-        $ville       = $student->getIdCenter()?->getCity() ?? '';
-        $adresse     = $student->getIdCenter()?->getAddress() ?? '';
-        $prenom      = $student->getFirstname();
-        $link        = 'https://votre-testeur-de-lien.exemple/test';  // lien de test
+    //         if (!$ok) {
+    //             throw new \RuntimeException('Envoi à Zapier signalé comme échoué');
+    //         }
 
-        try {
-            $ok = $this->smsSender->sendSessionPaymentLink(
-                $phone,
-                $centre,
-                $dateCours,
-                $heureDebut,
-                $ville,
-                $adresse,
-                $prenom,
-                $link
-            );
-
-            if (!$ok) {
-                throw new \RuntimeException('Envoi à Zapier signalé comme échoué');
-            }
-
-            return new JsonResponse([
-                'status'  => 'SMS envoyé en test',
-                'to'      => $phone,
-                'payload' => compact('centre','dateCours','heureDebut','ville','adresse','prenom','link'),
-            ], JsonResponse::HTTP_OK);
-        } catch (\Throwable $e) {
-            return new JsonResponse([
-                'error' => 'Erreur envoi SMS de test: '.$e->getMessage(),
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
+    //         return new JsonResponse([
+    //             'status'  => 'SMS envoyé en test',
+    //             'to'      => $phone,
+    //             'payload' => compact('centre','dateCours','heureDebut','ville','adresse','prenom','link'),
+    //         ], JsonResponse::HTTP_OK);
+    //     } catch (\Throwable $e) {
+    //         return new JsonResponse([
+    //             'error' => 'Erreur envoi SMS de test: '.$e->getMessage(),
+    //         ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+    //     }
+    // }
     
 
-    #[Route('/test-sms', name: 'test_sms', methods: ['POST'])]
-    public function __invoke(Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-        if (!\is_array($data)) {
-            throw new BadRequestHttpException('Corps invalide, JSON attendu.');
-        }
+    // #[Route('/test-sms', name: 'test_sms', methods: ['POST'])]
+    // public function __invoke(Request $request): JsonResponse
+    // {
+    //     $data = json_decode($request->getContent(), true);
+    //     if (!\is_array($data)) {
+    //         throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+    //     }
 
-        // Vérification des champs obligatoires
-        foreach (['to','centre','dateCours','heureDebut','ville','adresse','prenom','link'] as $field) {
-            if (empty($data[$field])) {
-                throw new BadRequestHttpException("Le champ « $field » est requis.");
-            }
-        }
+    //     // Vérification des champs obligatoires
+    //     foreach (['to','centre','dateCours','heureDebut','ville','adresse','prenom','link'] as $field) {
+    //         if (empty($data[$field])) {
+    //             throw new BadRequestHttpException("Le champ « $field » est requis.");
+    //         }
+    //     }
 
-        try {
-            $ok = $this->smsSender->sendSessionPaymentLink(
-                $data['to'],
-                $data['centre'],
-                new \DateTimeImmutable($data['dateCours']),
-                $data['heureDebut'],
-                $data['ville'],
-                $data['adresse'],
-                $data['prenom'],
-                $data['link']
-            );
+    //     try {
+    //         $ok = $this->smsSender->sendSessionPaymentLink(
+    //             $data['to'],
+    //             $data['centre'],
+    //             new \DateTimeImmutable($data['dateCours']),
+    //             $data['heureDebut'],
+    //             $data['ville'],
+    //             $data['adresse'],
+    //             $data['prenom'],
+    //             $data['link']
+    //         );
 
-            if (!$ok) {
-                return new JsonResponse(
-                    ['status'=>'Erreur lors de l’envoi du SMS'],
-                    JsonResponse::HTTP_INTERNAL_SERVER_ERROR
-                );
-            }
+    //         if (!$ok) {
+    //             return new JsonResponse(
+    //                 ['status'=>'Erreur lors de l’envoi du SMS'],
+    //                 JsonResponse::HTTP_INTERNAL_SERVER_ERROR
+    //             );
+    //         }
 
-            return new JsonResponse(
-                ['status'=>'SMS envoyé en test', 'to'=>$data['to'], 'payload'=>$data],
-                JsonResponse::HTTP_OK
-            );
-        } catch (\Exception $e) {
-            return new JsonResponse(
-                ['error'=>$e->getMessage()],
-                JsonResponse::HTTP_BAD_REQUEST
-            );
-        }
-    }
+    //         return new JsonResponse(
+    //             ['status'=>'SMS envoyé en test', 'to'=>$data['to'], 'payload'=>$data],
+    //             JsonResponse::HTTP_OK
+    //         );
+    //     } catch (\Exception $e) {
+    //         return new JsonResponse(
+    //             ['error'=>$e->getMessage()],
+    //             JsonResponse::HTTP_BAD_REQUEST
+    //         );
+    //     }
+    // }
 
 }
