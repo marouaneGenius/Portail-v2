@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/api/aixos';
+import { useDraggable } from '@dnd-kit/core';
 
 type SessionData = {
   id: number;
@@ -31,12 +32,23 @@ type Student = {
 
 interface StudentCardProps {
   student: Student;
+  tutorId:any;
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({ student }:any) => {
+export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, day }:any) => {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: student.id,
+    data: {                       // 👇  on étiquette le nœud
+        type: 'student',
+        studentId: student.id,
+        tutorId,           
+        day         // conteneur d’origine
+      },
+  })
 
   useEffect(() => {
     // console.log(student.sessions)
@@ -47,8 +59,21 @@ export const StudentCard: React.FC<StudentCardProps> = ({ student }:any) => {
     }
   }, [student.id]);
 
+  const style = transform ?
+  {
+    transform: `translate(${transform.x}px, ${transform.y}px)`
+  }:undefined
+
   return (
-    <div className="bg-gray-200 rounded shadow p-4 w-full ">
+    <div 
+        ref={setNodeRef} 
+        {...listeners}
+        {...attributes}
+        style={style}
+        
+        className="bg-gray-200 rounded shadow p-4 w-full ">
+      <h1 className="font-medium">ID: {student.id}  </h1>
+
       <h3 className="text-lg font-semibold">
         {student.firstname} {student.lastname}
       </h3>
