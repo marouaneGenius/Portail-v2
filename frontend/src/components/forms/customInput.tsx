@@ -89,7 +89,6 @@ export function MultiSelectNoCtrl({
 }
 
 export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any) => (
-
   <>
     {f.options && (
       <MultiSelectNoCtrl
@@ -183,12 +182,18 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
 export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
   const todayISO = new Date().toISOString().split('T')[0];
 
+
+  console.log(todayISO)
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Annuel'){
     if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
       return  <TutorAvailabilityPicker
                   school_subjects={values.school_subjects}
+                  // f={f} 
+                  values={values}
+                  setValues={setValues} 
+                  removeValueFromField={removeValueFromField}
                   onSelect={(slots: any[]) => {
                     setValues((prev: any) => ({
                       ...prev,
@@ -398,7 +403,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
     return renderMultiSelect(f, values, 'centers', setValues, removeValueFromField);
   }
 
-  if (f.name === 'school_subjects' && f.multiple) {
+  if (f.name === 'school_subjects' && f.multiple && title !== 'Annuel') {
     return renderMultiSelect(f, values, 'school_subjects', setValues, removeValueFromField);
   }
 

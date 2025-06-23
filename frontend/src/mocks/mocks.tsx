@@ -91,11 +91,10 @@ export const ClassesOptions = [
   export const HoursOptions = [
     { value: '9h30', label: '9h30'},
     { value: '11h00', label: '11h00'},
-    { value: '12h30', label: '12h30'},
-    { value: '14h00', label: '14h00'},
-    { value: '15h30', label: '15h30'},
-    { value: '17h00', label: '17h00'},
-    { value: '18h30', label: '18h30' }
+    { value: '13h30', label: '13h30'},
+    { value: '15h00', label: '15h00'},
+    { value: '16h30', label: '16h30'},
+    { value: '18h00', label: '18h00' }
   ];
 
 

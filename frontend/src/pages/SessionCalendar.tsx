@@ -186,38 +186,39 @@ export default function SessionCalendar() {
         { !selectedCenter ? (
           <p className="text-gray-500">Sélectionnez un centre pour voir les disponibilités.</p>
         ) : 
+        
         <DndContext onDragEnd={handleDragEnd} sensors={sensors} collisionDetection={closestCenter} collisionDetection={collisionDetection} >
         
-        {frenchDays.map(day => (
+            {frenchDays.map(day => (
 
-          <div key={day} className="w-full border rounded-lg p-4">
-            <h3 className="text-xl font-semibold mb-2">
-              {day.charAt(0).toUpperCase() + day.slice(1)}
-            </h3>
+            <div key={day} className="w-full border rounded-lg p-4">
+                <h3 className="text-xl font-semibold mb-2">
+                {day.charAt(0).toUpperCase() + day.slice(1)}
+                </h3>
 
-            {availabilityByDay[day].length > 0 ? (
+                {availabilityByDay[day].length > 0 ? (
 
-            <div className="flex flex-row">
-                {availabilityByDay[day].map(tutor => (
-                        <TutorCard 
-                        key={tutor.id}
-                        droppableId={`${day}-${tutor.id}`}
-                        tutor={tutor}
-                        day={day}
-                        selectedCenter={selectedCenter as number}
-                        students={tutor.students}
-                        />
-                ))}
+                <div className="flex flex-row">
+                    {availabilityByDay[day].map(tutor => (
+                            <TutorCard 
+                            key={tutor.id}
+                            droppableId={`${day}-${tutor.id}`}
+                            tutor={tutor}
+                            day={day}
+                            selectedCenter={selectedCenter as number}
+                            students={tutor.students}
+                            />
+                    ))}
 
-              </div>
+                </div>
 
-            ) : (
-              <p className="text-gray-400 italic">Pas de tuteur disponible.</p>
-            )}
+                ) : (
+                <p className="text-gray-400 italic">Pas de tuteur disponible.</p>
+                )}
 
-          </div>
+            </div>
 
-        )) }
+            )) }
 
         </DndContext>
 

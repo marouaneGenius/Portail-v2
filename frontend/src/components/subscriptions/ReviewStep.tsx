@@ -8,6 +8,8 @@ export interface ReviewStepProps {
   onConfirm: () => void;
 }
 
+
+
 /** Affiche un récapitulatif lisible et permet de revenir en arrière avant l'envoi. */
 const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfirm }) => {
   return (
