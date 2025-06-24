@@ -189,6 +189,8 @@ class UserController extends AbstractController
                 'id'          => $c->getId(),
                 // 'created_at'  => $c->getCreatedAt()->format(\DateTime::ATOM),
                 'name'        => $c->getName(),
+                'address'     => $c->getAddress(),
+                'city'        => $c->getCity(),
             ], $user->getCentres()->toArray()),
 
 
