@@ -12,7 +12,7 @@ const Users: React.FC = () => {
   }
 
   return (
-    <div className=" mx-auto py-2 px-4">
+    <div className="mx-auto py-2 px-4">
       {/* <h1 className="text-3xl font-bold mb-6">Utilisateurs</h1> */}
       <CustomDataTable endpoint="user" title="Liste des utilisateurs" addLabel="Ajouter un utilisateur" />
     </div>

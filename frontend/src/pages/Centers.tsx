@@ -12,7 +12,7 @@ const Centers: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto py-10 px-4">
+    <div className="mx-auto py-2 px-4">
       {/* <h1 className="text-3xl font-bold mb-6">Liste des centres</h1> */}
       <CustomDataTable endpoint="center" title="Liste des centres" addLabel="Ajouter un centre" />
     </div>

@@ -1,19 +1,21 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { actions } from '../mocks/mocks';
 import { CustomButton } from './CustomButton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Building, MapPin, Phone, Users, User, Mail } from 'lucide-react';
 
 interface CustomAlertProps {
   title?: string;
   message?: string;
-  action?: (item:any) => void;
+  action?: (item: any) => void;
 }
 
 interface CustomComponentProps {
-    value?:any
-    currentkey?:any
-    onRedirect?: (item:any) => void;
-    action?:(item:any) => void;
-    id?: string;
+  value?: any;
+  currentkey?: any;
+  onRedirect?: (item: any) => void;
+  action?: (item: any) => void;
+  id?: string;
 }
 
 export interface BrothersComponentProps {
@@ -27,297 +29,294 @@ export interface BrothersComponentProps {
 
 export interface Action {
   label: string;
-  to: (studentId: number) => string; // fonction qui génère la route
+  to: (studentId: number) => string;
 }
 
-export const CustomAlert: React.FC<CustomAlertProps> =  ({title, message, action}) => {
-    return(
-        <div className=" text-center py-4">
-            <div className="p-2 bg items-center text-gray-800 leading-none lg:rounded-full flex lg:inline-flex w-full" role="alert" onClick={action}>
-                <span className="flex rounded-full bg-green-400 uppercase px-2 py-1 text-xs font-bold mr-3 ">{title}</span>
-                <span className="font-semibold mr-2 text-left flex-auto">{message}</span>
-            </div>
-        </div>
-    )
-}
+// Alert stylée en card
+export const CustomAlert: React.FC<CustomAlertProps> = ({ title, message, action }) => (
+  <div className="flex justify-center py-4">
+    <div
+      className="w-full max-w-md bg-white border border-hello-yellow rounded-xl shadow-md p-4 flex flex-col items-center gap-2"
+      role="alert"
+      onClick={action}
+    >
+      {title && (
+        <span className="inline-block rounded-full bg-hello-yellow/90 uppercase px-3 py-1 text-xs font-bold text-white mb-1">
+          {title}
+        </span>
+      )}
+      <span className="font-semibold text-mister-anthracite text-center">{message}</span>
+    </div>
+  </div>
+);
 
+// Table → Card pour les parents
 export function CustomParentComponent({
-    value,
-    currentkey,
-    onRedirect,
-    action
+  value,
+  currentkey,
+  onRedirect,
+  action,
+}: CustomComponentProps): React.ReactNode {
+  if (currentkey !== 'parents' || !Array.isArray(value)) return null;
 
-  }: CustomComponentProps): React.ReactNode {
-    if (currentkey !== 'parents' || !Array.isArray(value)) return null;
-  
-    // Afficher l'alerte si aucun parent
-    if (value.length === 0) {
-      return (
-        <CustomAlert
-          title="Attention !"
-          message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
-          action={action}
-        />
-      );
-    }
-  
-    // Colonnes sans `id`
-    const columns = Object.keys(value[0]).filter((c) => c !== 'id');
-  
+  // Si aucun parent
+  if (value.length === 0) {
     return (
-      <div className="md:col-span-2">
-        <dd className="mt-1 text-gray-700">
-          <table className="w-full text-left text-sm mb-4">
-            <thead className="bg-gray-100">
-              <tr>
-                {columns.map((col) => (
-                  <th key={col} className="px-2 py-1 font-medium text-gray-600">
-                    {col.replace('_', ' ')}
-                  </th>
-                ))}
-                {/* Colonne pour le bouton */}
-                <th className="px-2 py-1" />
-              </tr>
-            </thead>
-            <tbody>
-              {value.map((parent: Record<string, any>, idx: number) => (
-                <tr
-                  key={idx}
-                  className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                >
-                  {columns.map((col, i) => (
-                    <td key={i} className="px-2 py-1">
-                      {String(parent[col])}
-                    </td>
-                  ))}
-                  <td className="px-2 py-1 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onRedirect?.(`parent/${parent.id}`)}
-                      className="py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-green-200 hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Voir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </dd>
-      </div>
+      <CustomAlert
+        title="Attention !"
+        message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
+        action={action}
+      />
     );
-}
+  }
 
-export function CustomStudentsComponent({
-    value,
-    currentkey,
-    onRedirect,
-  }: CustomComponentProps): React.ReactNode {
-    if (currentkey !== 'students' || !Array.isArray(value)) return null;
-  
-    // Afficher l'alerte si aucun parent
-    if (value.length === 0) {
-      return (
-        <CustomAlert
-          title="Attention !"
-          message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
-        />
-      );
-    }
-  
-    const columns = Object.keys(value[0]).filter((c) => c !== 'id');
-  
-    return (
-      <div className="md:col-span-2">
-        <dd className="mt-1 text-gray-700">
-          <table className="w-full text-left text-sm mb-4">
-            <thead className="bg-gray-100">
-              <tr>
-                {columns.map((col) => (
-                  <th key={col} className="px-2 py-1 font-medium text-gray-600">
-                    {col.replace('_', ' ')}
-                  </th>
-                ))}
-                {/* Colonne pour le bouton */}
-                <th className="px-2 py-1" />
-              </tr>
-            </thead>
-            <tbody>
-              {value.map((parent: Record<string, any>, idx: number) => (
-                <tr
-                  key={idx}
-                  className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                >
-                  {columns.map((col, i) => (
-                    <td key={i} className="px-2 py-1">
-                      {String(parent[col])}
-                    </td>
-                  ))}
-                  <td className="px-2 py-1 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onRedirect?.(`student/${parent.id}`)}
-                      className="py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-green-200 hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
-                    >
-                      Voir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </dd>
-      </div>
-    );
-}
+  // On suppose ici que le premier parent est le parent responsable
+  const parent = value[0];
+  const siblings = value.slice(1).map((s) => `${s.firstname} ${s.lastname}`);
 
-export const CustomReportsComponent: React.FC<CustomComponentProps> =  ({value, currentkey}) => {
-    return (
-        <>
-            {currentkey === 'reports' && Array.isArray(value) && (
-                <table className="w-full text-left text-sm mb-2">
-                <thead className="bg-gray-100">
-                    <tr>
-                    {value.length > 0 &&
-                        Object.keys(value[0]).map((col) => (
-                        <th
-                            key={col}
-                            className="px-2 py-1 font-medium text-gray-600"
-                        >
-                            {col}
-                        </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {value.map((row: Record<string, any>, idx: number) => (
-                    <tr
-                        key={idx}
-                        className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    >
-                        {Object.values(row).map((cell, i) => (
-                        <td key={i} className="px-2 py-1">
-                            {String(cell)}
-                        </td>
-                        ))}
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
+  return (
+    <Card className="border-fading-grey">
+      <CardHeader>
+        <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+          <Users className="w-5 h-5 text-crazy-magenta" />
+          Famille
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Parent */}
+        <div>
+          <h4 className="font-medium text-mister-anthracite mb-3 flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Parent responsable
+          </h4>
+          <div className="bg-fading-grey/30 p-4 rounded-lg space-y-2">
+            <div className="font-medium text-mister-anthracite">{parent.firstname} {parent.lastname}</div>
+            {parent.profession && (
+              <div className="text-sm text-mister-anthracite/70">{parent.profession}</div>
             )}
-
-            { currentkey === 'reports' && value.length === 0 &&  (
-                <CustomAlert title='Message !' message="Vous n'avez pas de Comptes rendu pour l'instant" />
-            )} 
-        </>
-    )
-}
-
-export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> =  ({value, currentkey, onRedirect, id, action }) => {
-    return (
-      <>
-        {currentkey === 'tutor_schedules' && Array.isArray(value) && (
-            <table className="w-full text-left text-sm mb-2">
-              <thead className="bg-gray-100">
-                  <tr>
-                  {value.length > 0 &&
-                      Object.keys(value[0]).map((col) => (
-                      <th
-                          key={col}
-                          className="px-2 py-1 font-medium text-gray-600"
-                      >
-                          {col}
-                      </th>
-                      ))}
-                  </tr>
-              </thead>
-              <tbody>
-                {value.map((row: Record<string, any>, idx: number) => (
-                  <>
-                    <tr
-                    key={idx}
-                    className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    >
-                      {Object.entries(row).map(([key, cell], i) => (
-                        <td key={i} className="px-2 py-1">
-                          {key === 'centers' && Array.isArray(cell)
-                            ? cell.map((center: any) => center.name).join(', ')
-                            : String(cell)}
-                        </td>
-                      ))}
-                    </tr>
-                  </>
-                ))}
-              </tbody>
-            </table>
-        )}
-
-        {
-          currentkey === 'tutor_schedules' && value.length !== 0 &&
-          <div className='p-2 w-full '>
-            <CustomButton action={()=>action?.(`planing`)} title='voir le planing' />
-            <CustomButton action={onRedirect} title='Gerer le planing' />
+            <div className="flex flex-col sm:flex-row gap-2 text-sm">
+              {parent.email && (
+                <div className="flex items-center gap-1">
+                  <Mail className="w-3 h-3 text-mister-anthracite/60" />
+                  <span className="text-mister-anthracite/70">{parent.email}</span>
+                </div>
+              )}
+              {parent.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-mister-anthracite/60" />
+                  <span className="text-mister-anthracite/70">{parent.phone}</span>
+                </div>
+              )}
+            </div>
           </div>
-        }
+        </div>
 
-        { currentkey === 'tutor_schedules' && value.length === 0 &&  (
-            <CustomAlert title='Attention !' message="Vous n'avez pas de Creneau pour l'instant, cliquer ici pour creer des creneaux !" action={onRedirect}/>
-        )} 
-      </>
-    )
+        {/* Frères et sœurs */}
+        <div>
+          <h4 className="font-medium text-mister-anthracite mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Frères et sœurs
+          </h4>
+          {siblings.length > 0 ? (
+            <div className="space-y-2">
+              {siblings.map((sibling, index) => (
+                <div key={index} className="bg-fading-grey/30 p-3 rounded-lg">
+                  <span className="text-mister-anthracite font-medium">{sibling}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-mister-anthracite/70 italic">Aucun frère ou sœur enregistré</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
-export const CustomSessionComponent: React.FC<CustomComponentProps> =  ({value, currentkey}) => {
+// Table → Card pour les étudiants
+export function CustomStudentsComponent({
+  value,
+  currentkey,
+  onRedirect,
+}: CustomComponentProps): React.ReactNode {
+  if (currentkey !== 'students' || !Array.isArray(value)) return null;
+
+  if (value.length === 0) {
     return (
-        <>
-            {currentkey === 'sessions' && Array.isArray(value) && (
-                <table className="w-full text-left text-sm mb-2">
-                <thead className="bg-gray-100">
-                    <tr>
-                    {value.length > 0 &&
-                        Object.keys(value[0]).map((col) => (
-                        <th
-                            key={col}
-                            className="px-2 py-1 font-medium text-gray-600"
-                        >
-                            {col}
-                        </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {value.map((row: Record<string, any>, idx: number) => (
-                    <tr
-                        key={idx}
-                        className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                    >
-                        {Object.values(row).map((cell, i) => (
-                        <td key={i} className="px-2 py-1">
-                            {String(cell)}
-                        </td>
-                        ))}
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            )}
+      <CustomAlert
+        title="Attention !"
+        message="Aucun enfant enregistré pour ce parent."
+      />
+    );
+  }
 
-            { currentkey === 'sessions' && value.length === 0 &&  (
-                <CustomAlert title='Message!' message="Vous n'avez pas de Sessions pour l'instant" />
-            )} 
-        </>
-    )
+  return (
+    <Card className="border-fading-grey">
+      <CardHeader>
+        <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+          <Users className="w-5 h-5 text-crazy-magenta" />
+          Enfants
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {value.map((student: Record<string, any>) => (
+          <div key={student.id} className="bg-fading-grey/30 p-4 rounded-lg space-y-2">
+            <div className="font-medium text-mister-anthracite flex items-center gap-2">
+              <User className="w-4 h-4" />
+              {student.firstname} {student.lastname}
+              {student.class && (
+                <span className="ml-2 text-xs text-mister-anthracite/60 bg-white border border-fading-grey rounded px-2 py-0.5">
+                  {student.class}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 text-sm">
+              {student.email && (
+                <div className="flex items-center gap-1">
+                  <Mail className="w-3 h-3 text-mister-anthracite/60" />
+                  <span className="text-mister-anthracite/70">{student.email}</span>
+                </div>
+              )}
+              {student.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-mister-anthracite/60" />
+                  <span className="text-mister-anthracite/70">{student.phone}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onRedirect?.(`student/${student.id}`)}
+                className="py-2 px-4 text-xs font-semibold text-mister-anthracite bg-white rounded-lg border border-hello-yellow hover:bg-hello-yellow/10 hover:text-hello-yellow focus:outline-none focus:ring-4 focus:ring-hello-yellow/20 transition"
+              >
+                Voir
+              </button>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
 }
 
-export const CustomCenterComponent: React.FC<CustomComponentProps> = ({ value, currentkey,onRedirect,}) => {
-  // On attend que value soit soit un objet unique, soit un tableau d’objets
+export const CustomReportsComponent: React.FC<CustomComponentProps> = ({ value, currentkey }) => {
+  return (
+    <>
+      {currentkey === 'reports' && Array.isArray(value) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {value.map((report: Record<string, any>, idx: number) => (
+            <div
+              key={idx}
+              className="bg-white border border-fading-grey rounded-xl shadow p-4 flex flex-col gap-2"
+            >
+              {Object.entries(report).map(([k, v]) => (
+                <div key={k}>
+                  <span className="font-medium capitalize">{k.replace('_', ' ')}:</span>{' '}
+                  <span>{String(v)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentkey === 'reports' && value.length === 0 && (
+        <CustomAlert title="Message !" message="Vous n'avez pas de Comptes rendu pour l'instant" />
+      )}
+    </>
+  );
+};
+
+export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> = ({
+  value,
+  currentkey,
+  onRedirect,
+  id,
+  action,
+}) => {
+  return (
+    <>
+      {currentkey === 'tutor_schedules' && Array.isArray(value) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {value.map((row: Record<string, any>, idx: number) => (
+            <div
+              key={idx}
+              className="bg-white border border-fading-grey rounded-xl shadow p-4 flex flex-col gap-2"
+            >
+              {Object.entries(row).map(([key, cell]) => (
+                <div key={key}>
+                  <span className="font-medium capitalize">{key.replace('_', ' ')}:</span>{' '}
+                  <span>
+                    {key === 'centers' && Array.isArray(cell)
+                      ? cell.map((center: any) => center.name).join(', ')
+                      : String(cell)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentkey === 'tutor_schedules' && value.length !== 0 && (
+        <div className="flex gap-2 mt-2">
+          <CustomButton action={() => action?.('planing')} title="Voir le planning" />
+          <CustomButton action={onRedirect} title="Gérer le planning" />
+        </div>
+      )}
+
+      {currentkey === 'tutor_schedules' && value.length === 0 && (
+        <CustomAlert
+          title="Attention !"
+          message="Vous n'avez pas de créneau pour l'instant, cliquez ici pour créer des créneaux !"
+          action={onRedirect}
+        />
+      )}
+    </>
+  );
+};
+
+export const CustomSessionComponent: React.FC<CustomComponentProps> = ({ value, currentkey }) => {
+  return (
+    <>
+      {currentkey === 'sessions' && Array.isArray(value) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {value.map((row: Record<string, any>, idx: number) => (
+            <div
+              key={idx}
+              className="bg-white border border-fading-grey rounded-xl shadow p-4 flex flex-col gap-2"
+            >
+              {Object.entries(row).map(([k, v]) => (
+                <div key={k}>
+                  <span className="font-medium capitalize">{k.replace('_', ' ')}:</span>{' '}
+                  <span>{String(v)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentkey === 'sessions' && value.length === 0 && (
+        <CustomAlert title="Message!" message="Vous n'avez pas de Sessions pour l'instant" />
+      )}
+    </>
+  );
+};
+
+export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
+  value,
+  currentkey,
+  onRedirect,
+}) => {
   const centers = Array.isArray(value) ? value : value ? [value] : [];
 
   if (currentkey !== 'centers') {
     return null;
   }
 
-  // Aucun centre du tout
   if (centers.length === 0) {
     return (
       <CustomAlert
@@ -328,31 +327,38 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({ value, c
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {centers.map((ctr: any) => (
-        <div
-          key={ctr.id}
-          className="text-lg w-full flex items-center justify-between  p-0 border-b-2 rounded bg-gray-50"
-        >
-          <span>{ctr.name}</span>
-          <button
-            type="button"
-            onClick={() => onRedirect?.(`center/${ctr.id}`)}
-            className="
-              py-2.5 px-5 me-2 mb-2
-              text-sm font-medium text-gray-900
-              focus:outline-none bg-white rounded-lg
-              border border-green-200
-              hover:bg-gray-100 hover:text-blue-700
-              focus:z-10 focus:ring-4 focus:ring-gray-100
-              dark:focus:ring-gray-700 dark:bg-gray-800
-              dark:text-gray-400 dark:border-gray-600
-              dark:hover:text-white dark:hover:bg-gray-700
-            "
-          >
-            Voir
-          </button>
-        </div>
+        <Card key={ctr.id} className="border-fading-grey">
+          <CardHeader>
+            <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+              <Building className="w-5 h-5 text-hello-yellow" />
+              {ctr.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* <div>
+              <h4 className="font-medium text-mister-anthracite">{ctr.name}</h4>
+            </div> */}
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-mister-anthracite/60 mt-0.5" />
+              <span className="text-mister-anthracite/70">{ctr.address}, {ctr.city}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="w-4 h-4 text-mister-anthracite/60" />
+              <span className="text-mister-anthracite/70">{ctr.phone}</span>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onRedirect?.(`center/${ctr.id}`)}
+                className="py-2 px-4 text-xs font-semibold text-mister-anthracite bg-white rounded-lg border border-hello-yellow hover:bg-hello-yellow/10 hover:text-hello-yellow focus:outline-none focus:ring-4 focus:ring-hello-yellow/20 transition"
+              >
+                Voir
+              </button>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
@@ -360,46 +366,42 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({ value, c
 
 export const CustomBrothersComponent: React.FC<BrothersComponentProps> = ({
   brothers,
-}) => {
-
-  return (
-    <div className="mt-2 bg-gray-50 p-2">
-      <h1 className='bg-border border-b-2  color-border p-4 mt-0 text-lg text-dark'>
+}) => (
+  <div className="mt-2">
+    <h1 className="bg-border border-b-2 color-border p-4 mt-0 text-lg text-mister-anthracite rounded-t-xl">
       Frères et soeurs
-      </h1>
+    </h1>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {brothers.map((bro) => (
         <div
           key={bro.id}
-          className="flex items-center justify-between p-3 bg-gray-100 rounded shadow-sm"
+          className="flex items-center justify-between p-4 bg-fading-grey rounded-xl shadow"
         >
-          <span className="font-medium text-slate-800">
+          <span className="font-medium text-mister-anthracite">
             {bro.firstname} {bro.lastname}
           </span>
-
           <button
             type="button"
-            className="py-2 px-4 text-xs font-semibold text-gray-900 bg-white rounded-lg border border-green-200 hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-100"
+            className="py-2 px-4 text-xs font-semibold text-mister-anthracite bg-white rounded-lg border border-hello-yellow hover:bg-hello-yellow/10 hover:text-hello-yellow focus:outline-none focus:ring-4 focus:ring-hello-yellow/20 transition"
           >
             Voir
           </button>
         </div>
       ))}
-        {
-          brothers.length === 0 && 
-          <CustomAlert title='Message!' message="l'élève n'a pas de Frères et soeurs" />
-        }
-
+      {brothers.length === 0 && (
+        <CustomAlert title="Message!" message="l'élève n'a pas de Frères et soeurs" />
+      )}
     </div>
-  );
-};
+  </div>
+);
 
 export const ActionGrid: React.FC<{ studentId: any }> = ({ studentId }) => (
-  <div className="p-2 bg-gray-100 grid grid-rows-2  gap-2 ">
+  <div className="p-2 bg-fading-grey grid grid-cols-1 md:grid-cols-2 gap-2 rounded-xl">
     {actions.map((a) => (
       <a
         key={a.label}
         href={a.to(studentId)}
-        className="bg-white text-center hover:bg-gray-100 text-color font-semibold py-2 px-4 border color-border rounded shadow"
+        className="bg-white text-center hover:bg-hello-yellow/10 text-hello-yellow font-semibold py-2 px-4 border color-border rounded shadow transition"
       >
         {a.label}
       </a>

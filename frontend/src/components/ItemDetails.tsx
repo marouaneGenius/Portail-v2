@@ -1,19 +1,46 @@
-// src/pages/DetailPage.tsx
-import { useParams, Navigate, redirect, useNavigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import api from '../api/aixos';
 import { useModal } from '../Hooks/useModal';
 import Modal from './Modal';
 import ParentSelector from './ParentFinder';
 import { showDataDetails, TranslateHeaderNames } from '../services/functions';
-import { CustomAlert, CustomBrothersComponent, CustomCenterComponent, CustomParentComponent, CustomReportsComponent, CustomSessionComponent, CustomStudentsComponent, CustomTutorScheduleComponent } from './CustomAlert';
-import { GradientCard } from './GardientCard';
+import {
+  CustomAlert,
+  CustomBrothersComponent,
+  CustomCenterComponent,
+  CustomParentComponent,
+  CustomReportsComponent,
+  CustomSessionComponent,
+  CustomStudentsComponent,
+  CustomTutorScheduleComponent,
+} from './CustomAlert';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars } from 'lucide-react';
 
 export interface DetailPageParams {
   resource: string;
   id: string;
   [key: string]: string | undefined;
 }
+
+const getRoleColor = (role: string) => {
+  if (!role) return 'bg-fading-grey text-mister-anthracite border-fading-grey';
+  if (role.includes('ADMIN')) return 'bg-crazy-magenta/10 text-crazy-magenta border-crazy-magenta/20';
+  if (role.includes('COORDINATOR')) return 'bg-hello-yellow/10 text-orange-600 border-orange-200';
+  if (role.includes('TUTOR')) return 'bg-blue-100 text-blue-600 border-blue-200';
+  return 'bg-fading-grey text-mister-anthracite border-fading-grey';
+};
+const getStatusColor = (status: string) =>
+  status === 'Actif'
+    ? 'bg-green-100 text-green-600 border-green-200'
+    : 'bg-gray-100 text-gray-600 border-gray-200';
+
+const initials = (item: any) =>
+  [item.firstname, item.lastname].filter(Boolean).map((n: string) => n[0]).join('').toUpperCase();
 
 const ItemDetails: React.FC = () => {
   const { resource, id } = useParams<DetailPageParams>();
@@ -23,102 +50,317 @@ const ItemDetails: React.FC = () => {
   const [brothers, setBrothers] = useState([]);
   const [error, setError] = useState<string | null>(null);
   const { isOpen, open, close } = useModal();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!resource || !id) return;
     setLoading(true);
     api
       .get(`/api/${resource}/${id}`)
-      .then(({ data }:any) => {
-        const {id, ...newobj} = data
+      .then(({ data }: any) => {
         delete data.id;
         setItem(data);
       })
-      .catch((err:any) => {
+      .catch((err: any) => {
         setError(err.response?.data?.message || 'Erreur de chargement');
       })
       .finally(() => setLoading(false));
 
-      if(resource === 'student') {
-        getBrothers() 
-      }
-
+    if (resource === 'student') {
+      getBrothers();
+    }
   }, [resource, id, updateItem]);
 
-  const updateCurrentItem = (student:any) => {
-    setUpdateItem(student)
-  }
+  const updateCurrentItem = (student: any) => {
+    setUpdateItem(student);
+  };
 
-  const redirection = (route:any) => {
+  const redirection = (route: any) => {
     navigate(`/${route}`);
-  }
+  };
 
-  const redirectionToForm = (route:any) => {
+  const redirectionToForm = () => {
     navigate(`/form/tutorschedule/${id}`);
-  }
+  };
 
   const getBrothers = () => {
-    api
-    .get(`/api/student/${id}/siblings`)
-    .then(({ data }:any) => setBrothers(data))
-  }
+    api.get(`/api/student/${id}/siblings`).then(({ data }: any) => setBrothers(data));
+  };
+
+  // Ajoute cette fonction pour la suppression
+  const handleDelete = async () => {
+    if (!window.confirm('Voulez-vous vraiment supprimer cet élément ?')) return;
+    try {
+      await api.delete(`/api/${resource}/${id}`);
+      navigate(`/${resource}s`);
+    } catch (err) {
+      alert("Erreur lors de la suppression.");
+    }
+  };
+
+  // Ajoute cette fonction pour la modification
+  const handleEdit = () => {
+    navigate(`/${resource}/${id}/edit`);
+  };
 
   if (loading) return <p>Chargement…</p>;
   if (error) return <p className="text-red-600">{error}</p>;
   if (!item) return <Navigate to={`/${resource}`} replace />;
 
+  const mainFields = ['firstname', 'lastname', 'email', 'phone', 'gender'];
+  const addressFields = ['address', 'city', 'zip_code', 'country'];
+  const otherFields = Object.keys(item).filter(
+    (key) =>
+      !mainFields.includes(key) &&
+      !addressFields.includes(key) &&
+      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects','is_active'].includes(key)
+  );
+
+  // Pour le badge statut
+  const statusLabel = item.is_active ? 'Actif' : 'Inactif';
+
   return (
-    <div className=" mx-auto py-3 px-4 flex flex-col justify-center items-center">
-        <h1 className="text-4xl font-bold mb-4">
-            Détails du {resource}
-        </h1>
-        <GradientCard className="w-4/5" innerClassName="p-4 space-y-6">
-        
-          <div className="mx-auto py-3 px-2 bg-white shadow-xl rounded">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {Object.entries(item).map(([key, value]) => (
-                    <div key={key} className="bg-gray-50 w-full p-2 rounded">
-                      <div className="text-sm font-medium  capitalize w-full">
-                          <div className='bg-border text-lg w-full flex items-center h-10 border-b-2  px-1 '>
-                              {value !== null ? TranslateHeaderNames(key) :  key.replace('_', ' ')}
-                          </div>
-                      </div>
-                      <div className=''>
-                          { showDataDetails(value, key) }
-                      </div>
-                      <div className="mt-0 text-gray-900 p-1 ">
-                        <CustomParentComponent currentkey={key} value={value} onRedirect={redirection}  />
-                        <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
-                        <CustomReportsComponent currentkey={key} value={value} />
-                        <CustomTutorScheduleComponent currentkey={key} value={value} onRedirect={redirectionToForm} action={redirection} id={id} />
-                        <CustomSessionComponent currentkey={key} value={value} />
-                        <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />   {/* */}
+    <div className="space-y-6">
+      {/* En-tête */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="shrink-0">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour
+          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-mister-anthracite">
+              {item.firstname} {item.lastname}
+            </h1>
+            <p className="text-mister-anthracite/70 capitalize">Détails du {resource}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Edit className="w-4 h-4 mr-2" />
+            Modifier
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            Supprimer
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Colonne principale */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Card Informations principales */}
+          <Card className="border-fading-grey">
+            <CardHeader>
+              <CardTitle className="text-xl text-mister-anthracite flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-hello-yellow to-crazy-magenta rounded-full flex items-center justify-center">
+                  <span className="text-dat-white text-lg font-semibold">
+                    {initials(item)}
+                  </span>
+                </div>
+                {item.firstname} {item.lastname}
+              </CardTitle>
+              {/* <CardDescription>
+                Informations détaillées de {item.firstname}
+              </CardDescription> */}
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mainFields.map((key) =>
+                  item[key] !== undefined && key !== 'firstname' && key !== 'lastname'? (
+                    <div key={key} className="flex items-center gap-3">
+                      {key === 'email' && <Mail className="w-5 h-5 text-mister-anthracite/50" />}
+                      {key === 'phone' && <Phone className="w-5 h-5 text-mister-anthracite/50" />}
+                      {key === 'gender' && <VenusAndMars className="w-5 h-5 text-mister-anthracite/50" />}
+                      <div>
+                        <p className="text-sm text-mister-anthracite/70">{TranslateHeaderNames(key)}</p>
+                        <p className="font-medium text-mister-anthracite">
+                          {showDataDetails(item[key], key)}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                    
+                  ) : null
+                )}
               </div>
-              { resource === 'student' && <CustomBrothersComponent  brothers={brothers}  /> }
-          </div>
-        </GradientCard>
-        <Modal
-            isOpen={isOpen}
-            title="Attacher ou créer le parent"
-            onClose={close}
-            footer={
+              {/* <Separator /> */}
+              {/* Adresse */}
+              {addressFields.some((key) => item[key]) && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-mister-anthracite/50" />
+                  <div>
+                    <p className="text-sm text-mister-anthracite/70">Adresse</p>
+                    <p className="font-medium text-mister-anthracite">
+                      {[item.address, item.city, item.zip_code, item.country].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {/* Autres infos */}
+              {otherFields.length > 0 && (
                 <>
-                    <button
-                    onClick={close}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                    Fermer
-                    </button>
+                  <Separator />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {otherFields.map((key) =>
+                      item[key] !== null && typeof item[key] !== 'object' ? (
+                        <div key={key}>
+                          <p className="text-sm text-mister-anthracite/70">{TranslateHeaderNames(key)}</p>
+                          <p className="font-medium text-mister-anthracite">{showDataDetails(item[key], key)}</p>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
                 </>
-            }
-        >
-            <ParentSelector student={item} onClose={close} updateItem={updateCurrentItem} />
-        </Modal>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Cards pour les entités liées */}
+          {Object.entries(item).map(([key, value]) => {
+            if (key === 'parents')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Parents</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} action={open} />
+                  </CardContent>
+                </Card>
+              );
+            if (key === 'students')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Enfant(s)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
+                  </CardContent>
+                </Card>
+              );
+            if (key === 'reports')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Rapports</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomReportsComponent currentkey={key} value={value} />
+                  </CardContent>
+                </Card>
+              );
+            if (key === 'tutorschedules')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Plannings tuteur</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomTutorScheduleComponent
+                      currentkey={key}
+                      value={value}
+                      onRedirect={redirectionToForm}
+                      action={redirection}
+                      id={id}
+                    />
+                  </CardContent>
+                </Card>
+              );
+            if (key === 'sessions')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Séances</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomSessionComponent currentkey={key} value={value} />
+                  </CardContent>
+                </Card>
+              );
+            if (key === 'centers')
+              return (
+                <Card key={key} className="border-fading-grey">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-mister-anthracite">Centre d'affectation</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />
+                  </CardContent>
+                </Card>
+              );
+            return null;
+          })}
+
+          {/* Card frères et soeurs pour les étudiants */}
+          {/* {resource === 'student' && (
+            <Card className="border-fading-grey">
+              <CardHeader>
+                <CardTitle className="text-lg text-mister-anthracite">Frères et soeurs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CustomBrothersComponent brothers={brothers} />
+              </CardContent>
+            </Card>
+          )} */}
+        </div>
+
+        {/* Sidebar infos rapides */}
+        <div className="space-y-6">
+          <Card className="border-fading-grey">
+            <CardHeader>
+              <CardTitle className="text-lg text-mister-anthracite">Statut</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-mister-anthracite/50" />
+                <div className="flex-1">
+                  <p className="text-sm text-mister-anthracite/70">Rôle</p>
+                  <Badge className={getRoleColor(item.roles?.[0] || '')}>
+                    {item.roles?.[0]?.replace('ROLE_', '') || 'Utilisateur'}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <div className={`w-3 h-3 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-mister-anthracite/70">Statut du compte</p>
+                  <Badge className={getStatusColor(statusLabel)}>{statusLabel}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {/* Activité récente (exemple) */}
+          {item.last_login && (
+            <Card className="border-fading-grey">
+              <CardHeader>
+                <CardTitle className="text-lg text-mister-anthracite">Activité récente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-mister-anthracite/50" />
+                  <div>
+                    <p className="text-sm text-mister-anthracite/70">Dernière connexion</p>
+                    <p className="font-medium text-mister-anthracite">{item.last_login}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Modal parent */}
+      <Modal
+        isOpen={isOpen}
+        title="Attacher ou créer le parent"
+        onClose={close}
+        footer={<Button variant="outline" onClick={close}>Fermer</Button>}
+      >
+        <ParentSelector student={item} onClose={close} updateItem={updateCurrentItem} />
+      </Modal>
     </div>
   );
 };

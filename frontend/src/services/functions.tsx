@@ -94,7 +94,7 @@ export const showDataDetails = (value:any, key: any) => {
 
   // 3️⃣ Null ou undefined
   if (value == null) {
-      return 'N/C';
+      return 'Non défini';
   }
   
   if(key === 'roles') {
@@ -183,11 +183,11 @@ export const TranslateHeaderNames = (value:String) => {
       case 'email':
         return 'E-mail'
       case 'roles':
-        return 'Role'
+        return 'Rôle'
       case 'is_active':
         return 'Activé'
       case 'created_at':
-        return 'Création'
+        return 'Date de création'
       case 'created_by':
         return 'Crée Par'
       case 'actions':

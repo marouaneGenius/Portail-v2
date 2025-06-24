@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/aixos';
 import {
   Plus, Search, Eye, Pencil, Trash2,
-  ShieldCheck, UserRound, GraduationCap
+  ShieldCheck, UserRound, GraduationCap, Mail, Phone, Mars, Venus
 } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import {
 import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TranslateHeaderNames } from '../services/functions';
 
 interface DataTableProps {
   endpoint: string;
@@ -113,7 +115,7 @@ export default function CustomDataTable({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-mister-anthracite">{title}</h1>
+        <h1 className="text-3xl font-bold text-mister-anthracite">{title}</h1>
         <Button
           className="bg-hello-yellow text-mister-anthracite hover:bg-hello-yellow/90 transition"
           onClick={() => navigate(`/form/${endpoint}`)}
@@ -151,7 +153,7 @@ export default function CustomDataTable({
                   <TableRow className="border-fading-grey">
                     {Object.keys(paginatedData[0]).map((key) => (
                       <TableHead key={key} className="text-mister-anthracite uppercase text-xs">
-                        {key === 'id_center' ? 'Centre' : key.replace(/_/g, ' ')}
+                        {TranslateHeaderNames(key)}
                       </TableHead>
                     ))}
                     <TableHead className="text-mister-anthracite uppercase text-xs">Actions</TableHead>
@@ -194,6 +196,29 @@ export default function CustomDataTable({
                                 );
                               }
 
+                              if(key === 'email') {
+                                return (
+                                  <span className="inline-flex items-center rounded-md bg-[#F2F2F2] px-2 py-1 text-xs font-medium text-[#333333] ring-1 ring-[#FFB800]/20 ring-inset">
+                                    <Mail className="w-3 h-3 mr-1" />
+                                    {value}
+                                  </span>
+                                );
+                              }
+
+                              if(key === 'phone') {
+                                return value ?(
+                                  <span className="inline-flex items-center rounded-md bg-[#FFB800]/10 px-2 py-1 text-xs font-medium text-[#FFB800] ring-1 ring-[#FFB800]/20  ring-inset">
+                                    <Phone className="w-3 h-3 mr-1" />
+                                    {value}
+                                  </span>
+                                ): (
+                                  <span className="inline-flex items-center rounded-md bg-[#FFB800]/10 px-2 py-1 text-xs font-medium text-[#FFB800] ring-1 ring-[#FFB800]/20 ring-inset">
+                                    <Phone className="w-3 h-3 mr-1" />
+                                    Non renseigné
+                                  </span>
+                                );
+                              }
+
                               if (key === 'is_active') {
                                 return value ? (
                                   <span className="inline-flex items-center rounded-full bg-green-100 text-green-600 text-xs font-medium px-2 py-1">
@@ -231,6 +256,30 @@ export default function CustomDataTable({
 
                               if (key === 'id_center') return centerMap[value] || '—';
 
+                              if (key === 'gender') {
+                                if (value === 'male' || value === 'homme' || value === 'M') {
+                                  return (
+                                    <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-600  ring-1 ring-[#FFB800]/20  ring-inset">
+                                    <Mars className="w-3 h-3 mr-1" />
+                                    Homme
+                                  </span>
+                                  );
+                                }
+                                if (value === 'female' || value === 'femme' || value === 'F') {
+                                  return (
+                                    <span className="inline-flex items-center rounded-md bg-pink-100 px-2 py-1 text-xs font-medium text-pink-600  ring-1 ring-[#FFB800]/20  ring-inset">
+                                    <Venus className="w-3 h-3 mr-1" />
+                                    Femme
+                                  </span>
+                                  );
+                                }
+                                return (
+                                  <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1">
+                                    Autre
+                                  </span>
+                                );
+                              }
+
                               return value || '—';
                             })()}
                           </TableCell>
@@ -239,15 +288,32 @@ export default function CustomDataTable({
 
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}`)}>
-                            <Eye className="w-4 h-4 text-mister-anthracite/70" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/${endpoint}/${row.id}/edit`)}>
-                            <Pencil className="w-4 h-4 text-hello-yellow" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-                            <Trash2 className="w-4 h-4 text-crazy-magenta" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" className='hover:bg-hello-yellow/20' size="sm" onClick={() => navigate(`/${endpoint}/${row.id}`)}>
+                                  <Eye className="w-4 h-4 text-mister-anthracite/70" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Voir</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" className='hover:bg-hello-yellow/20' size="sm" onClick={() => navigate(`/${endpoint}/${row.id}/edit`)}>
+                                  <Pencil className="w-4 h-4 text-hello-yellow" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Modifier</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" className='hover:bg-hello-yellow/20' size="sm" onClick={() => handleDelete(row.id)}>
+                                  <Trash2 className="w-4 h-4 text-crazy-magenta" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Supprimer</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </TableRow>
