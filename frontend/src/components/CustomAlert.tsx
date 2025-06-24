@@ -108,6 +108,15 @@ export function CustomParentComponent({
                 </div>
               )}
             </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onRedirect?.(`parent/${parent.id}`)}
+                className="py-2 px-4 text-xs font-semibold text-mister-anthracite bg-white rounded-lg border border-hello-yellow hover:bg-hello-yellow/10 hover:text-hello-yellow focus:outline-none focus:ring-4 focus:ring-hello-yellow/20 transition"
+              >
+                Voir
+              </button>
+            </div>
           </div>
         </div>
 

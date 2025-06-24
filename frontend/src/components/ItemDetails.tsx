@@ -220,23 +220,13 @@ const ItemDetails: React.FC = () => {
             if (key === 'parents')
               return (
                 <Card key={key} className="border-fading-grey">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-mister-anthracite">Parents</CardTitle>
-                  </CardHeader>
-                  <CardContent>
                     <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} action={open} />
-                  </CardContent>
                 </Card>
               );
             if (key === 'students')
               return (
                 <Card key={key} className="border-fading-grey">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-mister-anthracite">Enfant(s)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
                     <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
-                  </CardContent>
                 </Card>
               );
             if (key === 'reports')
