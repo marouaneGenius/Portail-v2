@@ -61,6 +61,24 @@ class Session
     #[ORM\Column(nullable: true)]
     private ?bool $is_paid = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $is_absent = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $absent_by = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $created_at = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $created_by = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updated_at = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $updated_by = null;
+
     public function __construct()
     {
         $this->id_student = new ArrayCollection();
@@ -291,6 +309,78 @@ class Session
     public function setIsPaid(?bool $is_paid): static
     {
         $this->is_paid = $is_paid;
+
+        return $this;
+    }
+
+    public function isIsAbsent(): ?bool
+    {
+        return $this->is_absent;
+    }
+
+    public function setIsAbsent(?bool $is_absent): static
+    {
+        $this->is_absent = $is_absent;
+
+        return $this;
+    }
+
+    public function getAbsentBy(): ?string
+    {
+        return $this->absent_by;
+    }
+
+    public function setAbsentBy(?string $absent_by): static
+    {
+        $this->absent_by = $absent_by;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $created_at): static
+    {
+        $this->created_at = $created_at;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?string
+    {
+        return $this->created_by;
+    }
+
+    public function setCreatedBy(string $created_by): static
+    {
+        $this->created_by = $created_by;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updated_at): static
+    {
+        $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
+    public function getUpdatedBy(): ?string
+    {
+        return $this->updated_by;
+    }
+
+    public function setUpdatedBy(string $updated_by): static
+    {
+        $this->updated_by = $updated_by;
 
         return $this;
     }

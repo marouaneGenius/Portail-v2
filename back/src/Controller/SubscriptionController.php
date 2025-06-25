@@ -149,8 +149,8 @@ class SubscriptionController extends AbstractController
             ] : null,
             'sessions' => array_map(fn($s) => [
                 'id'         => $s->getId(),
-                'start_time' => $s->getStartTime()?->format('Y-m-d H:i:s'),
-                'end_time'   => $s->getEndTime()?->format('Y-m-d H:i:s'),
+                // 'start_time' => $s->getS
+                // 'end_time'   => $s->getEndTime()?->format('Y-m-d H:i:s'),
             ], $sessions->toArray()),
 
             'created_at' => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),

@@ -259,5 +259,103 @@ export function uuid () {
   return (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now());
 }
 
+export const extractExactHour = (isoString: string): string => {
+  const date = new Date(isoString);
+  // Compensation du décalage horaire
+  const timezoneOffset = date.getTimezoneOffset() * 60000; // en millisecondes
+  const adjustedDate = new Date(date.getTime() + timezoneOffset);
+  
+  const hours = adjustedDate.getHours();
+  const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+  return `${hours}h${minutes}`;
+};
 
-// Utilisation :
+export function formatScheduledAt(isoDateTime: string, slot: string): string {
+  // Extraire la partie date seule (avant 'T' ou avant l'espace)
+  const datePart = isoDateTime.includes('T')
+    ? isoDateTime.split('T')[0]
+    : isoDateTime.split(' ')[0];
+
+  // Récupérer heures et minutes depuis "13h30"
+  const [h, m = '0'] = slot.split('h').map(Number);
+
+  // Formatter les composants
+  const HH = String(h).padStart(2, '0');
+  const MM = String(m).padStart(2, '0');
+
+  return `${datePart} ${HH}:${MM}:00`;
+}
+
+
+export function buildSessions(
+  startDate: string,
+  endDate: string,
+  slots: Array<{
+    day: string;
+    hour: string;
+    matieres: string[];
+    tutorId: number;
+  }>,
+  perWeek: number
+) {
+  // 1) Mappage jour français → indice JS (0=dimanche…6=samedi)
+  const daysMap: Record<string, number> = {
+    dimanche: 0,
+    lundi: 1,
+    mardi: 2,
+    mercredi: 3,
+    jeudi: 4,
+    vendredi: 5,
+    samedi: 6
+  };
+
+  const start = new Date(startDate);
+  const finish = new Date(endDate);
+  const sessions: Array<{
+    scheduled_at: string;
+    tutor_id: number;
+    school_subjects: string[];
+  }> = [];
+
+  slots.forEach(slot => {
+
+    const targetWeekday = daysMap[slot.day.toLowerCase()];
+    if (targetWeekday === undefined) {
+      throw new Error(`Jour inconnu: ${slot.day}`);
+    }
+
+    // 2) Trouver la première occurrence du jour cible ≥ start
+    const cursor = new Date(start);
+    const diff = (targetWeekday + 7 - cursor.getDay()) % 7;
+    cursor.setDate(cursor.getDate() + diff);
+
+    // 3) Boucler semaine par semaine
+    while (cursor <= finish) {
+      // combiner date et heure ("13h30") → "YYYY-MM-DDTHH:MM:00"
+      const [h, m = '0']:any = slot.hour.split('h').map(Number);
+      const scheduled = new Date(cursor);
+      scheduled.setHours(h, m, 0, 0);
+
+
+        const localScheduled = formatScheduledAt(
+            cursor.toISOString(),
+            slot.hour
+          );
+
+      sessions.push({
+        scheduled_at: localScheduled,     
+        tutor_id: slot.tutorId,
+        school_subjects: slot.matieres
+      });
+
+      // incrémenter d’une semaine
+      cursor.setDate(cursor.getDate() + 7);
+    }
+  });
+
+  return sessions;
+}
+
+export function pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
