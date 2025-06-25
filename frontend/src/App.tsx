@@ -4,6 +4,7 @@ import Navbar from './components/NavBar';
 import { useAuth } from './Hooks/auth';
 import Sidebar from './components/SideBar';
 import { SidebarProvider } from '@/components/ui/sidebar'; // adapte le chemin selon ton arborescence
+import { Toaster } from '@/components/ui/sonner';
 
 const App = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const App = () => {
           </main>
         </div>
       )}
+     <Toaster richColors closeButton />
     </div>
   );
 };
