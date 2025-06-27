@@ -298,7 +298,6 @@ export function buildSessions(
   }>,
   perWeek: number
 ) {
-  // 1) Mappage jour français → indice JS (0=dimanche…6=samedi)
   const daysMap: Record<string, number> = {
     dimanche: 0,
     lundi: 1,
@@ -311,51 +310,51 @@ export function buildSessions(
 
   const start = new Date(startDate);
   const finish = new Date(endDate);
-  const sessions: Array<{
-    scheduled_at: string;
-    tutor_id: number;
-    school_subjects: string[];
-  }> = [];
+  const sessions:any = [];
 
   slots.forEach(slot => {
-
     const targetWeekday = daysMap[slot.day.toLowerCase()];
     if (targetWeekday === undefined) {
       throw new Error(`Jour inconnu: ${slot.day}`);
     }
 
-    // 2) Trouver la première occurrence du jour cible ≥ start
-    const cursor = new Date(start);
-    const diff = (targetWeekday + 7 - cursor.getDay()) % 7;
-    cursor.setDate(cursor.getDate() + diff);
+    const firstDate = new Date(start); // Nouvelle copie pour chaque slot
+    const diff = (targetWeekday + 7 - firstDate.getDay()) % 7;
+    firstDate.setDate(firstDate.getDate() + diff);
 
-    // 3) Boucler semaine par semaine
-    while (cursor <= finish) {
-      // combiner date et heure ("13h30") → "YYYY-MM-DDTHH:MM:00"
+    while (firstDate <= finish) {
       const [h, m = '0']:any = slot.hour.split('h').map(Number);
-      const scheduled = new Date(cursor);
+      const scheduled = new Date(firstDate);
       scheduled.setHours(h, m, 0, 0);
 
-
-        const localScheduled = formatScheduledAt(
-            cursor.toISOString(),
-            slot.hour
-          );
+      const y = scheduled.getFullYear();
+      const mon = String(scheduled.getMonth()+1).padStart(2,'0');
+      const d = String(scheduled.getDate()).padStart(2,'0');
+      const hh = String(scheduled.getHours()).padStart(2,'0');
+      const mm = String(scheduled.getMinutes()).padStart(2,'0');
+      const scheduled_at = `${y}-${mon}-${d}T${hh}:${mm}:00`;
 
       sessions.push({
-        scheduled_at: localScheduled,     
+        scheduled_at,
         tutor_id: slot.tutorId,
         school_subjects: slot.matieres
       });
 
-      // incrémenter d’une semaine
-      cursor.setDate(cursor.getDate() + 7);
+      firstDate.setDate(firstDate.getDate() + 7);
     }
   });
 
   return sessions;
 }
 
+
 export function pad(n: number): string {
   return String(n).padStart(2, '0');
+}
+
+export const  toLocalDateString = (date:any) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }

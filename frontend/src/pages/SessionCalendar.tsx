@@ -12,7 +12,7 @@ import {
   useSensors,
   DragEndEvent
 } from '@dnd-kit/core';
-import { extractExactHour, formatScheduledAt } from '@/services/functions';
+import { extractExactHour, formatScheduledAt, toLocalDateString } from '@/services/functions';
 import { DaysCalendar } from '@/components/ui/days-canlendar';
 
 // Vos heures disponibles
@@ -57,80 +57,81 @@ const timeToMinutes = (time: string): number => {
 export default function SessionCalendar() {
   const { user } = useAuth();
   const [centers, setCenters] = useState<{id: number; name: string}[]>([]);
-  const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [tutors, setTutors] = useState<any[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<number | ''>('');
   // const [selectedDay, setSelectedDay] = useState<string>('lundi');
   const [selectedDate, setSelectedDate] = useState<Date>();
-
+  const [sessionsByCenter, setSessionsByCenter] = useState<any[]>([]);
   // Jours français en ordre
   const frenchDays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as const;
   
  // Dans SessionCalendar.tsx
+  // useEffect(() => {
+  //   Promise.all([
+  //     api.get<Tutor[]>('/api/user/tutors'),
+  //     getCenters(),
+  //   ]).then(async ([tRes, cRes]) => {
+  //     setCenters(cRes);
+
+  //     const tutorsWithStudents = await Promise.all(
+  //       tRes.data.map(async tutor => {
+  //         const { data } = await api.get<{ 
+  //           id: number;
+  //           scheduled_at: string;
+  //           tutor_id: number;
+  //           students: StudentFromSession[];
+  //         }[]>(`/api/sessions/tutor/${tutor.id}`);
+  //         return {
+  //           tutor,
+  //           sessions: data
+  //         }
+  //       })
+  //     );
+
+  //     setTutors(tutorsWithStudents)
+  //   }).catch(console.error);
+  // }, []);
+
+
   useEffect(() => {
-    Promise.all([
-      api.get<Tutor[]>('/api/user/tutors'),
-      getCenters(),
-    ]).then(async ([tRes, cRes]) => {
-      setCenters(cRes);
+    getCenters().then(setCenters)
 
-      const tutorsWithStudents = await Promise.all(
-        tRes.data.map(async tutor => {
-          const { data } = await api.get<{ 
-            id: number;
-            scheduled_at: string;
-            tutor_id: number;
-            students: StudentFromSession[];
-          }[]>(`/api/sessions/tutor/${tutor.id}`);
-
-          // Associer l'heure exacte aux étudiants
-          const studentsWithHour = data.flatMap(session => 
-            session.students.map(student => ({
-              ...student,
-              sessions: [{
-                ...session,
-                exactHour: extractExactHour(session.scheduled_at)
-              }]
-            }))
-          );
-
-          // Fusionner les données
-          const studentsMap = new Map<number, StudentFromSession>();
-          studentsWithHour.forEach(student => {
-            if (studentsMap.has(student.id)) {
-              const existing:any = studentsMap.get(student.id)!;
-              studentsMap.set(student.id, {
-                ...existing,
-                sessions: [...(existing.sessions || []), ...student.sessions]
-              });
-            } else {
-              studentsMap.set(student.id, student);
-            }
-          });
-
-          return { 
-            ...tutor, 
-            students: Array.from(studentsMap.values()) 
-          };
-        })
-      );
-
-      setTutors(tutorsWithStudents);
-    }).catch(console.error);
   }, []);
+
+  function formatDateToYMD(date: any): string {
+    return date.toISOString().slice(0, 10);
+  }
+  
+
+  useEffect(() => {
+    // if (selectedCenter === '' || !selectedDate) {
+    //   setSessionsByCenter([]);
+    //   return;
+    // }
+  
+    // api.get<any[]>(
+    //   `/api/center/${selectedCenter}/sessions-by-date`,
+    //   { params: { date: selectedDate } }
+    // )
+    // .then(({ data }) => setSessionsByCenter(data))
+    // .catch(console.error);
+
+    console.log(Date.parse(selectedDate))
+  }, [selectedCenter, selectedDate]);
 
   // Filtrer tuteurs par centre sélectionné
   const tutorsForCenter = useMemo(() => {
     if (!selectedCenter) return [];
-    return tutors.filter(tutor =>
-      tutor.events.some(ev => ev.centers.some(c => c.id === selectedCenter))
+    return tutors.filter((tutor:any) =>
+      tutor.tutor.events.some((ev:any) => ev.centers.some((c:any) => c.id === selectedCenter))
     );
   }, [tutors, selectedCenter, selectedDate]);
 
-  // Fonction pour vérifier si un tuteur est disponible à une heure donnée
+
   const isTutorAvailableAtHour = (
     tutor: Tutor,
     hour: string
-  ): boolean => {
+  ) => {
     if (!selectedDate) return false;
   
     const weekday = selectedDate
@@ -145,130 +146,137 @@ export default function SessionCalendar() {
     });
   };
 
+
+const handleDragEnd = (event: DragEndEvent) => {
+
+}
+
+
+
+
+  // function handleDragEnd(event: DragEndEvent) {
+  //   const { active, over } = event;
+  //   if (!over || active.data.current?.type !== 'student') return;
+  
+  //   // 1) Source
+  //   const {
+  //     studentId,
+  //     tutorId: fromTutorId,
+  //     sessionHour: fromHour,
+  //     sessionId: fromSessionId 
+  //   } = active.data.current;
+  
+  //   // 2) Récupérer l'étudiant + sa session exacte
+  //   const fromTutor = tutors.find(t => t.id === fromTutorId);
+  //   const movedStudent: any = fromTutor?.students?.find(s => s.id === studentId);
+  //   if (!movedStudent) {
+  //     console.error('Étudiant introuvable');
+  //     return;
+  //   }
+
+  
+  //   const sessionToMove:any = movedStudent.sessions?.find((sess: any) => {
+  //     // si exactHour a déjà été mis à jour, on l'utilise, sinon on fallback sur scheduled_at
+  //     const hour = sess.exactHour ?? extractExactHour(sess.scheduled_at);
+  //     return sess.tutor_id === fromTutorId && hour === fromHour;
+  //   });
+
+  //   if (!sessionToMove) {
+  //     console.error('Session introuvable');
+  //     return;
+  //   }
+  
+  //   // 3) Cible depuis over.data.current
+  //   const {
+  //     tutorId: targetTutorId,
+  //     hourSlot: targetHour,
+  //     sessionId: draggedSessionId
+  //   }:any = over.data.current;
+
+  //   // 4) Retirer la session déplacée
+  //   const filteredSessions = movedStudent.sessions.filter(
+  //     (sess: any) => sess.id !== sessionToMove.id
+  //   );
+  
+  //   // 5) Créer la nouvelle session :
+  //   //    - on change juste tutor_id et exactHour  
+  //   const newSession = {
+  //     ...sessionToMove,
+  //     tutor_id: targetTutorId,
+  //     exactHour: targetHour
+  //     // scheduled_at reste inchangé
+  //   };
+  
+  //   const updatedStudent = {
+  //     ...movedStudent,
+  //     sessions: [...filteredSessions, newSession]
+  //   };
+  
+  //   // 6) Mettre à jour les tuteurs
+  //   setTutors(prev =>
+  //     prev.map((tutor: any) => {
+  //       // ─── Cas spécial : même tuteur, on ne fait que “mettre à jour” l'étudiant ───
+  //       if (tutor.id === fromTutorId && fromTutorId === targetTutorId) {
+  //         return {
+  //           ...tutor,
+  //           students: tutor.students.map((s: any) =>
+  //             s.id === studentId ? updatedStudent : s
+  //           )
+  //         };
+  //       }
+    
+  //       // ─── Sinon, cas “source” (différent tuteur ou plusieurs sessions restantes) ───
+  //       if (tutor.id === fromTutorId) {
+  //         const stillHas = filteredSessions.length > 0;
+  //         return {
+  //           ...tutor,
+  //           students: stillHas
+  //             ? tutor.students.map((s: any) =>
+  //                 s.id === studentId ? updatedStudent : s
+  //               )
+  //             : tutor.students.filter((s: any) => s.id !== studentId)
+  //         };
+  //       }
+    
+  //       // ─── Cas “cible” si tuteur différent ───
+  //       if (tutor.id === targetTutorId) {
+  //         const exists = tutor.students.some((s: any) => s.id === studentId);
+  //         return {
+  //           ...tutor,
+  //           students: exists
+  //             ? tutor.students.map((s: any) =>
+  //                 s.id === studentId ? updatedStudent : s
+  //               )
+  //             : [...(tutor.students ?? []), updatedStudent]
+  //         };
+  //       }
+    
+  //       return tutor;
+  //     })
+  //   );
+
+  //   const values = {
+  //     tutor_id: targetTutorId,
+  //     scheduled_at : formatScheduledAt(sessionToMove.scheduled_at, targetHour) 
+  //   }
+
+  //   try{
+  //     api.patch(`/api/sessions/${fromSessionId}`,values).then((res) => {
+  //       if(res) {
+  //         alert('Modification reussi');
+  //       }
+  //     })
+  //   } catch(e:any) {
+  //     alert('une erreur est servenu lors de la modification')
+  //     console.error('error ==>', e)
+  //   }
+    
+  // }
+
+  if (!user) return null;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.data.current?.type !== 'student') return;
-  
-    // 1) Source
-    const {
-      studentId,
-      tutorId: fromTutorId,
-      sessionHour: fromHour,
-      sessionId: fromSessionId 
-    } = active.data.current;
-  
-    // 2) Récupérer l'étudiant + sa session exacte
-    const fromTutor = tutors.find(t => t.id === fromTutorId);
-    const movedStudent: any = fromTutor?.students?.find(s => s.id === studentId);
-    if (!movedStudent) {
-      console.error('Étudiant introuvable');
-      return;
-    }
-
-  
-    const sessionToMove:any = movedStudent.sessions?.find((sess: any) => {
-      // si exactHour a déjà été mis à jour, on l'utilise, sinon on fallback sur scheduled_at
-      const hour = sess.exactHour ?? extractExactHour(sess.scheduled_at);
-      return sess.tutor_id === fromTutorId && hour === fromHour;
-    });
-
-    if (!sessionToMove) {
-      console.error('Session introuvable');
-      return;
-    }
-  
-    // 3) Cible depuis over.data.current
-    const {
-      tutorId: targetTutorId,
-      hourSlot: targetHour,
-      sessionId: draggedSessionId
-    }:any = over.data.current;
-
-    // 4) Retirer la session déplacée
-    const filteredSessions = movedStudent.sessions.filter(
-      (sess: any) => sess.id !== sessionToMove.id
-    );
-  
-    // 5) Créer la nouvelle session :
-    //    - on change juste tutor_id et exactHour  
-    const newSession = {
-      ...sessionToMove,
-      tutor_id: targetTutorId,
-      exactHour: targetHour
-      // scheduled_at reste inchangé
-    };
-  
-    const updatedStudent = {
-      ...movedStudent,
-      sessions: [...filteredSessions, newSession]
-    };
-  
-    // 6) Mettre à jour les tuteurs
-    setTutors(prev =>
-      prev.map((tutor: any) => {
-        // ─── Cas spécial : même tuteur, on ne fait que “mettre à jour” l'étudiant ───
-        if (tutor.id === fromTutorId && fromTutorId === targetTutorId) {
-          return {
-            ...tutor,
-            students: tutor.students.map((s: any) =>
-              s.id === studentId ? updatedStudent : s
-            )
-          };
-        }
-    
-        // ─── Sinon, cas “source” (différent tuteur ou plusieurs sessions restantes) ───
-        if (tutor.id === fromTutorId) {
-          const stillHas = filteredSessions.length > 0;
-          return {
-            ...tutor,
-            students: stillHas
-              ? tutor.students.map((s: any) =>
-                  s.id === studentId ? updatedStudent : s
-                )
-              : tutor.students.filter((s: any) => s.id !== studentId)
-          };
-        }
-    
-        // ─── Cas “cible” si tuteur différent ───
-        if (tutor.id === targetTutorId) {
-          const exists = tutor.students.some((s: any) => s.id === studentId);
-          return {
-            ...tutor,
-            students: exists
-              ? tutor.students.map((s: any) =>
-                  s.id === studentId ? updatedStudent : s
-                )
-              : [...(tutor.students ?? []), updatedStudent]
-          };
-        }
-    
-        return tutor;
-      })
-    );
-
-    const values = {
-      tutor_id: targetTutorId,
-      scheduled_at : formatScheduledAt(sessionToMove.scheduled_at, targetHour) 
-    }
-
-    try{
-      api.patch(`/api/sessions/${fromSessionId}`,values).then((res) => {
-        if(res) {
-          alert('Modification reussi');
-        }
-      })
-    } catch(e:any) {
-      alert('une erreur est servenu lors de la modification')
-      console.error('error ==>', e)
-    }
-    
-  }
-
-  if (!user) return null;
 
   return (
     <div className="p-6 space-y-6">
@@ -289,20 +297,6 @@ export default function SessionCalendar() {
           </select>
         </div>
 
-        {/* <div>
-          <label className="block mb-1 font-medium">Jour :</label>
-          <select
-            className="w-full border px-3 py-2 rounded"
-            value={selectedDay}
-            onChange={e => setSelectedDay(e.target.value)}
-          >
-            {frenchDays.map(day => (
-              <option key={day} value={day}>
-                {day.charAt(0).toUpperCase() + day.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div> */}
         <div>
           <DaysCalendar
             value={selectedDate}
@@ -321,7 +315,7 @@ export default function SessionCalendar() {
           {HoursOptions.map(hourSlot => {
 
               const availableTutors = tutorsForCenter.filter(tutor => 
-                isTutorAvailableAtHour(tutor, hourSlot.value)
+                isTutorAvailableAtHour(tutor.tutor, hourSlot.value)
               );
 
               return (
@@ -333,30 +327,30 @@ export default function SessionCalendar() {
                 {availableTutors.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {availableTutors.map(tutor => {
-                     const studentsAtThisHour = tutor.students?.filter((student: any) => {
-                        if (student.id_center !== selectedCenter) {
-                          return false;
-                        } else{
-                          console.log(student, student.id_center )
-                        }
+                             
+                             const sessionAtThisHour = tutor.sessions?.filter((session: any) => {
+                              // 1. Extraire heure :
+                              const sessionHour = extractExactHour(session.scheduled_at);
+                              // 2. Extraire la date (Y-M-D) de la session et de la date sélectionnée :
+                              const sessionDateString = toLocalDateString(new Date(session.scheduled_at));
+                              const selectedDateString = selectedDate ? toLocalDateString(selectedDate) : null;
 
-                      return student.sessions?.some((session: any) => {
-                        // on utilise d’abord exactHour, sinon fallback sur scheduled_at
-                        const sessionHour = session.exactHour ?? extractExactHour(session.scheduled_at);
-                        return (
-                          session.tutor_id === tutor.id &&
-                          sessionHour === hourSlot.value
-                        );
-                      });
-                    }) || [];
-                    
-                              
-                            return (
+                              // 3. Comparer :
+                              return (
+                                sessionHour === hourSlot.value &&
+                                sessionDateString === selectedDateString &&
+                                session.students[0].id_center === selectedCenter
+                              );
+                            });
+
+
+                            
+                              return (
                               <TutorCard
-                                key={`${hourSlot.value}-${tutor.id}`}
-                                tutor={tutor}
+                                key={`${hourSlot.value}-${tutor.tutor.id}`}
+                                tutor={tutor.tutor}
                                 selectedCenter={selectedCenter}
-                                students={studentsAtThisHour}
+                                students={sessionAtThisHour}
                                 droppableId={`${hourSlot.value}-${tutor.id}`} // clef unique par jour/heure/tuteur !
                                 hourSlot={hourSlot.value}
                               />

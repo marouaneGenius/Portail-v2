@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Session;
+use App\Repository\CenterRepository;
 use App\Repository\SessionRepository;
 use App\Repository\UserRepository;
 use App\Repository\StudentRepository;
@@ -29,6 +30,7 @@ class SessionController extends AbstractController
         private readonly StudentRepository $studentRepo,
         private readonly SubscriptionRepository $subRepo,
         private readonly SessionRepository $sessionRepo,
+        private readonly CenterRepository $centerRepo,
         private readonly StripeClient $stripe ,
         ZapierSmsSender $smsSender
     ) {
@@ -52,6 +54,11 @@ class SessionController extends AbstractController
         $tutor = $this->userRepo->find($data['tutor_id'] ?? null);
         if (!$tutor) {
             return new JsonResponse(['error'=>'Tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $center = $this->centerRepo->find($data['center_id'] ?? null);
+        if (!$center) {
+            return new JsonResponse(['error'=>'Centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $students = [];
@@ -83,7 +90,7 @@ class SessionController extends AbstractController
         $session->setIsPaid($data['is_paid']);
         $session->setIsAbsent($data['is_absent']);
         $session->setUpdatedBy($data['updated_by']);
-        
+        $session->setCenter($center);
 
         $session->setIdTutor($tutor);
         $session->setScheduledAt(
@@ -117,13 +124,11 @@ class SessionController extends AbstractController
             'payment_date'  => $session->getPaymentDate()->format('Y-m-d'),
             'date_slot'     => $session->getDateSlot()->format('Y-m-d'),
             'tutor_id'      => $tutor->getId(),
+            'center_id'         => $center->getId(),
             'student_ids'   => array_map(fn($s)=> $s->getId(), $students),
             'subscription_ids' => array_map(fn($s)=> $s->getId(), $subs),
         ], JsonResponse::HTTP_CREATED);
         }
-
-
-
     }
 
 
@@ -137,6 +142,31 @@ class SessionController extends AbstractController
         }
 
         $data = $this->sessionRepo->getSessionsDataByTutor($tutor);
+        return new JsonResponse($data);
+    }
+
+
+    #[Route('/center/{id}/sessions-by-date', name: 'sessions_by_center_date', methods: ['GET'])]
+    public function sessionsByCenterAndScheduledDate(
+        int     $id,
+        Request $request,
+        CenterRepository $centerRepo
+    ): JsonResponse {
+        $center = $centerRepo->find($id);
+        if (!$center) {
+            return new JsonResponse(['error' => 'Centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+    
+        $dateParam = $request->query->get('date');
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
+        if (!$date) {
+            return new JsonResponse(
+                ['error' => 'Paramètre date invalide, format attendu YYYY-MM-DD'],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+    
+        $data = $this->sessionRepo->getSessionsByCenterAndScheduledAt($center, $date);
         return new JsonResponse($data);
     }
 

@@ -79,6 +79,9 @@ class Session
     #[ORM\Column(length: 255)]
     private ?string $updated_by = null;
 
+    #[ORM\ManyToOne(inversedBy: 'sessions')]
+    private ?Center $center = null;
+
     public function __construct()
     {
         $this->id_student = new ArrayCollection();
@@ -381,6 +384,18 @@ class Session
     public function setUpdatedBy(string $updated_by): static
     {
         $this->updated_by = $updated_by;
+
+        return $this;
+    }
+
+    public function getCenter(): ?Center
+    {
+        return $this->center;
+    }
+
+    public function setCenter(?Center $center): static
+    {
+        $this->center = $center;
 
         return $this;
     }

@@ -133,6 +133,8 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
 
   const handleCreateSessidons = async (allSessions:any, subscription:any) => {
     setIsLoading(true);
+
+    console.log()
     try {
       const promises = allSessions.map((sess:any) => {
         const now = new Date();
@@ -152,7 +154,9 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
           is_absent: false,
           session_type: 'standard',
           is_canceled: false,
+          center_id: student.centers.id
         };
+
 
         return api.post('/api/sessions', payload);
       });

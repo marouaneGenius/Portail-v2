@@ -111,6 +111,53 @@ class SessionRepository extends ServiceEntityRepository
     }
 
 
+
+
+    public function getSessionsByCenterAndScheduledAt(
+        \App\Entity\Center $center,
+        \DateTimeInterface $date
+    ): array {
+        $qb = $this->createQueryBuilder('s')
+            ->leftJoin('s.id_tutor', 't')->addSelect('t')
+            ->andWhere('s.center = :center')
+            ->andWhere('DATE(s.scheduled_at) = :day')       // filtrer sur scheduled_at
+            ->setParameter('center', $center)
+            ->setParameter('day',   $date->format('Y-m-d'))
+            ->orderBy('s.scheduled_at', 'ASC');
+    
+        $sessions = $qb->getQuery()->getResult();
+    
+        return array_map(function(\App\Entity\Session $s) {
+            $tutor = $s->getIdTutor();
+            return [
+                'id'            => $s->getId(),
+                'payment_date'  => $s->getPaymentDate()?->format('Y-m-d'),
+                'scheduled_at'  => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
+                'resume'        => $s->getResume(),
+    
+                'tutor' => $tutor ? [
+                    'id'        => $tutor->getId(),
+                    'firstname' => $tutor->getFirstname(),
+                    'lastname'  => $tutor->getLastname(),
+                    'email'     => $tutor->getEmail(),
+                ] : null,
+    
+                'students' => array_map(fn($stu) => [
+                    'id'        => $stu->getId(),
+                    'firstname' => $stu->getFirstname(),
+                    'lastname'  => $stu->getLastname(),
+                ], $s->getIdStudent()->toArray()),
+    
+                'reports' => array_map(fn($r) => [
+                    'id'      => $r->getId(),
+                    'content' => $r->getContent(),
+                ], $s->getReports()->toArray()),
+            ];
+        }, $sessions);
+    }
+
+
+
 //    /**
 //     * @return Session[] Returns an array of Session objects
 //     */

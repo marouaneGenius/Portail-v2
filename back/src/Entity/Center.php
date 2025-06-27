@@ -35,11 +35,15 @@ class Center
     #[ORM\ManyToMany(targetEntity: TutorSchedule::class, mappedBy: 'center')]
     private Collection $tutorSchedules;
 
+    #[ORM\OneToMany(mappedBy: 'center', targetEntity: Session::class)]
+    private Collection $sessions;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->students = new ArrayCollection();
         $this->tutorSchedules = new ArrayCollection();
+        $this->sessions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -171,6 +175,36 @@ class Center
     {
         if ($this->tutorSchedules->removeElement($tutorSchedule)) {
             $tutorSchedule->removeCenter($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Session>
+     */
+    public function getSessions(): Collection
+    {
+        return $this->sessions;
+    }
+
+    public function addSession(Session $session): static
+    {
+        if (!$this->sessions->contains($session)) {
+            $this->sessions->add($session);
+            $session->setCenter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSession(Session $session): static
+    {
+        if ($this->sessions->removeElement($session)) {
+            // set the owning side to null (unless already changed)
+            if ($session->getCenter() === $this) {
+                $session->setCenter(null);
+            }
         }
 
         return $this;
