@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StudentCard } from './StudentCardComponent';
 import { useDroppable } from '@dnd-kit/core';
 
@@ -31,6 +31,7 @@ interface TutorCardProps {
   students: any;
   droppableId?: any;
   hourSlot: string;
+  session:any;
   // day: string;
 }
 
@@ -40,8 +41,10 @@ export const TutorCard: React.FC<TutorCardProps> = ({
   students,
   droppableId,
   hourSlot,
+  session
   // day
 }) => {
+
   const { setNodeRef, isOver } = useDroppable({
     id: droppableId,
     data: {
@@ -50,6 +53,10 @@ export const TutorCard: React.FC<TutorCardProps> = ({
       hourSlot,
     },
   });
+
+
+
+  // console.log(session)
 
 
   return (
@@ -80,6 +87,8 @@ export const TutorCard: React.FC<TutorCardProps> = ({
           Étudiants à {hourSlot}
         </h4>
         <div className="space-y-2 min-h-[60px]"> 
+
+
           {students.length > 0 ? (
             students.map((student:any) => (
               <StudentCard 

@@ -132,7 +132,6 @@ class SessionController extends AbstractController
     }
 
 
-
     #[Route('/tutor/{id}', name: 'sessions_by_tutor', methods: ['GET'])]
     public function forTutor(int $id, UserRepository $userRepo): JsonResponse
     {
@@ -147,11 +146,8 @@ class SessionController extends AbstractController
 
 
     #[Route('/center/{id}/sessions-by-date', name: 'sessions_by_center_date', methods: ['GET'])]
-    public function sessionsByCenterAndScheduledDate(
-        int     $id,
-        Request $request,
-        CenterRepository $centerRepo
-    ): JsonResponse {
+    public function sessionsByCenterAndScheduledDate( int     $id, Request $request,  CenterRepository $centerRepo): JsonResponse {
+
         $center = $centerRepo->find($id);
         if (!$center) {
             return new JsonResponse(['error' => 'Centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
@@ -166,11 +162,10 @@ class SessionController extends AbstractController
             );
         }
     
-        $data = $this->sessionRepo->getSessionsByCenterAndScheduledAt($center, $date);
+        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $date);
         return new JsonResponse($data);
+        
     }
-
-    
 
 
     #[Route('/{id}', name: 'session_update', methods: ['PUT', 'PATCH'])]

@@ -103,6 +103,15 @@ class Subscription
     #[ORM\OneToMany(mappedBy: 'subscription', targetEntity: SubscriptionURL::class)]
     private Collection $subscriptionURLs;
 
+    #[ORM\Column( name: "is_programmed",  type: "boolean", nullable: true )]
+    private ?bool $is_programed = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $programed_at = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $programed_by = null;
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
@@ -493,6 +502,42 @@ class Subscription
                 $subscriptionURL->setSubscription(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isIsProgramed(): ?bool
+    {
+        return $this->is_programed;
+    }
+
+    public function setIsProgramed(?bool $is_programed): static
+    {
+        $this->is_programed = $is_programed;
+
+        return $this;
+    }
+
+    public function getProgramedAt(): ?\DateTimeImmutable
+    {
+        return $this->programed_at;
+    }
+
+    public function setProgramedAt(?\DateTimeImmutable $programed_at): static
+    {
+        $this->programed_at = $programed_at;
+
+        return $this;
+    }
+
+    public function getProgramedBy(): ?string
+    {
+        return $this->programed_by;
+    }
+
+    public function setProgramedBy(?string $programed_by): static
+    {
+        $this->programed_by = $programed_by;
 
         return $this;
     }

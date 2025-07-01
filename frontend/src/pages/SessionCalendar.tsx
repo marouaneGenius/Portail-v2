@@ -12,8 +12,9 @@ import {
   useSensors,
   DragEndEvent
 } from '@dnd-kit/core';
-import { extractExactHour, formatScheduledAt, toLocalDateString } from '@/services/functions';
+import { extractExactHour, formatDate, formatScheduledAt, timeToMinutes, toLocalDateString } from '@/services/functions';
 import { DaysCalendar } from '@/components/ui/days-canlendar';
+import { format } from "date-fns";
 
 // Vos heures disponibles
 export const HoursOptions = [
@@ -41,103 +42,64 @@ type Tutor = {
   students?: StudentFromSession[];
 };
 
-// Fonction utilitaire pour convertir les heures en minutes
-const timeToMinutes = (time: string): number => {
-  if (time.includes('T')) {
-    // Format ISO
-    const date = new Date(time);
-    return date.getHours() * 60 + date.getMinutes();
-  }
-  
-  // Format "9h30"
-  const [hours, minutes] = time.replace('h', ':').split(':').map(Number);
-  return hours * 60 + (minutes || 0);
-};
+
+
 
 export default function SessionCalendar() {
   const { user } = useAuth();
   const [centers, setCenters] = useState<{id: number; name: string}[]>([]);
   const [tutors, setTutors] = useState<any[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<number | ''>('');
-  // const [selectedDay, setSelectedDay] = useState<string>('lundi');
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [sessionsByCenter, setSessionsByCenter] = useState<any[]>([]);
-  // Jours français en ordre
-  const frenchDays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as const;
+  const [selectedDate, setSelectedDate] = useState<any>();
   
- // Dans SessionCalendar.tsx
-  // useEffect(() => {
-  //   Promise.all([
-  //     api.get<Tutor[]>('/api/user/tutors'),
-  //     getCenters(),
-  //   ]).then(async ([tRes, cRes]) => {
-  //     setCenters(cRes);
-
-  //     const tutorsWithStudents = await Promise.all(
-  //       tRes.data.map(async tutor => {
-  //         const { data } = await api.get<{ 
-  //           id: number;
-  //           scheduled_at: string;
-  //           tutor_id: number;
-  //           students: StudentFromSession[];
-  //         }[]>(`/api/sessions/tutor/${tutor.id}`);
-  //         return {
-  //           tutor,
-  //           sessions: data
-  //         }
-  //       })
-  //     );
-
-  //     setTutors(tutorsWithStudents)
-  //   }).catch(console.error);
-  // }, []);
-
-
   useEffect(() => {
     getCenters().then(setCenters)
-
   }, []);
 
-  function formatDateToYMD(date: any): string {
-    return date.toISOString().slice(0, 10);
-  }
-  
-
   useEffect(() => {
-    // if (selectedCenter === '' || !selectedDate) {
-    //   setSessionsByCenter([]);
-    //   return;
-    // }
-  
-    // api.get<any[]>(
-    //   `/api/center/${selectedCenter}/sessions-by-date`,
-    //   { params: { date: selectedDate } }
-    // )
-    // .then(({ data }) => setSessionsByCenter(data))
-    // .catch(console.error);
+    if(selectedDate) {
+      const date = new Date(selectedDate);
+      api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
+        params: { date: formatDate(date) }
+      })
+        .then(({ data }) => {
 
-    console.log(Date.parse(selectedDate))
+          const filteredTutors = data.map((item:any) => {
+            return {
+              scheduled_at: extractExactHour(item.sessions[0].scheduled_at),
+              tutor: item,
+              students: item.sessions[0].students,
+              sessions: item.sessions
+            }
+          })
+          setTutors(filteredTutors)
+          
+        })
+    }
   }, [selectedCenter, selectedDate]);
 
   // Filtrer tuteurs par centre sélectionné
-  const tutorsForCenter = useMemo(() => {
-    if (!selectedCenter) return [];
-    return tutors.filter((tutor:any) =>
-      tutor.tutor.events.some((ev:any) => ev.centers.some((c:any) => c.id === selectedCenter))
-    );
-  }, [tutors, selectedCenter, selectedDate]);
+  // const tutorsForCenter = useMemo(() => {
+  //   if (!selectedCenter) return [];
+  //   return tutors.filter((tutor:any) =>
+  //     tutor.events.some((ev:any) => ev.centers.some((c:any) => c.id === selectedCenter))
+  //   );
 
+  //   // console.log(tutors)
 
-  const isTutorAvailableAtHour = (
-    tutor: Tutor,
-    hour: string
-  ) => {
+  //   // return []
+  // }, [tutors, selectedCenter, selectedDate]);
+
+  const isTutorAvailableAtHour = (tutor: Tutor, hour: string ) => {
     if (!selectedDate) return false;
+
   
     const weekday = selectedDate
       .toLocaleDateString('fr-FR', { weekday: 'long' })
       .toLowerCase();
     const hourMinutes = timeToMinutes(hour);
+
+
     return tutor.events.some(ev => {
       if (ev.day.toLowerCase() !== weekday) return false;
       const startMinutes = timeToMinutes(ev.start_hour);
@@ -273,6 +235,20 @@ const handleDragEnd = (event: DragEndEvent) => {
     
   // }
 
+  const currentStudents = (tutor:any, hourSlot:any) => {
+
+    const sessionHour = tutor.scheduled_at
+
+
+    console.log('tetetete', sessionHour, hourSlot.value , tutor)
+
+    if(sessionHour === hourSlot.value ) {
+
+
+      return tutor.students
+    }
+  }
+
   if (!user) return null;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -314,45 +290,29 @@ const handleDragEnd = (event: DragEndEvent) => {
           <div className="space-y-8">
           {HoursOptions.map(hourSlot => {
 
-              const availableTutors = tutorsForCenter.filter(tutor => 
-                isTutorAvailableAtHour(tutor.tutor, hourSlot.value)
-              );
-
               return (
                 <div key={hourSlot.value} className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="text-xl font-semibold mb-4">
                   {hourSlot.label}
                 </h3>
           
-                {availableTutors.length > 0 ? (
+                {tutors.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {availableTutors.map(tutor => {
-                             
-                             const sessionAtThisHour = tutor.sessions?.filter((session: any) => {
-                              // 1. Extraire heure :
-                              const sessionHour = extractExactHour(session.scheduled_at);
-                              // 2. Extraire la date (Y-M-D) de la session et de la date sélectionnée :
-                              const sessionDateString = toLocalDateString(new Date(session.scheduled_at));
-                              const selectedDateString = selectedDate ? toLocalDateString(selectedDate) : null;
+                          {tutors.map(session => {
 
-                              // 3. Comparer :
-                              return (
-                                sessionHour === hourSlot.value &&
-                                sessionDateString === selectedDateString &&
-                                session.students[0].id_center === selectedCenter
-                              );
-                            });
-
-
+                            const students = currentStudents(session, hourSlot);    
                             
-                              return (
+                            console.log(students)
+                            
+                            return (
                               <TutorCard
-                                key={`${hourSlot.value}-${tutor.tutor.id}`}
-                                tutor={tutor.tutor}
+                                key={`${hourSlot.value}-${session.tutor.id}`}
+                                tutor={session.tutor}
                                 selectedCenter={selectedCenter}
-                                students={sessionAtThisHour}
-                                droppableId={`${hourSlot.value}-${tutor.id}`} // clef unique par jour/heure/tuteur !
+                                students={students ? students : []}
+                                droppableId={`${hourSlot.value}-${session.id}`} // clef unique par jour/heure/tuteur !
                                 hourSlot={hourSlot.value}
+                                session={session}
                               />
                             );
                           })}

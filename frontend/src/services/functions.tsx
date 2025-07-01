@@ -4,6 +4,8 @@ interface SplitValues {
     mainValues: Record<string, any>;
     parentValues: Record<string, any>;
 }
+type DoctrineDate = { date: string; timezone_type: number; timezone: string };
+
 
 export function renameFields<T extends { name?: string }>(fields: T[]): T[] {
     return fields.map((field) => {
@@ -358,3 +360,38 @@ export const  toLocalDateString = (date:any) => {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+
+export function formatDate(dateStr:any) {
+  const d = new Date(dateStr);
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+
+
+export const timeToMinutes = (time: string | DoctrineDate): number => {
+  // Si c'est un objet Doctrine, prends la propriété "date"
+  if (typeof time === 'object' && time !== null && 'date' in time) {
+    time = time.date;
+  }
+
+  if (typeof time === 'string' && time.includes('T')) {
+    const date = new Date(time);
+    return date.getHours() * 60 + date.getMinutes();
+  }
+
+  if (typeof time === 'string' && time.match(/^\d{4}-\d{2}-\d{2} /)) {
+    const [, hour, minute] = time.match(/(\d{2}):(\d{2})/) || [];
+    return (Number(hour) || 0) * 60 + (Number(minute) || 0);
+  }
+
+  if (typeof time === 'string' && time.includes('h')) {
+    const [hours, minutes] = time.replace('h', ':').split(':').map(Number);
+    return hours * 60 + (minutes || 0);
+  }
+
+  return 0;
+};

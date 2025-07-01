@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\Center;
 use App\Entity\Session;
+use App\Entity\TutorSchedule;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -110,76 +112,65 @@ class SessionRepository extends ServiceEntityRepository
         }, $sessions);
     }
 
+    public function getTutorsAndSessionsWithStudentsByCenterAndDate(Center $center, \DateTimeImmutable $date): array
+    {
+        // Préparer bornes du jour
+        $startOfDay = $date->setTime(0, 0, 0);
+        $endOfDay   = $date->setTime(23, 59, 59);
 
+        $tutors = [];
+        foreach ($center->getUsers() as $user) {
+            if (!in_array('ROLE_TUTOR', $user->getRoles())) continue; // Prend seulement les tuteurs
 
+            // Filtre les sessions de ce tuteur sur ce centre et ce jour
+            $sessionsDuJour = $user->getSessions()->filter(function($session) use ($center, $startOfDay, $endOfDay) {
+                return $session->getCenter()?->getId() === $center->getId()
+                    && $session->getScheduledAt() !== null
+                    && $session->getScheduledAt() >= $startOfDay
+                    && $session->getScheduledAt() <= $endOfDay;
+            });
 
-    public function getSessionsByCenterAndScheduledAt(
-        \App\Entity\Center $center,
-        \DateTimeInterface $date
-    ): array {
-        $qb = $this->createQueryBuilder('s')
-            ->leftJoin('s.id_tutor', 't')->addSelect('t')
-            ->andWhere('s.center = :center')
-            ->andWhere('DATE(s.scheduled_at) = :day')       // filtrer sur scheduled_at
-            ->setParameter('center', $center)
-            ->setParameter('day',   $date->format('Y-m-d'))
-            ->orderBy('s.scheduled_at', 'ASC');
-    
-        $sessions = $qb->getQuery()->getResult();
-    
-        return array_map(function(\App\Entity\Session $s) {
-            $tutor = $s->getIdTutor();
-            return [
-                'id'            => $s->getId(),
-                'payment_date'  => $s->getPaymentDate()?->format('Y-m-d'),
-                'scheduled_at'  => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
-                'resume'        => $s->getResume(),
-    
-                'tutor' => $tutor ? [
-                    'id'        => $tutor->getId(),
-                    'firstname' => $tutor->getFirstname(),
-                    'lastname'  => $tutor->getLastname(),
-                    'email'     => $tutor->getEmail(),
-                ] : null,
-    
-                'students' => array_map(fn($stu) => [
-                    'id'        => $stu->getId(),
-                    'firstname' => $stu->getFirstname(),
-                    'lastname'  => $stu->getLastname(),
-                ], $s->getIdStudent()->toArray()),
-    
-                'reports' => array_map(fn($r) => [
-                    'id'      => $r->getId(),
-                    'content' => $r->getContent(),
-                ], $s->getReports()->toArray()),
+            $sessionsArr = [];
+            foreach ($sessionsDuJour as $session) {
+                $studentsArr = [];
+                foreach ($session->getIdStudent() as $student) {
+                    $studentsArr[] = [
+                        'id' => $student->getId(),
+                        'firstname' => $student->getFirstname(),
+                        'lastname'  => $student->getLastname(),
+                        'email'     => $student->getEmail(),
+                        // Ajoute ici ce que tu veux
+                    ];
+                }
+                $sessionsArr[] = [
+                    'id'            => $session->getId(),
+                    'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
+                    'resume'        => $session->getResume(),
+                    'students'      => $studentsArr,
+                ];
+            }
+
+            // ⬇️ Ajoute cette ligne :
+            if (empty($sessionsArr)) continue;
+
+            $tutors[] = [
+                'id'        => $user->getId(),
+                'firstname' => $user->getFirstname(),
+                'lastname'  => $user->getLastname(),
+                'email'     => $user->getEmail(),
+                'events' => array_map(fn(TutorSchedule $tutorSchedule) => [
+                    'id'   => $tutorSchedule->getId(),
+                    'day' => $tutorSchedule->getDay(),
+                    'start_hour' => $tutorSchedule->getStartHour(),
+                    'end_hour' => $tutorSchedule->getEndHour(),
+                ], $user->getTutorSchedules()->toArray()),
+                // autres infos tuteur...
+                'sessions'  => $sessionsArr,
             ];
-        }, $sessions);
+        }
+        return $tutors;
+
     }
-
-
-
-//    /**
-//     * @return Session[] Returns an array of Session objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Session
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    
+    
 }

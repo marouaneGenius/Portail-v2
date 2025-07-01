@@ -82,6 +82,8 @@ class SubscriptionController extends AbstractController
         $subscription->setWeekCount($data['week_count'] ?? null);
         $subscription->setSelectedWeeks($data['selected_weeks'] ?? null);
         $subscription->setKnownWeeks($data['known_weeks'] ?? null);
+        $subscription->setIsProgramed(false);
+
 
         // Sessions (si données comme array d’IDs)
         // if (!empty($data['sessions']) && is_array($data['sessions'])) {
@@ -140,6 +142,9 @@ class SubscriptionController extends AbstractController
             'membership_fee'         => $subscription->getMembershipFee(),
             'school_subjects'        => $subscription->getSchoolSubjects(),
             'favorite_slots'         => $subscription->getFavoriteSlots(),
+
+            'is_programed'         => $subscription->isIsProgramed(),
+            'programed_at'         => $subscription->getProgramedAt(),
 
             'student' => $student ? [
                 'id'        => $student->getId(),
@@ -245,6 +250,43 @@ class SubscriptionController extends AbstractController
             'is_valide'  => $subscription->isIsValide(),
             'updated_by' => $subscription->getUpdatedBy(),
             'updated_at' => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+        ], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/{id}/programed', name: 'programed', methods: ['PATCH'])]
+    public function programmed(int $id, Request $request): JsonResponse
+    {
+        // 1) Récupère l’abonnement
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            throw new NotFoundHttpException('Abonnement introuvable.');
+        }
+
+        // 2) Récupère l’email de qui valide
+        $data = json_decode($request->getContent(), true);
+        $programedBy = $data['programed_by'] ?? null;
+        if (!$programedBy) {
+            return new JsonResponse(
+                ['error' => 'Le champ "programedBy" est requis.'],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+
+        // 3) Met à jour les champs
+        $subscription->setIsProgramed(true);
+        $subscription->setProgramedBy($programedBy);
+        $subscription->setProgramedAt(new \DateTimeImmutable());
+
+        // 4) Persiste
+        $this->em->persist($subscription);
+        $this->em->flush();
+
+        // 5) Retourne l’état mis à jour
+        return new JsonResponse([
+            'id'         => $subscription->getId(),
+            'is_valide'  => $subscription->isIsProgramed(),
+            'updated_by' => $subscription->getProgramedBy(),
+            'updated_at' => $subscription->getProgramedAt()?->format(\DateTimeInterface::ATOM),
         ], JsonResponse::HTTP_OK);
     }
 }

@@ -43,10 +43,14 @@ export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, sess
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   const currentSession = student.sessions?.find((s: any) => {
     const hour = s.exactHour ?? extractExactHour(s.scheduled_at);
     return hour === sessionHour && s.tutor_id === tutorId;
   });
+
+  console.log(student.sessions)
+
 
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =useDraggable({

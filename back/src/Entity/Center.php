@@ -26,7 +26,7 @@ class Center
     #[ORM\Column(length: 255)]
     private ?string $city = null;
 
-    #[ORM\OneToMany(mappedBy: 'id_center', targetEntity: User::class)]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'centres')]
     private Collection $users;
 
     #[ORM\OneToMany(mappedBy: 'id_center', targetEntity: Student::class)]

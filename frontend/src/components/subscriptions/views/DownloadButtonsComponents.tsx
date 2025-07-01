@@ -20,6 +20,9 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   const [isValide, setIsValide] = useState<boolean>(
     subscription.is_valide
   );
+  const [isProgramed, setIsProgramed] = useState<boolean>(
+    subscription.is_programed
+  );
 
   useEffect(() => {
     if (!pdfUrl) return;
@@ -113,6 +116,21 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
     }
   }
 
+  const programeContract = async () => {
+    try {
+      const res = await api.patch(
+        `/api/subs/${subscription.id}/programed`,
+        { programed_by: user.email }
+      );
+      if (res.status === 200) {
+        alert('Le contrat a été programé')
+        setIsProgramed(true);
+      }
+    } catch (err) {
+      console.error("Erreur de validation :", err);
+    }
+  }
+
   const programSessions = () => {
     const sub = isCombined ? (Array.isArray(subscription) ?subscription.find((item) => item.subscription_type === 'annuel') : null ): subscription
     if (!sub) {
@@ -134,7 +152,6 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   const handleCreateSessidons = async (allSessions:any, subscription:any) => {
     setIsLoading(true);
 
-    console.log()
     try {
       const promises = allSessions.map((sess:any) => {
         const now = new Date();
@@ -157,13 +174,14 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
           center_id: student.centers.id
         };
 
-
+       
         return api.post('/api/sessions', payload);
       });
 
       // on attend que tous les calls se terminent
       await Promise.all(promises);
       alert('Toutes les séances ont été créées !');
+      programeContract()
     } catch (e) {
       console.error('Erreur création séances', e);
       alert('Une erreur est survenue lors de la création des séances');
@@ -180,23 +198,28 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
         <div className="space-x-2">
           <div className="flex space-x-4">
 
+            {
+              isProgramed === false ? 
               <button
                 onClick={programSessions}
                 className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               >
-               {isCombined? 'Programer les seances Annuel' : 'Programer les seances'} 
+              {isCombined? 'Programer les seances Annuel' : 'Programer les seances'} 
               </button>
-
-
-
-
-
+              :
+              <button
+              disabled={true}
+              className="mt-4 px-4 py-2 bg-green-200 text-gray-400 rounded hover:bg-green-300"
+              >
+              Seances deja programé
+              </button>
+            }
 
               <button
                 onClick={()=>  navigate(`/student/subscriptions/${student.id}`)}
                 className="mt-4 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
               >
-                Tous les contrats
+                Mes contrats
               </button>
 
 
