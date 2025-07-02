@@ -217,6 +217,9 @@ export default function SessionCalendar() {
   );
 
   return (
+
+    <>
+   
     <div className="p-6 space-y-6">
       <h2 className="text-2xl mb-4">Disponibilités des tuteurs</h2>
 
@@ -287,67 +290,82 @@ export default function SessionCalendar() {
         </DndContext>
       )}
 
-      <div className='w-4/5'>
-        <div className='flex items-center w-3/5 p-2'>
-            <Modal
-            
-              isOpen={isOpen}
-              title="Sauvegarder les modifications"
-              onClose={close}
-              footer={
-                <>
-                  <button onClick={close} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                    Fermer
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!dragContext) return;
-                      updateSession(
-                        dragContext.sessionId,
-                        dragContext.fromTutorId,
-                        dragContext.toTutorId,
-                        dragContext.scheduledAt,
-                        dragContext.studentId,
-                        applyAll
-                      );
-                      close();
-                    }}
-                  >
-                    Enregistrer
-                  </button>
-                </>
-              }
-            >
-              <p>Appliquer le changement :</p>
-              <div className="mt-2 space-y-1">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="single"
-                    checked={!applyAll}
-                    onChange={() => setApplyAll(false)}
-                    className="form-radio"
-                  />
-                  <span className="ml-2">Uniquement cette séance</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="all"
-                    checked={applyAll}
-                    onChange={() => setApplyAll(true)}
-                    className="form-radio"
-                  />
-                  <span className="ml-2">Toutes les séances de cet étudiant</span>
-                </label>
-              </div>
-            </Modal>
-        </div>
-      </div>
+{/* Overlay fixe, centré */}
+{/* Overlay fixe centré */}
+
+
+
+
+
 
 
     </div>
+
+  {/* Conteneur du Modal, largeur fixe et petite */}
+  <div className="bg-white rounded-lg shadow-lg w-full max-w-xs mx-2">
+    <Modal
+      isOpen={isOpen}
+      title="Sauvegarder les modifications"
+      onClose={close}
+      footer={
+        <div className="flex justify-end space-x-2 bg-green-300">
+          <button
+            onClick={close}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            Fermer
+          </button>
+          <button
+            onClick={() => {
+              if (!dragContext) return;
+              updateSession(
+                dragContext.sessionId,
+                dragContext.fromTutorId,
+                dragContext.toTutorId,
+                dragContext.scheduledAt,
+                dragContext.studentId,
+                applyAll
+              );
+              close();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Enregistrer
+          </button>
+        </div>
+      }
+    >
+      <p className="mb-4">Appliquer le changement :</p>
+      <div className="space-y-3">
+        <label className="flex items-center text-sm">
+          <input
+            type="radio"
+            name="scope"
+            value="single"
+            checked={!applyAll}
+            onChange={() => setApplyAll(false)}
+            className="form-radio"
+          />
+          <span className="ml-2">Uniquement cette séance</span>
+        </label>
+        <label className="flex items-center text-sm">
+          <input
+            type="radio"
+            name="scope"
+            value="all"
+            checked={applyAll}
+            onChange={() => setApplyAll(true)}
+            className="form-radio"
+          />
+          <span className="ml-2">Toutes les séances de cet étudiant</span>
+        </label>
+      </div>
+    </Modal>
+</div>
+
+
+
+
+ </>
   );
 }
