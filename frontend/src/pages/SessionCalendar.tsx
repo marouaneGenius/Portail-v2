@@ -15,6 +15,9 @@ import {
 import { extractExactHour, formatDate, formatScheduledAt, timeToMinutes, toLocalDateString } from '@/services/functions';
 import { DaysCalendar } from '@/components/ui/days-canlendar';
 import { format } from "date-fns";
+import Modal from '../components/Modal';
+
+import { useModal } from '@/Hooks/useModal';
 
 // Vos heures disponibles
 export const HoursOptions = [
@@ -48,6 +51,18 @@ export default function SessionCalendar() {
   const [tutors, setTutors] = useState<any[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<number | ''>('');
   const [selectedDate, setSelectedDate] = useState<any>();
+  const { isOpen, open, close } = useModal();
+  const [applyAll, setApplyAll] = useState<any>(false);
+  const [dragContext, setDragContext] = useState<{
+    sessionId: number;
+    fromTutorId: number;
+    toTutorId: number;
+    scheduledAt: string;
+    studentId: number;
+  } | null>(null);
+  
+  
+  
   
   useEffect(() => {
     getCenters().then(setCenters)
@@ -72,13 +87,11 @@ export default function SessionCalendar() {
     }
   }, [selectedCenter, selectedDate]);
 
-
-
   const handleDragEnd = (event: DragEndEvent) => {
+
     const { active, over } = event;
     if (!over || active.data.current?.type !== "student") return;
   
-    // 1. Infos source
     const {
       studentId,
       tutorId: fromTutorId,
@@ -86,13 +99,11 @@ export default function SessionCalendar() {
       sessionId: fromSessionId,
     } = active.data.current;
   
-    // 2. Infos cible
     const {
       tutorId: targetTutorId,
       hourSlot: targetHour,
     }: any = over.data.current;
   
-    // 3. Cherche la session à déplacer et le student
     const fromTutor = tutors.find(t => t.tutor.id === fromTutorId);
     if (!fromTutor) return;
   
@@ -101,13 +112,23 @@ export default function SessionCalendar() {
   
     const movedStudent = (sessionToMove.students ?? []).find((s:any) => s.id === studentId);
     if (!movedStudent) return;
+
+
+    const scheduledAt = formatScheduledAt(sessionToMove.scheduled_at, targetHour);
+    setDragContext({
+      sessionId:    sessionToMove.id,
+      fromTutorId,
+      toTutorId:    targetTutorId,
+      scheduledAt,
+      studentId,
+    });
+    open();
   
     setTutors(prevTutors =>
       prevTutors.map((tutor: any) => {
 
-        // console.log(tutor.tutor.id, fromTutorId)
-
         if (tutor.tutor.id === fromTutorId && fromTutorId === targetTutorId) {
+
           return {
             ...tutor,
             sessions: (tutor.sessions ?? []).map((sess: any) =>
@@ -117,8 +138,6 @@ export default function SessionCalendar() {
             ),
           };
         }
-
-
   
         if (tutor.tutor.id === fromTutorId) {
           const newSessions = (tutor.sessions ?? []).map((sess: any) =>
@@ -134,28 +153,49 @@ export default function SessionCalendar() {
         }
   
         if (tutor.tutor.id === targetTutorId) {
-          let updatedSessions: any[] = [...(tutor.sessions ?? [])];
+          const updatedSessions = [...(tutor.sessions ?? [])];
+          sessionToMove.students = [ movedStudent ];
+          sessionToMove.scheduled_at =
+            formatScheduledAt(sessionToMove.scheduled_at, targetHour);
           updatedSessions.push(sessionToMove);
-
-          console.log(updatedSessions)
-
+        
           return {
             ...tutor,
             sessions: updatedSessions,
           };
         }
+
+        // updateSession(sessionToMove, tutor.tutor.id, targetTutorId, targetHour, studentId,  )
+
+
   
         return tutor;
       })
-    );
-  };
-  
 
-  useEffect(() => {
-    console.log(tutors)
-  },[tutors])
-  
-  
+    );
+
+  };
+
+
+  const updateSession = (
+    sessionId: number,
+    fromTutorId: number,
+    toTutorId: number,
+    scheduledAt: string,
+    studentId: number,
+    updateAll: boolean
+  ) => {
+
+    // console.log(sessionId,fromTutorId,toTutorId, scheduledAt,  studentId, updateAll )
+
+    api.patch(`/api/sessions/${sessionId}`, {
+      tutor_id:     fromTutorId !== toTutorId ? toTutorId : undefined,
+      scheduled_at: scheduledAt,
+      student_ids:  [studentId],
+      update_all:   updateAll,
+    }).catch(err =>console.error(err.response.data));
+
+  };
   
   const currentStudents = (item:any, hourSlot:any) => {
     const sessionsForSlot = item.sessions.filter((sess:any) =>
@@ -170,10 +210,6 @@ export default function SessionCalendar() {
     }
     return students;
   };
-
-
-  
-
 
   if (!user) return null;
   const sensors = useSensors(
@@ -228,14 +264,12 @@ export default function SessionCalendar() {
                           const key = hasSession
                             ? String(block.sessions[0].id)
                             : `no-session-${block.tutor.id}-${hourSlot.value}`;
-                          // const key = `${block.tutor.id}-${hourSlot.value}`;
                           return (
                             <TutorCard
                               key={key}
                               tutor={block.tutor}
                               selectedCenter={selectedCenter}
                               students={students}
-                              // droppableId={`${hourSlot.value}-${key}`}
                               droppableId={`${selectedDate}-${hourSlot.value}-${key}`}
                               hourSlot={hourSlot.value}
                               session={block}
@@ -252,6 +286,68 @@ export default function SessionCalendar() {
           </div>
         </DndContext>
       )}
+
+      <div className='w-4/5'>
+        <div className='flex items-center w-3/5 p-2'>
+            <Modal
+            
+              isOpen={isOpen}
+              title="Sauvegarder les modifications"
+              onClose={close}
+              footer={
+                <>
+                  <button onClick={close} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                    Fermer
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!dragContext) return;
+                      updateSession(
+                        dragContext.sessionId,
+                        dragContext.fromTutorId,
+                        dragContext.toTutorId,
+                        dragContext.scheduledAt,
+                        dragContext.studentId,
+                        applyAll
+                      );
+                      close();
+                    }}
+                  >
+                    Enregistrer
+                  </button>
+                </>
+              }
+            >
+              <p>Appliquer le changement :</p>
+              <div className="mt-2 space-y-1">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="single"
+                    checked={!applyAll}
+                    onChange={() => setApplyAll(false)}
+                    className="form-radio"
+                  />
+                  <span className="ml-2">Uniquement cette séance</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="all"
+                    checked={applyAll}
+                    onChange={() => setApplyAll(true)}
+                    className="form-radio"
+                  />
+                  <span className="ml-2">Toutes les séances de cet étudiant</span>
+                </label>
+              </div>
+            </Modal>
+        </div>
+      </div>
+
+
     </div>
   );
 }

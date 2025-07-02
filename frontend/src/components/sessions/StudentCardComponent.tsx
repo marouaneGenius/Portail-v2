@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '@/api/aixos';
 import { useDraggable } from '@dnd-kit/core';
 import { extractExactHour } from '@/services/functions';
+import Modal from '../Modal';
 
 type SessionData = {
   id: number;
@@ -83,33 +84,43 @@ export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, sess
   };
 
   return (
-    <div 
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`bg-gray-200 rounded shadow p-4 w-full ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab'}`}
-    >
-      <div className="font-medium">
-        {currentStudent.firstname} {currentStudent.lastname}
-      </div>
-      
-      {currentSession && (
-        <div className="mt-2 text-sm">
-          <div className="font-medium">Session #{currentSession.id}</div>
-          <div>
-            {new Date(currentSession.scheduled_at).toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </div>
-          <div>
-            Heure: {   extractExactHour(currentSession.scheduled_at)}
-          </div>
+
+
+    <>
+      <div 
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className={`bg-gray-200 rounded shadow p-4 w-full ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab'}`}
+      >
+        <div className="font-medium">
+          {currentStudent.firstname} {currentStudent.lastname} {currentStudent.id}
         </div>
-      )}
-    </div>
+        
+        {currentSession && (
+          <div className="mt-2 text-sm">
+            <div className="font-medium">Session #{currentSession.id}</div>
+            <div>
+              {new Date(currentSession.scheduled_at).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </div>
+            <div>
+              Heure: {   extractExactHour(currentSession.scheduled_at)}
+            </div>
+          </div>
+        )}
+      </div>
+
+
+
+    
+    
+    </>
+
   );
 };

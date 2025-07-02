@@ -139,6 +139,7 @@ class SessionRepository extends ServiceEntityRepository
                         'firstname' => $student->getFirstname(),
                         'lastname'  => $student->getLastname(),
                         'email'     => $student->getEmail(),
+                        'session_id' => $session->getId(), 
                         // Ajoute ici ce que tu veux
                     ];
                 }
@@ -171,6 +172,31 @@ class SessionRepository extends ServiceEntityRepository
         return $tutors;
 
     }
+
+
+    public function findByStudentAndCenterAndPeriod(
+        int $studentId,
+        Center $center,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end
+    ): array {
+        return $this->createQueryBuilder('s')
+            ->join('s.id_student', 'stu')                     // nom de la propriété, pas idStudent
+            ->andWhere('stu.id = :stuId')
+            ->andWhere('s.center = :center')
+            ->andWhere('s.Scheduled_at BETWEEN :start AND :end') // propriété $Scheduled_at
+            ->setParameters([
+                'stuId'   => $studentId,
+                'center'  => $center,
+                'start'   => $start,
+                'end'     => $end,
+            ])
+            ->getQuery()
+            ->getResult();
+    }
+    
+    
+
     
     
 }

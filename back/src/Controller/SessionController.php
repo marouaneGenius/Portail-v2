@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Psr\Log\LoggerInterface;
 
 use Stripe\StripeClient;
 
@@ -131,7 +132,6 @@ class SessionController extends AbstractController
         }
     }
 
-
     #[Route('/tutor/{id}', name: 'sessions_by_tutor', methods: ['GET'])]
     public function forTutor(int $id, UserRepository $userRepo): JsonResponse
     {
@@ -168,25 +168,192 @@ class SessionController extends AbstractController
     }
 
 
+    // #[Route('/{id}', name: 'session_update', methods: ['PUT', 'PATCH'])]
+    // public function update(int $id, Request $request): JsonResponse
+    // {
+    //     $data = json_decode($request->getContent(), true);
+    //     if (!\is_array($data)) {
+    //         throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+    //     }
+
+    //     // 1) Récupérer la session
+    //     $session = $this->sessionRepo->find($id);
+    //     if (!$session) {
+    //         return new JsonResponse(['error' => 'Session introuvable'], JsonResponse::HTTP_NOT_FOUND);
+    //     }
+
+    //     $updateAll = $data['update_all'] ?? false;
+
+    //     // 2) Champs “scheduled_at”, “tutor_id”
+    //     if (array_key_exists('scheduled_at', $data)) {
+    //         $session->setScheduledAt(
+    //             $data['scheduled_at']
+    //                 ? new \DateTimeImmutable($data['scheduled_at'])
+    //                 : null
+    //         );
+    //     }
+    //     if (array_key_exists('tutor_id', $data)) {
+    //         $tutor = $this->userRepo->find($data['tutor_id']);
+    //         if (!$tutor) {
+    //             return new JsonResponse(['error' => 'Tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
+    //         }
+    //         $session->setIdTutor($tutor);
+    //     }
+
+    //     // 3) Mise à jour des étudiants
+    //     if (array_key_exists('student_ids', $data)) {
+    //         // Détacher tous les étudiants existants
+    //         foreach ($session->getIdStudent() as $stu) {
+    //             $session->removeIdStudent($stu);
+    //         }
+    //         // Attacher les nouveaux valides
+    //         foreach ((array)$data['student_ids'] as $stuId) {
+    //             if ($s = $this->studentRepo->find($stuId)) {
+    //                 $session->addIdStudent($s);
+    //             }
+    //         }
+    //     }
+
+    //     // 4) (Optionnel) autres champs si besoin
+    //     if (array_key_exists('payment_date', $data)) {
+    //         $session->setPaymentDate(new \DateTime($data['payment_date']));
+    //     }
+    //     if (array_key_exists('date_slot', $data)) {
+    //         $session->setDateSlot(new \DateTime($data['date_slot']));
+    //     }
+    //     if (array_key_exists('stripe_number', $data)) {
+    //         $session->setStripeNumber($data['stripe_number']);
+    //     }
+    //     if (array_key_exists('school_subjects', $data)) {
+    //         $session->setSchoolSubjects($data['school_subjects']);
+    //     }
+    //     if (array_key_exists('resume', $data)) {
+    //         $session->setResume($data['resume']);
+    //     }
+    //     if (array_key_exists('scheduled_by', $data)) {
+    //         $session->setScheduledBy($data['scheduled_by']);
+    //     }
+    //     if (array_key_exists('session_type', $data)) {
+    //         $session->setSessionType($data['session_type']);
+    //     }
+    //     if (array_key_exists('is_canceled', $data)) {
+    //         $session->setIsCanceled((bool)$data['is_canceled']);
+    //     }
+    //     if (array_key_exists('canceled_by', $data)) {
+    //         $session->setCanceledBy($data['canceled_by']);
+    //     }
+    //     if (array_key_exists('subscription_ids', $data)) {
+    //         foreach ($session->getIdSubscription() as $sub) {
+    //             $session->removeIdSubscription($sub);
+    //         }
+    //         foreach ((array)$data['subscription_ids'] as $subId) {
+    //             if ($subs = $this->subRepo->find($subId)) {
+    //                 $session->addIdSubscription($subs);
+    //             }
+    //         }
+    //     }
+
+    //     $scheduledAt      = $session->getScheduledAt();
+    //     $startPeriod      = $scheduledAt;
+    //     $endPeriod        = new \DateTimeImmutable($scheduledAt->format('Y') . '-12-31 23:59:59');
+        
+    //     $originalTime     = $scheduledAt->format('H:i');
+    //     $originalTutorId  = $session->getIdTutor()->getId();
+    //     $originalDow      = (int)$scheduledAt->format('w');
+        
+
+    //     if ($updateAll) {
+    //         $studentIds = $data['student_ids'] ?? [];
+    //         foreach ($studentIds as $stuId) {
+    //             $others = $this->sessionRepo
+    //             ->findByStudentAndCenterAndPeriod(
+    //                 $stuId,
+    //                 $session->getCenter(),
+    //                $startPeriod,
+    //                $endPeriod
+    //             );
+        
+    //             foreach ($others as $other) {
+    //                 if ($other->getId() === $session->getId()) {
+    //                     continue;
+    //                 }
+
+    //                 if ($other->getIdTutor()->getId() !== $originalTutorId) {
+    //                     continue;
+    //                 }
+        
+    //                 if ((int)$other->getScheduledAt()->format('w') !== $originalDow) {
+    //                     continue;
+    //                 }
+        
+    //                 if ($other->getScheduledAt()->format('H:i') !== $originalTime) {
+    //                     continue;
+    //                 }
+        
+    //                 if (isset($data['scheduled_at'])) {
+    //                     $other->setScheduledAt(
+    //                         new \DateTimeImmutable($data['scheduled_at'])
+    //                     );
+    //                 }
+    //                 $this->em->persist($other);
+    //             }
+    //         }
+    //     }
+        
+
+    //     $this->em->persist($session);
+    //     $this->em->flush();
+
+    //     return new JsonResponse([
+    //         'id'               => $session->getId(),
+    //         'payment_date'     => $session->getPaymentDate()?->format('Y-m-d'),
+    //         'date_slot'        => $session->getDateSlot()?->format('Y-m-d'),
+    //         'scheduled_at'     => $session->getScheduledAt()?->format(\DateTime::ATOM),
+    //         'tutor_id'         => $session->getIdTutor()?->getId(),
+    //         'student_ids'      => array_map(fn($s) => $s->getId(), $session->getIdStudent()->toArray()),
+    //         'subscription_ids' => array_map(fn($s) => $s->getId(), $session->getIdSubscription()->toArray()),
+    //     ], JsonResponse::HTTP_OK);
+    // }
+
     #[Route('/{id}', name: 'session_update', methods: ['PUT', 'PATCH'])]
-    public function update(int $id, Request $request): JsonResponse
+    public function update(int $id, Request $request, LoggerInterface $logger): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
             throw new BadRequestHttpException('Corps invalide, JSON attendu.');
         }
 
-        // 1) Récupérer la session
+        // 1) Récupérer la session ciblée
         $session = $this->sessionRepo->find($id);
         if (!$session) {
             return new JsonResponse(['error' => 'Session introuvable'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        // 2) Champs “scheduled_at”, “tutor_id”
+        // 2) Capture des valeurs d'origine AVANT modification
+        $oldScheduledAt  = $session->getScheduledAt();                                // ex. 2025-06-15 09:30
+        $originalTime    = $oldScheduledAt->format('H:i');                            // "09:30"
+        $originalDow     = (int)$oldScheduledAt->format('w');                         // 1 = lundi
+        $originalTutorId = $session->getIdTutor()->getId();
+
+        // Période : à partir de la séance courante jusqu'à la fin de l'année
+        $startPeriod = $oldScheduledAt;
+        $year  = (int)$oldScheduledAt->format('Y');
+        $month = (int)$oldScheduledAt->format('n');
+        if ($month >= 9) {
+            // Séance en septembre–décembre N → fin 15 août N+1
+            $endPeriod = new \DateTimeImmutable(($year + 1) . '-08-15 23:59:59');
+        } else {
+            // Séance en janvier–août N → fin 15 août de cette année
+            $endPeriod = new \DateTimeImmutable($year . '-08-15 23:59:59');
+        }
+
+        $updateAll = $data['update_all'] ?? false;
+
+        // 3) Mise à jour de la séance ciblée
         if (array_key_exists('scheduled_at', $data)) {
             $session->setScheduledAt(
-                $data['scheduled_at']
-                    ? new \DateTimeImmutable($data['scheduled_at'])
+                $data['scheduled_at'] 
+                    ? new \DateTimeImmutable($data['scheduled_at']) 
                     : null
             );
         }
@@ -197,14 +364,12 @@ class SessionController extends AbstractController
             }
             $session->setIdTutor($tutor);
         }
-
-        // 3) Mise à jour des étudiants
         if (array_key_exists('student_ids', $data)) {
             // Détacher tous les étudiants existants
             foreach ($session->getIdStudent() as $stu) {
                 $session->removeIdStudent($stu);
             }
-            // Attacher les nouveaux valides
+            // Attacher les nouveaux
             foreach ((array)$data['student_ids'] as $stuId) {
                 if ($s = $this->studentRepo->find($stuId)) {
                     $session->addIdStudent($s);
@@ -212,58 +377,68 @@ class SessionController extends AbstractController
             }
         }
 
-        // 4) (Optionnel) autres champs si besoin
+        // (Optionnel) autres champs…
         if (array_key_exists('payment_date', $data)) {
             $session->setPaymentDate(new \DateTime($data['payment_date']));
         }
         if (array_key_exists('date_slot', $data)) {
             $session->setDateSlot(new \DateTime($data['date_slot']));
         }
-        if (array_key_exists('stripe_number', $data)) {
-            $session->setStripeNumber($data['stripe_number']);
-        }
-        if (array_key_exists('school_subjects', $data)) {
-            $session->setSchoolSubjects($data['school_subjects']);
-        }
-        if (array_key_exists('resume', $data)) {
-            $session->setResume($data['resume']);
-        }
-        if (array_key_exists('scheduled_by', $data)) {
-            $session->setScheduledBy($data['scheduled_by']);
-        }
-        if (array_key_exists('session_type', $data)) {
-            $session->setSessionType($data['session_type']);
-        }
-        if (array_key_exists('is_canceled', $data)) {
-            $session->setIsCanceled((bool)$data['is_canceled']);
-        }
-        if (array_key_exists('canceled_by', $data)) {
-            $session->setCanceledBy($data['canceled_by']);
-        }
-        if (array_key_exists('subscription_ids', $data)) {
-            foreach ($session->getIdSubscription() as $sub) {
-                $session->removeIdSubscription($sub);
-            }
-            foreach ((array)$data['subscription_ids'] as $subId) {
-                if ($subs = $this->subRepo->find($subId)) {
-                    $session->addIdSubscription($subs);
+        // … etc.
+
+        // 4) Si on applique à toutes les prochaines séances
+        if ($updateAll) {
+            $studentIds = $data['student_ids'] ?? [];
+            foreach ($studentIds as $stuId) {
+                $others = $this->sessionRepo
+                    ->findByStudentAndCenterAndPeriod(
+                        $stuId,
+                        $session->getCenter(),
+                        $startPeriod,
+                        $endPeriod
+                    );
+        
+                foreach ($others as $other) {
+                    if ($other->getId() === $session->getId()) continue;
+                    if ($other->getIdTutor()->getId() !== $originalTutorId) continue;
+                    if ((int)$other->getScheduledAt()->format('w') !== $originalDow) continue;
+                    if ($other->getScheduledAt()->format('H:i') !== $originalTime) continue;
+        
+                    // 1) Mise à jour de l'heure
+                    if (isset($data['scheduled_at'])) {
+                        $newTime  = (new \DateTimeImmutable($data['scheduled_at']))->format('H:i:s');
+                        $datePart = $other->getScheduledAt()->format('Y-m-d');
+                        $other->setScheduledAt(new \DateTimeImmutable("$datePart $newTime"));
+                    }
+        
+                    // 2) Mise à jour du tuteur
+                    if (isset($data['tutor_id'])) {
+                        $newTutor = $this->userRepo->find($data['tutor_id']);
+                        if ($newTutor) {
+                            $other->setIdTutor($newTutor);
+                        }
+                    }
+        
+                    $this->em->persist($other);
                 }
             }
         }
+        
 
-        // 5) Persister & flush
+        // 5) Persist & flush de la séance ciblée
         $this->em->persist($session);
         $this->em->flush();
 
-        // 6) Réponse JSON
+        // 6) Réponse
         return new JsonResponse([
             'id'               => $session->getId(),
-            'payment_date'     => $session->getPaymentDate()?->format('Y-m-d'),
-            'date_slot'        => $session->getDateSlot()?->format('Y-m-d'),
             'scheduled_at'     => $session->getScheduledAt()?->format(\DateTime::ATOM),
             'tutor_id'         => $session->getIdTutor()?->getId(),
             'student_ids'      => array_map(fn($s) => $s->getId(), $session->getIdStudent()->toArray()),
-            'subscription_ids' => array_map(fn($s) => $s->getId(), $session->getIdSubscription()->toArray()),
+            'update_all'       => $data['update_all'],
+            'start'   => $startPeriod,
+            'end'     => $endPeriod,
+            // …
         ], JsonResponse::HTTP_OK);
     }
 

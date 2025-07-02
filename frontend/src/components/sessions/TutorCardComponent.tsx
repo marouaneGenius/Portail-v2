@@ -63,7 +63,7 @@ export const TutorCard: React.FC<TutorCardProps> = ({
     >
       <div className="mb-3">
         <div className="font-medium text-gray-900">
-          {tutor.firstname} {tutor.lastname}
+          {tutor.firstname} {tutor.lastname} id : {tutor.id}
         </div>
         
         <div className="flex flex-wrap gap-1 mt-2">
@@ -88,18 +88,14 @@ export const TutorCard: React.FC<TutorCardProps> = ({
           
           {students.length > 0 ? (
             students.map((student:any) => {
-
-
-              console.log(student, session)
+              const currentSession = session.sessions.find((s:any) => s.id === student.session_id)
               return(
                 <StudentCard
-                  key={`${student.id}-${session.sessions[0].id}`}
-                  // key={`${student.id}-${student.session.id}`}
-
+                  key={`${student.id}-${student.session_id}`}
                   student={
                     {
                       student,
-                      session: session.sessions[0]
+                      session: currentSession
                     }
                   }
                   tutorId={tutor.id}
