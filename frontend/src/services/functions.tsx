@@ -261,14 +261,25 @@ export function uuid () {
   return (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now());
 }
 
-export const extractExactHour = (isoString: string): string => {
-  const date = new Date(isoString);
-  // Compensation du décalage horaire
-  const timezoneOffset = date.getTimezoneOffset() * 60000; // en millisecondes
-  const adjustedDate = new Date(date.getTime() + timezoneOffset);
+// export const extractExactHour = (isoString: string | null | undefined): string => {
+//   if (!isoString) return ""; // sécurité
+//   const date = new Date(isoString);
+//   if (isNaN(date.getTime())) return ""; // sécurité Invalid Date
+
+//   // Affiche dans la timezone du navigateur
+//   const hours = date.getHours();
+//   const minutes = date.getMinutes().toString().padStart(2, "0");
+//   return `${hours}h${minutes}`;
+// };
+
+export const extractExactHour = (dateInput: Date | string | null | undefined): string => {
+  if (!dateInput) return "";
   
-  const hours = adjustedDate.getHours();
-  const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
   return `${hours}h${minutes}`;
 };
 
@@ -369,8 +380,6 @@ export function formatDate(dateStr:any) {
   const dd   = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
-
-
 
 export const timeToMinutes = (time: string | DoctrineDate): number => {
   // Si c'est un objet Doctrine, prends la propriété "date"

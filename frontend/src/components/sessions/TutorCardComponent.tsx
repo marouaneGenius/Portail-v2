@@ -55,10 +55,6 @@ export const TutorCard: React.FC<TutorCardProps> = ({
   });
 
 
-
-  // console.log(session)
-
-
   return (
     <div
       ref={setNodeRef}
@@ -89,16 +85,29 @@ export const TutorCard: React.FC<TutorCardProps> = ({
         <div className="space-y-2 min-h-[60px]"> 
 
 
+          
           {students.length > 0 ? (
-            students.map((student:any) => (
-              <StudentCard 
-                key={student.id} 
-                student={student} 
-                tutorId={tutor.id}
-                sessionHour={hourSlot}
-                // day={day}
-              />
-            ))
+            students.map((student:any) => {
+
+
+              console.log(student, session)
+              return(
+                <StudentCard
+                  key={`${student.id}-${session.sessions[0].id}`}
+                  // key={`${student.id}-${student.session.id}`}
+
+                  student={
+                    {
+                      student,
+                      session: session.sessions[0]
+                    }
+                  }
+                  tutorId={tutor.id}
+                  sessionHour={hourSlot}
+                  session={session}
+                />
+              )
+            })
           ) : (
             <p className="text-xs text-gray-400 italic">Aucun étudiant à cette heure</p>
           )}

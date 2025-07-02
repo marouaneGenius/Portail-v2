@@ -32,44 +32,48 @@ type Student = {
 };
 
 interface StudentCardProps {
-  student: Student;
+  student: any;
   tutorId:any;
   sessionHour?:any;
-  // day: string;
+  session:any
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, sessionHour }:any) => {
-  const [sessions, setSessions] = useState<SessionData[]>([]);
+export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, sessionHour, session }:any) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currentSession = student.session
+  const currentStudent = student.student
+
+  // const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
 
 
-  const currentSession = student.sessions?.find((s: any) => {
-    const hour = s.exactHour ?? extractExactHour(s.scheduled_at);
-    return hour === sessionHour && s.tutor_id === tutorId;
-  });
+  //   id: `${currentStudent.id}-${currentSession.id}`,
+  //   data: {
+  //     type: 'student',
+  //     studentId: currentStudent.id,
+  //     sessionId: currentSession.id,
+  //     tutorId,
+  //     sessionHour,
+  //   },
+  // });
 
-  console.log(student.sessions)
-
-
-
-  const { attributes, listeners, setNodeRef, transform, isDragging } =useDraggable({
-    id: student.id,
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `${currentStudent.id}-${currentSession.id}`,   // OK
     data: {
       type: 'student',
-      studentId: student.id,
+      studentId: currentStudent.id,
+      sessionId: currentSession.id,
       tutorId,
       sessionHour,
-      sessionId: currentSession?.id
-      // day, // Ajout du jour
     },
   });
+  
+  
   useEffect(() => {
-    if(student) {
-        setSessions(student.sessions);
+    if(session) {
         setLoading(false)
     }
-  }, [student.id]);
+  }, [session]);
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -87,7 +91,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({ student, tutorId, sess
       className={`bg-gray-200 rounded shadow p-4 w-full ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab'}`}
     >
       <div className="font-medium">
-        {student.firstname} {student.lastname}
+        {currentStudent.firstname} {currentStudent.lastname}
       </div>
       
       {currentSession && (
