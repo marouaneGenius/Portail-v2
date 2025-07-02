@@ -41,20 +41,6 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
     }
   };
 
-  // const seeContract = async () => {
-  //   const el = document.getElementById(previewId);
-  //   if (!el) return;
-
-  //   try {
-  //     const { default: html2pdf } = await import('html2pdf.js');
-  //     const worker = html2pdf().set(pdfOptions).from(el);
-  //     const blob: Blob = await worker.outputPdf('blob');
-  //     setPdfUrl(URL.createObjectURL(blob));
-  //   } catch (err) {
-  //     console.error('Erreur génération PDF :', err);
-  //   }
-  // };
-
   return (
     <div className="space-y-0  ">
         <DownloadButtonsComponents 

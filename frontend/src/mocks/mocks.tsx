@@ -19,13 +19,12 @@ export const ClassesOptions = [
    export const actions: Action[] = [
     { label: "Mes Abonnements", to: (id) => `/student/subscriptions/${id}` },
     { label: 'Ajouter un Abonnement', to: (id) => `/abonnements/${id}` },
-    { label: "Créer une séance d'essai", to: (id) => `/students/${id}/trial-session` },
+    { label: "Créer une séance d'essai", to: (id) => `/sessions/${id}` },
     { label: 'Voir plus de détails', to: (id) => `/student/${id}` },
     { label: 'Ajouter une facture', to: (id) => `/students/${id}/invoices/new` },
     { label: 'Rupture de contrat', to: (id) => `/students/${id}/terminate` },
     { label: "Modifier l'élève", to: (id) => `/student/${id}/edit` },
   ];
-
 
   export const Days = [
     { value: 'lundi', label: 'Lundi'  }, 
@@ -92,11 +91,10 @@ export const ClassesOptions = [
   export const HoursOptions = [
     { value: '9h30', label: '9h30'},
     { value: '11h00', label: '11h00'},
-    { value: '12h30', label: '12h30'},
-    { value: '14h00', label: '14h00'},
-    { value: '15h30', label: '15h30'},
-    { value: '17h00', label: '17h00'},
-    { value: '18h30', label: '18h30' }
+    { value: '13h30', label: '13h30'},
+    { value: '15h00', label: '15h00'},
+    { value: '16h30', label: '16h30'},
+    { value: '18h00', label: '18h00' }
   ];
 
 

@@ -253,22 +253,25 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       )}
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(values[f.name] as string[]).map((val) => {
-                          const label = f.options!.find((o: any) => o.value === val)?.label || val;
+
+                          if(Array.isArray(f.options) && f.options) {
+                            const label = f.options!.find((o: any) => o.value === val)?.label || val;
                           return (
                             <div
                               key={val}
                               className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
                             >
-                              {label}
+                              {label.name}
                               <button
                                 type="button"
-                                onClick={() => removeCenter(val)}
+                                // onClick={() => removeCenter(val)}
                                 className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
                               >
                                 &times;
                               </button>
                             </div>
                           );
+                        }
                         })}
                       </div>
                     </>

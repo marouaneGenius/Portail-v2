@@ -78,9 +78,9 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     }));
   };
 
-
   if (loading) {
     return <p>Chargement…</p>;
+
   }
 
   return (

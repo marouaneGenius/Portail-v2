@@ -93,7 +93,7 @@ export const tutorScheduleFields: (FormField|ArrayField)[] = [
 ];
 
 export const AnnuelFields: FormField[] = [
-  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
+  // { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   { name: 'favorite_slots', label: 'Tuteur planing', type: 'select',  multiple: true, required: true },
   { name: 'payment_mode', label: 'Le Mode de paiment', type: 'select',
     options: [ 
@@ -106,15 +106,15 @@ export const AnnuelFields: FormField[] = [
   { name: 'first_debit_date', label: 'Date du premier prélèvement', type: 'date'},
   { name: 'membership_fee', label: '', type: 'text', value:'90'},
   { name: 'offer_amount', label: 'Offre', type: 'text'},
+];
 
-  // { name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    options: [
-  //   { value: '5', label: '5 du mois' },
-  //   { value: '15', label: '15 du mois' },
-  //   { value: '28', label: '28 du mois' },
-  // ]},
-  // { name: 'subscription_start_date', label: 'On commaence le', type: 'date'},
-  // { name: 'offer_type', label: 'Type d\'Offre', type: 'text'},
-  // { name: 'discount', label: 'Reduction', type: 'text',  },
+
+export const TrialSession: FormField[] = [
+  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
+  // { name: 'payment_date', label: 'Date de paiement', type: 'date'},
+  { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'date'},
+
+
 ];
 
 export const StageFields: FormField[] = [

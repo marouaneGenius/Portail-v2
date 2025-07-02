@@ -1,19 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { getUser } from '../../api/api';
 import { getFrenchDayLabel, normalizeHour } from '../../services/functions';
-import { HoursOptions, SessionOptions } from '../../mocks/mocks';
+import { HoursOptions, SchoolSubjects, SessionOptions } from '../../mocks/mocks';
 import { TutorRaw } from '../../services/planing-functions';
 import api from '../../api/aixos';
 import { Student } from '../ParentFinder';
 import { useParams } from 'react-router-dom';
+import { renderMultiSelect } from '../forms/customInput';
+import { V } from 'framer-motion/dist/types.d-CtuPurYT';
 
 interface Props {
   onSelect: (result: [{ tutorId: number; day: string; hour: string }]) => void;
   tutors?: any;
   school_subjects?: string[];
+  // f:any 
+  values:any 
+  setValues:any 
+  removeValueFromField :any 
 }
 
-export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, school_subjects }:any) => {
+export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, school_subjects, values, setValues, removeValueFromField }:any) => {
   const [day, setDay] = useState('');
   const [sessionLength, setSessionLength] = useState<any>(null);
   const [availableTutors, setAvailableTutors] = useState<any[]>([]);
@@ -26,7 +32,15 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
   const [availabilitys, setAvailabilitys] = useState<any[]>([]);
   const [hoursList, setHoursList] = useState<any[]>(HoursOptions);
   const [isSlotExist, setIsSlotExist] = useState<boolean>(false);
+  const [sessionPerWeek, setSessionPerWeek] = useState<any>(null);
   const { id } = useParams();
+  const f =  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true, options: SchoolSubjects };
+  const hoursPerSession = [
+    { value: '1', label: '1h30' },
+    { value: '2', label: '3h' },
+    { value: '3', label: '4h30' },
+    { value: '4', label: '6h' },
+  ]
 
   //get all tutors by school subjects
   useEffect(() => {
@@ -117,20 +131,26 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
   useEffect(() => {
     if (selectedTutor && day && selectedHour) {
-      const newSlot = { tutorId: selectedTutor, day, hour: selectedHour };
+      const newSlot = { tutorId: selectedTutor, day, hour: selectedHour, matieres: values.school_subjects };
+
+      // console.log(availabilitys)
   
       setSelectedHour(null);
       setSelectedTutor(null);
       setDay('');
       setSessionLength(null);
       setIsSlotExist(false);
+      setValues((prev: any) => ({
+        ...prev,
+        school_subjects: [] 
+      }));
   
       setAvailabilitys((prev) => {
         if (prev.length >= 4) {
           setErrorMessage("Vous ne pouvez pas ajouter plus de 4 créneaux.");
           return prev;
         }
-  
+
         const alreadyExists = prev.some(
           (slot) =>
             slot.tutorId === newSlot.tutorId &&
@@ -141,7 +161,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
         if (!alreadyExists) {
           setIsSlotExist(true);
           // onSelect(newSlot);
-          onSelect([...availabilitys, newSlot]);
+          // onSelect([...availabilitys, newSlot]);
           setErrorMessage('');
           return [...prev, newSlot];
         } else {
@@ -151,10 +171,46 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       });
     }
   }, [selectedTutor]);
-  
 
+
+  useEffect(() => {
+    if(availabilitys.length !== 0){
+      const matieres = availabilitys.map((slot:any) => {
+        if(slot.matieres) { 
+          return slot.matieres.join();
+        }
+      })
+      setValues((prev: any) => ({
+        ...prev,
+        school_subjects: matieres
+      }));
+      onSelect(availabilitys)
+    }
+  }, [availabilitys])
+  
   return (
     <div className="bg-white p-4 rounded shadow space-y-4 ">
+        {/* <div>
+          <label className="block mb-1 font-medium">Seance par semaine</label>
+          <select
+            value={selectedTutor || ''}
+            onChange={(e) => setSessionPerWeek(Number(e.target.value))}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Sélectionner le nombre d'heure de cours par semaine</option>
+            {hoursPerSession.map(l => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </div> */}
+
+      <div>
+        {
+          renderMultiSelect(f, values, 'school_subjects', setValues, removeValueFromField)
+        }
+      </div>
       {/* Jour */}
       <div>
         <label className="block mb-1 font-medium">Jour</label>
@@ -214,7 +270,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
         {availabilitys.map((slot, index) => (
           <div key={index} className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
             <span>
-              📅 {slot.day} à 🕒 {slot.hour}
+              📅 {slot.day} à 🕒 {slot.hour},  Matières: {slot.matieres.join()}
             </span>
             <button
               onClick={() =>

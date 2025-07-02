@@ -87,7 +87,6 @@ class TutorScheduleController extends AbstractController
         ], 201);
     }
 
-
     #[Route('/{id}', name: 'api_tutorschedule_update', methods: ['PUT'])]
     public function update(int $id, Request $request): JsonResponse
     {

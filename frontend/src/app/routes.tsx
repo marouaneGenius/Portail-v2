@@ -19,6 +19,7 @@ import { Planing } from "../pages/Planing";
 import SubscriptionsFormView from "../components/subscriptions/views/SubscriptionFormsView";
 import ContractGenerator from "../components/subscriptions/ContractGenerator";
 import StudentSubscriptions from "../pages/StudentSubscriptions";
+import SessionCalendar from "@/pages/SessionCalendar";
 
 export const router = createBrowserRouter([
     {
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
             { path: "/dashboard", element: <Dashboard /> },
             { path: "/profile", element: <Profile /> },
             { path: "/centers", element: <Centers /> },
-            { path: "/sessions", element: <Sessions /> },
+            { path: "/sessions/:id", element: <Sessions /> },
             { path: "/users", element: <Users /> },
             { path: "/students", element: <Students /> },
             { path: "/abonnements/:id", element: <Subscriptions /> },
@@ -45,6 +46,8 @@ export const router = createBrowserRouter([
             { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
             { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
             { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
+            { path: "/session-calendar", element: <SessionCalendar /> },
+
           ],
         },
       ],

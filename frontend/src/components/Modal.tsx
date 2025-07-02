@@ -19,15 +19,15 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 w-full" 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full w-3/6"
+        className="bg-white rounded-lg shadow-lg w-full max-w-xs"  
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex justify-between items-center px-6 py-4 border-b">
+          <div className="flex justify-between items-center px-4 py-2 border-b">
             <h2 className="text-lg font-semibold">{title}</h2>
             <button
               onClick={onClose}
@@ -38,12 +38,12 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4">  {/* ← Ajuste ici le padding */}
           {children}
         </div>
 
         {footer && (
-          <div className="px-6 py-4 border-t flex justify-end space-x-3">
+          <div className="px-4 py-2 border-t flex justify-end space-x-2">
             {footer}
           </div>
         )}

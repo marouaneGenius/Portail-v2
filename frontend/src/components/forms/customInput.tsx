@@ -1,18 +1,23 @@
+import { DateTimePickerToolbar } from "@mui/x-date-pickers/DateTimePicker/DateTimePickerToolbar";
 import { FIXED_END_DATE } from "../../mocks/constants";
 import { WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
 import SlotSelector from "../subscriptions/SlotSelector";
 import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
 import VacationWeekSelector from "../subscriptions/WeeksAvailiabilityPicker";
 import GroupedInputs from "./GroupedInputs";
+import { DateTimePicker } from "../ui/date-time-picker";
+import { TutorListComponent } from "../sessions/TutorListComponent";
+
 export interface RenderFieldProps {
   f: any;
   values: any | null;
   setValues: any | null;
   removeValueFromField: (field: string, value: any)  => void;
   handleChange: (item:any) => void;
-  fieldName: any;
+  fieldName?: any;
   tutors?:any,
-  title?:any
+  title?:any,
+  student?:any
 }
 
 interface MultiSelectWrapperProps {
@@ -176,11 +181,19 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
 
 export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
   const todayISO = new Date().toISOString().split('T')[0];
+
+
+  console.log(todayISO)
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Annuel'){
     if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
       return  <TutorAvailabilityPicker
                   school_subjects={values.school_subjects}
+                  // f={f} 
+                  values={values}
+                  setValues={setValues} 
+                  removeValueFromField={removeValueFromField}
                   onSelect={(slots: any[]) => {
                     setValues((prev: any) => ({
                       ...prev,
@@ -284,7 +297,6 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       );
     }
   }
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Stage ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Stage'){
@@ -384,7 +396,6 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
 
     
   }
-  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // OTHER FIELDS ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -392,7 +403,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
     return renderMultiSelect(f, values, 'centers', setValues, removeValueFromField);
   }
 
-  if (f.name === 'school_subjects' && f.multiple) {
+  if (f.name === 'school_subjects' && f.multiple && title !== 'Annuel') {
     return renderMultiSelect(f, values, 'school_subjects', setValues, removeValueFromField);
   }
 
@@ -432,3 +443,106 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
     />
   );
 };
+
+
+
+export const RenderTrialField: React.FC<RenderFieldProps> = ({
+  f,
+  values,
+  setValues,
+  removeValueFromField,
+  handleChange,
+  student
+}) => {
+  const todayISO = new Date().toISOString().split("T")[0];
+
+
+  // if(student) {
+  //   setValues({
+  //     ...values,
+  //     student_ids: [student.id]
+  //   })
+  // }
+
+
+  // 1) Matières → multi-select
+  if (f.name === "school_subjects" && f.type === "select" && f.multiple) {
+    return <>
+    {renderMultiSelect(
+        f,
+        values,
+        "school_subjects",
+        setValues,
+        removeValueFromField
+      )}
+ 
+    </> 
+  }
+
+  // 2) Date de fin (date_slot)
+  if (f.name === "date_slot") {
+    return (
+      <GroupedInputs
+        fields={[
+          {
+            name: "date_slot",
+            label: "Date de fin",
+            type: "date",
+            value: values.date_slot,
+            onChange: handleChange,
+            min: todayISO,
+          },
+        ]}
+      />
+    );
+  }
+
+  // 3) Date et heure (scheduled_at)
+  if (f.name === "scheduled_at") {
+    return (
+      <>
+       <div className="space-y-1">
+         <label htmlFor="scheduled_at" className="block text-sm font-medium">
+           Date et heure de cours
+         </label>
+         <DateTimePicker
+           value={values.scheduled_at ? new Date(values.scheduled_at) : undefined}
+           onChange={(date) => {
+             setValues({
+               ...values,
+               scheduled_at: date.toISOString()
+             })
+           }}
+         />
+       </div>
+      <div className="mt-0 bg-gray-100  p-2 rounded">
+      <TutorListComponent
+        values={values}
+        student={student}
+        onSelect={(tutorId) => {
+          setValues({
+            ...values,
+            tutor_id: tutorId,
+
+          })
+        }}
+      />
+    </div>
+    </>
+
+    );
+  }
+
+  return (
+    <input
+      id={f.name}
+      name={f.name}
+      type={f.type}
+      value={values[f.name] || ""}
+      onChange={handleChange}
+      className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
+      required={!!f.required}
+    /> 
+  );
+};
+

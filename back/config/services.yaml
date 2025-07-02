@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    stripe.public_key: '%env(TEST_STRIPE_PUBLIC_KEY)%'
+    stripe.secret_key: '%env(TEST_STRIPE_PRIVATE_KEY)%'
+
 
 services:
     # default configuration for services in *this* file
@@ -24,6 +27,14 @@ services:
         tags: ['controller.service_arguments']
     
     App\EventListener\JWTCreatedListener: ~
+    App\Service\ZapierSmsSender:
+        arguments:
+            $zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/22004416/2hghlmc/'
+            
+    Stripe\StripeClient:
+        class: Stripe\StripeClient
+        arguments:
+            - '%stripe.secret_key%'   
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
