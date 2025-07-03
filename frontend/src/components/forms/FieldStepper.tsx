@@ -10,7 +10,6 @@ interface Props {
   title: string;
   fields: FormField[];
   onBack: () => void;
-  // onNext: (values: Record<string, any>) => void;
   onNext: (section: string, values: Record<string, any>) => void;
   initialValues?: Record<string, any>;
   isLast: boolean;
@@ -20,10 +19,10 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, any>>(initialValues);
-  const [touched, setTouched] = useState(false); // pour afficher le message seulement si l'utilisateur a interagi
+  const [touched, setTouched] = useState(false);
   if (index >= fields.length) {
     setIndex(0);
-    return null;           // le temps que l’état se mette à jour
+    return null;
   }
   const current = fields[index];
   const isFirst = index === 0;
@@ -32,29 +31,26 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   const isRequiredAndEmpty = current.required && (!value || value === '');
   const [showError, setShowError] = useState(false);
 
-  const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, type, value, checked,  options }:any = e.target ;
-    const multiple = e.target.multiple ;
-
-    //pour gerer les select multiple
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, type, value, checked, options }: any = e.target;
+    const multiple = e.target.multiple;
     setValues(prev => ({
       ...prev,
       [name]: multiple
         ? Array.from(options)
-            .filter((opt:any) => opt.selected)
-            .map((opt:any) => opt.value)
+            .filter((opt: any) => opt.selected)
+            .map((opt: any) => opt.value)
         : type === 'checkbox'
         ? checked
         : value,
     }));
   };
 
-
   useEffect(() => {
-    if(index && values && Object.keys(values).length > 0) {
-      setIndex(0)
+    if (index && values && Object.keys(values).length > 0) {
+      setIndex(0);
     }
-  }, [fields])
+  }, [fields]);
 
   const next = () => {
     if (isRequiredAndEmpty) return;
@@ -62,13 +58,12 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
       onNext(title, values);
     } else {
       setIndex((i) => i + 1);
-      setTouched(false); // reset touched for next field
+      setTouched(false);
     }
   };
 
   const prev = () => setIndex((i) => Math.max(i - 1, 0));
 
-  // pour supprimer une valeur du champ multi select
   const removeValueFromField = (field: any, value: any) => {
     setValues((prev: any) => ({
       ...prev,
@@ -78,22 +73,23 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     }));
   };
 
-
   if (loading) {
     return <p>Chargement…</p>;
   }
 
   return (
-    <div className="p-4 bg-white rounded shadow  w-full  ">
-      {showError &&  <AlertMessage message={'Un problème est survenu lors du chargement des créneaux !'} /> }
-      <h2 className="text-xl font-bold mb-2">{title}</h2>
-      <p className="text-sm text-gray-500 mb-4">Champ {index + 1} sur {fields.length}</p>
+    <div className="p-6 bg-white/80 rounded-2xl shadow-lg w-full border border-fading-grey max-w-xl mx-auto">
+      {showError && <AlertMessage message={'Un problème est survenu lors du chargement des créneaux !'} />}
+      <h2 className="text-2xl font-bold mb-2 text-mister-anthracite">{title}</h2>
+      <p className="text-sm text-mister-anthracite/60 mb-4">
+        Champ <span className="font-semibold">{index + 1}</span> sur <span className="font-semibold">{fields.length}</span>
+      </p>
 
-      <label className="block text-sm font-medium mb-1">
-        {current.label} {current.required && <span className="text-red-500">*</span>}
+      <label className="block text-base font-semibold mb-1 text-mister-anthracite">
+        {current.label} {current.required && <span className="text-crazy-magenta">*</span>}
       </label>
 
-      <RenderField 
+      <RenderField
         f={current}
         values={values}
         setValues={setValues}
@@ -104,13 +100,13 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
       />
 
       {isRequiredAndEmpty && touched && (
-        <p className="text-red-500 text-sm mt-1">Ce champ est requis.</p>
+        <p className="text-crazy-magenta text-sm mt-1">Ce champ est requis.</p>
       )}
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between mt-6">
         <button
           onClick={isFirst ? onBack : prev}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          className="px-6 py-2 rounded-xl bg-fading-grey text-mister-anthracite font-semibold hover:bg-hello-yellow/40 transition"
         >
           {isFirst ? 'Retour' : 'Précédent'}
         </button>
@@ -118,9 +114,11 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
         <button
           onClick={next}
           disabled={isRequiredAndEmpty}
-          className={`px-4 py-2 rounded text-white ${
-            isRequiredAndEmpty ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-          }`}
+          className={`px-8 py-2 rounded-xl font-bold transition text-lg flex items-center gap-2 shadow
+            ${isRequiredAndEmpty
+              ? 'bg-gray-300 text-gray-400 cursor-not-allowed'
+              : 'bg-hello-yellow text-mister-anthracite hover:bg-crazy-magenta hover:text-white'}
+          `}
         >
           {isFinalField ? (isLast ? 'Terminer' : 'Suivant abonnement') : 'Suivant'}
         </button>

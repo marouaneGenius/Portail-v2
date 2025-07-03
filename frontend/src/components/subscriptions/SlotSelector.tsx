@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HoursOptions } from '../../mocks/mocks';
+import { CalendarDays, Clock, PlusCircle, Trash2 } from 'lucide-react';
 
 const SlotSelector = ({ onSelect, form_values }: any) => {
   const [mode, setMode] = useState<string>('');
@@ -37,19 +38,30 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 bg-white/80 rounded-xl shadow-lg p-6 border border-fading-grey max-w-xl mx-auto">
       <div>
-        <label className="block mb-1 font-medium">Préférences de créneaux</label>
-        <div className="flex space-x-2">
-          {['known', 'unknown', 'partial'].map(opt => (
+        <label className="block mb-2 font-semibold text-mister-anthracite text-lg flex items-center gap-2">
+          <CalendarDays className="w-5 h-5 text-hello-yellow" />
+          Préférences de créneaux
+        </label>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { key: 'known', label: 'Je connais tous mes créneaux', color: 'bg-hello-yellow text-mister-anthracite border-hello-yellow', icon: <CalendarDays className="w-4 h-4" /> },
+            { key: 'unknown', label: 'Créneaux non connus', color: 'bg-crazy-magenta text-white border-crazy-magenta', icon: <Clock className="w-4 h-4" /> },
+            { key: 'partial', label: 'Partiellement connus', color: 'bg-blue-500 text-white border-blue-500', icon: <Clock className="w-4 h-4" /> },
+          ].map(opt => (
             <button
-              key={opt}
-              onClick={() => setMode(opt)}
-              className={`px-3 py-1 border rounded ${mode === opt ? 'bg-blue-500 text-white' : ''}`}
+              key={opt.key}
+              onClick={() => setMode(opt.key)}
+              type="button"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-medium transition shadow-sm
+                ${mode === opt.key
+                  ? `${opt.color} shadow`
+                  : 'bg-white text-mister-anthracite border-fading-grey hover:bg-hello-yellow/10'}
+              `}
             >
-              {opt === 'known' && 'Je connais tous mes créneaux'}
-              {opt === 'unknown' && 'Créneaux non connues pour le moment'}
-              {opt === 'partial' && 'Créneaux partiellement connus'}
+              {opt.icon}
+              {opt.label}
             </button>
           ))}
         </div>
@@ -57,13 +69,13 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
 
       {mode !== 'unknown' && (
         <>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label>Jour</label>
+              <label className="block text-mister-anthracite font-medium mb-1">Jour</label>
               <select
                 value={day}
                 onChange={e => setDay(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm"
               >
                 <option value="">Sélectionner un jour</option>
                 {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map(d => (
@@ -72,11 +84,11 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
               </select>
             </div>
             <div>
-              <label>Heure</label>
+              <label className="block text-mister-anthracite font-medium mb-1">Heure</label>
               <select
                 value={hour}
                 onChange={e => setHour(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm"
               >
                 <option value="">Sélectionner une heure</option>
                 {HoursOptions.map(h => (
@@ -87,26 +99,33 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
           </div>
           <button
             onClick={addSlot}
-            className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
+            className="mt-4 flex items-center gap-2 bg-green-100 text-green-800 hover:bg-green-200 font-semibold px-5 py-2 rounded-xl shadow transition"
           >
-            ➕ Ajouter ce créneau
+            <PlusCircle className="w-5 h-5" />
+            Ajouter ce créneau
           </button>
 
-          <div className="mt-4 space-y-2">
+          <div className="mt-6 space-y-2">
             {slots.map((slot, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
-                <span>📅 {slot.day} à 🕒 {slot.hour}</span>
+              <div
+                key={index}
+                className="flex items-center justify-between bg-hello-yellow/10 border border-hello-yellow/40 px-4 py-2 rounded-full shadow-sm"
+              >
+                <span className="flex items-center gap-2 text-mister-anthracite font-medium">
+                  <CalendarDays className="w-4 h-4 text-hello-yellow" />
+                  {slot.day} à <Clock className="w-4 h-4 text-blue-500" /> {slot.hour}
+                </span>
                 <button
                   onClick={() => removeSlot(index)}
-                  className="text-red-500 hover:text-red-700 text-sm"
+                  className="ml-2 text-crazy-magenta hover:text-crazy-magenta/80 font-bold flex items-center gap-1"
                 >
-                  ❌ Supprimer
+                  <Trash2 className="w-4 h-4" /> Supprimer
                 </button>
               </div>
             ))}
           </div>
 
-          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+          {error && <div className="text-crazy-magenta text-sm font-semibold mt-2">{error}</div>}
         </>
       )}
     </div>
