@@ -49,7 +49,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
 
   const fetchAvailableTutors = async () => {
 
-    console.log()
+    console.log(values.scheduled_at)
     try {
       setLoading(true);
       
@@ -74,10 +74,6 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
 
 
   const filterTutorBySchoolSubject = (tutorsList: Tutor[]) => {
-    // Récupère la liste de matières recherchées, ou un tableau vide
-
-    console.log('filterTutorBySchoolSubject',tutorsList, values.school_subjects)
-
     const wanted = Array.isArray(values.school_subjects)
       ? values.school_subjects
       : [];
@@ -133,8 +129,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
         // console.log(startMinutes,totalScheduledMinutes,  endMinutes, totalScheduledMinutes)
   
         // c) inclusion de l’heure planifiée dans l’intervalle [start, end]
-        return totalScheduledMinutes >= startMinutes
-            && totalScheduledMinutes <= endMinutes;
+        // return totalScheduledMinutes >= startMinutes
+        //     && totalScheduledMinutes <= endMinutes;
+     return   totalScheduledMinutes === startMinutes;
       });
     });
   };

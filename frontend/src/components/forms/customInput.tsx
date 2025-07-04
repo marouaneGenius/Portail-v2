@@ -456,15 +456,6 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
 }) => {
   const todayISO = new Date().toISOString().split("T")[0];
 
-
-  // if(student) {
-  //   setValues({
-  //     ...values,
-  //     student_ids: [student.id]
-  //   })
-  // }
-
-
   // 1) Matières → multi-select
   if (f.name === "school_subjects" && f.type === "select" && f.multiple) {
     return <>
