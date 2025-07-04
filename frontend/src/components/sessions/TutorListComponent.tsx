@@ -49,7 +49,6 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
 
   const fetchAvailableTutors = async () => {
 
-    console.log(values.scheduled_at)
     try {
       setLoading(true);
       
@@ -118,6 +117,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
         if (event.day.toLowerCase() !== dayOfWeek) {
           return false;
         }
+
+
+        console.log(event.start_hour, event.end_hour)
   
         // b) convertir start_hour / end_hour en objets Date
         const start = new Date(event.start_hour);
@@ -129,9 +131,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
         // console.log(startMinutes,totalScheduledMinutes,  endMinutes, totalScheduledMinutes)
   
         // c) inclusion de l’heure planifiée dans l’intervalle [start, end]
-        // return totalScheduledMinutes >= startMinutes
-        //     && totalScheduledMinutes <= endMinutes;
-     return   totalScheduledMinutes === startMinutes;
+        return totalScheduledMinutes >= startMinutes
+            && totalScheduledMinutes <= endMinutes;
       });
     });
   };

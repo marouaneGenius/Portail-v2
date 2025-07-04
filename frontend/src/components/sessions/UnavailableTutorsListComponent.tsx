@@ -15,10 +15,15 @@ interface Tutor {
 
 export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
   const formatTime = (timeString: string) => {
-    return new Date(timeString).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Si format ISO: "2025-10-14T12:30:00.000Z"
+    const isoMatch = timeString.match(/T(\d{2}:\d{2})/);
+    if (isoMatch) return isoMatch[1];
+  
+    // Si format simple: "12:30:00" ou "12:30"
+    const simpleMatch = timeString.match(/^(\d{2}:\d{2})/);
+    if (simpleMatch) return simpleMatch[1];
+  
+    return '';
   };
 
   return (

@@ -64,9 +64,9 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       update_all:   applyAll,
     }
     console.log(newValues)
-    // api.patch(`/api/sessions/move-future-slots/${currentSession.id}`, newValues)
-    // .then((r) =>  alert('Creneaux modifiés'))
-    // .catch((e) => alert('Une erreur est survenu lors de la modification'))
+    api.patch(`/api/sessions/move-future-slots/${currentSession.id}`, newValues)
+    .then((r) =>  alert('Creneaux modifiés'))
+    .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
   const updateSchoolSubjects = () => {
