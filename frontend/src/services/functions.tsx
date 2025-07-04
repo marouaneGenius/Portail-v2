@@ -404,3 +404,14 @@ export const timeToMinutes = (time: string | DoctrineDate): number => {
 
   return 0;
 };
+
+
+
+export const formatDateTime = (date: Date | null): string | null => {
+  if (!date) return null;
+  
+  const pad = (num: number) => num.toString().padStart(2, '0');
+  
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+         `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+};

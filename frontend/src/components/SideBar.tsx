@@ -30,6 +30,8 @@ const menuItems = [
   { title: 'Parents', url: '/parents', icon: UserCheck },
   { title: 'Mon profil', url: '/profile', icon: User },
   { title: 'Séances', url: '/session-calendar', icon: Calendar },
+  { title: 'Planing des Tuteurs',url: '/planing', icon: Calendar },
+
 
 ];
 

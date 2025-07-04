@@ -164,7 +164,10 @@ export const PreinscriptionFields: FormField[] = [
       { value: 'partial', label: 'Créneaux non connues pour le moment' },
     ] 
   },
-  // { name: 'subscription_start_date', label: 'On commence le', type: 'date'},
-  // { name: 'first_debit_date', label: 'Date de paiement', type: 'date'},
-  // { name: 'discount', label: '', type: 'text',  },
+]
+
+
+export const UpdateSlotForm: FormField[] = [
+  { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'date'},
+  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
 ]

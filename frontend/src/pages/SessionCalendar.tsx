@@ -361,7 +361,7 @@ export default function SessionCalendar() {
         </label>
       </div>
     </Modal>
-</div>
+  </div>
 
 
 

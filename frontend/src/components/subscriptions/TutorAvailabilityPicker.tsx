@@ -7,7 +7,6 @@ import api from '../../api/aixos';
 import { Student } from '../ParentFinder';
 import { useParams } from 'react-router-dom';
 import { renderMultiSelect } from '../forms/customInput';
-import { V } from 'framer-motion/dist/types.d-CtuPurYT';
 
 interface Props {
   onSelect: (result: [{ tutorId: number; day: string; hour: string }]) => void;
@@ -18,6 +17,8 @@ interface Props {
   setValues:any 
   removeValueFromField :any 
 }
+export const school_subjects_file =  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true, options: SchoolSubjects };
+
 
 export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, school_subjects, values, setValues, removeValueFromField }:any) => {
   const [day, setDay] = useState('');
@@ -34,7 +35,6 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
   const [isSlotExist, setIsSlotExist] = useState<boolean>(false);
   const [sessionPerWeek, setSessionPerWeek] = useState<any>(null);
   const { id } = useParams();
-  const f =  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true, options: SchoolSubjects };
   const hoursPerSession = [
     { value: '1', label: '1h30' },
     { value: '2', label: '3h' },
@@ -208,7 +208,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
       <div>
         {
-          renderMultiSelect(f, values, 'school_subjects', setValues, removeValueFromField)
+          renderMultiSelect(school_subjects_file, values, 'school_subjects', setValues, removeValueFromField)
         }
       </div>
       {/* Jour */}

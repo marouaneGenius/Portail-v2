@@ -23,3 +23,12 @@ const Students: React.FC = () => {
 };
 
 export default Students;
+
+
+// faire la card contrat sur la vue etudiant/parent le retirer du composant "DownloadButtons"
+// faire la card seance sur la vue etudiant/parent
+// optimiser "programer les seances"
+// sauvegarder le contrat a la generation de celuici
+// revoir les champs de les formulaires
+// revoir les dates/prix sur les contrats
+// 

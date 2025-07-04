@@ -20,7 +20,7 @@ interface Tutor {
 interface TutorListProps {
   values: {
     school_subjects: string[];
-    scheduled_at: string;
+    scheduled_at?: string;
   };
   student:any;
   onSelect: (tutorId: number) => void;
@@ -32,6 +32,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState<number | null>(null);
+
 
   useEffect(() => {
     api.get(`/api/user/tutors`).then((response) => {
@@ -47,6 +48,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   }, [values.school_subjects, values.scheduled_at, student]);
 
   const fetchAvailableTutors = async () => {
+
+    console.log()
     try {
       setLoading(true);
       
@@ -72,6 +75,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
 
   const filterTutorBySchoolSubject = (tutorsList: Tutor[]) => {
     // Récupère la liste de matières recherchées, ou un tableau vide
+
+    console.log('filterTutorBySchoolSubject',tutorsList, values.school_subjects)
+
     const wanted = Array.isArray(values.school_subjects)
       ? values.school_subjects
       : [];
@@ -80,7 +86,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     if (wanted.length === 0) {
       return tutorsList;
     }
-  
+
     return tutorsList.filter(tutor => {
       // S’assure que tutor.school_subjects est bien un tableau
       const have = Array.isArray(tutor.school_subjects)
@@ -88,7 +94,12 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
         : [];
   
       // On ne garde que si chaque matière recherchée est présente
-      return wanted.every(subj => have.includes(subj));
+      // return wanted.every(subj => have.includes(subj));
+
+
+      // On ne garde que si y'a au moins une matière recherchée est présente
+      return wanted.some(subj => have.includes(subj));
+
     });
   };
 
@@ -161,6 +172,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
       </div>
     );
   }
+
+
 
   return (
     <div className="mt-6 space-y-4">

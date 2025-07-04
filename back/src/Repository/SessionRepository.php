@@ -140,6 +140,14 @@ class SessionRepository extends ServiceEntityRepository
                         'lastname'  => $student->getLastname(),
                         'email'     => $student->getEmail(),
                         'session_id' => $session->getId(), 
+                        'centers' => $student->getIdCenter()
+                        ? [
+                            'id'      => $student->getIdCenter()->getId(),
+                            'name'    => $student->getIdCenter()->getName(),
+                            'address' => $student->getIdCenter()->getAddress(),
+                            'city'    => $student->getIdCenter()->getCity(),
+                        ]
+                        : null,
                         // Ajoute ici ce que tu veux
                     ];
                 }
@@ -147,7 +155,10 @@ class SessionRepository extends ServiceEntityRepository
                     'id'            => $session->getId(),
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
                     'resume'        => $session->getResume(),
+                    'is_canceled'        => $session->isIsCanceled(),
+                    'is_absent'        => $session->isIsAbsent(),
                     'students'      => $studentsArr,
+                    'school_subjects' => $session->getSchoolSubjects(),
                 ];
             }
 

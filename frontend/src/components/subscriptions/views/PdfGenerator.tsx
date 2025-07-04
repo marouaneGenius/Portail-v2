@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Preview } from 'react-html2pdf';
 import ContractContentComponent from './ContractContentComponent';
 import DownloadButtonsComponents from './DownloadButtonsComponents';
-import { RPConfig, RPDefaultLayout, RPPages, RPProvider } from '@pdf-viewer/react';
+// import { RPConfig, RPDefaultLayout, RPPages, RPProvider } from '@pdf-viewer/react';
 
 export interface FullContractProps {
   Student: any;
@@ -63,7 +63,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             </Preview>
           </div>
         }
-        {pdfUrl && (
+        {/* {pdfUrl && (
             <div className="mt-0 w-full h-[1000px] border">
               <RPConfig>
                 <RPProvider src={pdfUrl} >
@@ -73,7 +73,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
                 </RPProvider>
               </RPConfig>
             </div>
-          )}
+          )} */}
     </div>
   );
 };

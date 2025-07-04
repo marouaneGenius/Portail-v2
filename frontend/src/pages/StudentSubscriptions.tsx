@@ -3,9 +3,6 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../Hooks/auth";
 import api from "../api/aixos";
 import { GradientCard } from "../components/GardientCard";
-import { Viewer, Worker } from '@react-pdf-viewer/core';
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import { RPConfig, RPDefaultLayout, RPPages, RPProvider } from "@pdf-viewer/react";
 
 interface Contract {
   id: number;
