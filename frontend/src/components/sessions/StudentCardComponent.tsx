@@ -14,11 +14,8 @@ import { renderMultiSelect, RenderTrialField } from '../forms/customInput';
 import { school_subjects_file } from '../subscriptions/TutorAvailabilityPicker';
 import api from '@/api/aixos';
 import SessionScopeRadio from './SessionScopeRadio';
-// import { DateTimePicker } from '../ui/date-time-picker';
-import { TutorListComponent } from './TutorListComponent';
-import FrenchDateTimePicker from '../FrenchDateTimePicker';
-import FrenchDatePicker from '../FrenchDateTimePicker';
 import { UpdateSlotForm } from '@/forms/schemas';
+import { useAuth } from '@/Hooks/auth';
 
 interface StudentCardProps {
   student: any;
@@ -33,7 +30,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   sessionHour,
   session,
 }) => {
-  const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | null>(null);
+  const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | null>(null);
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
   const [isAbsent, setIsAbsent] = useState(student.session.is_absent);
   const [applyAll, setApplyAll] = useState<any>(false);
@@ -45,6 +42,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const navigate = useNavigate();
   const currentSession = student.session;
   const currentStudent = student.student;
+  const { user } = useAuth();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `${currentStudent.id}-${currentSession.id}`,
@@ -62,10 +60,13 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       tutor_id: values.tutor_id,
       scheduled_at: values.scheduled_at,
       update_all:   applyAll,
+      updated_by: user?.email,
     }
     console.log(newValues)
     api.patch(`/api/sessions/move-future-slots/${currentSession.id}`, newValues)
-    .then((r) =>  alert('Creneaux modifiés'))
+    .then((r) =>  {
+      setShowEditModal(null)
+      alert('Creneaux modifiés')})
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
@@ -79,23 +80,33 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   }
 
   const sessionManagement = () => {
-    // setShowCancelModal(true)
     const canceled = isCanceled ? false : true;
-    return api.patch(`/api/sessions/${currentSession.id}`, {
+    console.log(applyAll)
+    return api.patch(`/api/sessions/manage/${currentSession.id}`, {
       student_ids: [currentStudent.id],
-      is_canceled: canceled
-    }).then((r) => setIsCanceled(r.data.is_canceled))
+      update_all:   applyAll,
+      is_canceled: canceled,
+      canceled_by: user?.id,
+      updated_by: user?.email,
+    }).then((r) => {
+      setShowEditModal(null)
+      setIsCanceled(r.data.is_canceled)})
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
-
   }
 
   const studentManagement = () => {
     const absent = isAbsent ? false : true;
-    return api.patch(`/api/sessions/${currentSession.id}`, {
+    return api.patch(`/api/sessions/manage/${currentSession.id}`, {
       student_ids: [currentStudent.id],
-      is_absent: absent
+      update_all:   applyAll,
+      is_absent: absent,
+      absent_by: user?.email,
+      updated_by: user?.email
     })
-    .then((r) => setIsAbsent(r.data.is_absent))
+    .then((r) => {
+      setShowEditModal(null)
+      setIsAbsent(r.data.is_absent)
+    })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
@@ -175,12 +186,12 @@ export const StudentCard: React.FC<StudentCardProps> = ({
                 Modifier les Matières
               </DropdownMenuItem>
 
-              <DropdownMenuItem onSelect={studentManagement}>
+              <DropdownMenuItem onSelect={()=>setShowEditModal('absent')}>
                 Marquer comme 
                 {isAbsent ? ' Present ' : ' absent '}
               </DropdownMenuItem>
 
-              <DropdownMenuItem onSelect={sessionManagement} className={`${isCanceled ? 'bg-red-100 ' : ''}`}>
+              <DropdownMenuItem onSelect={()=> setShowEditModal('cancel')} className={`${isCanceled ? 'bg-red-100 ' : ''}`}>
                 {isCanceled ? 'Reprogrammer ' : 'Annuler '}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -212,6 +223,27 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
 
 
+      {showEditModal === 'cancel' && (
+        <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
+          <div className='p-3'>
+            <div className='p-3'> 
+              <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
+            </div>
+            <button onClick={sessionManagement} className='bg-green-500 text-white rounded p-3 w-full' >Sauvegarder</button>
+          </div>
+        </Modal>
+      )}
+
+      {showEditModal === 'absent' && (
+        <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
+          <div className='p-3'>
+            <div className='p-3'> 
+              <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
+            </div>
+            <button onClick={studentManagement} className='bg-green-500 text-white rounded p-3 w-full' >Sauvegarder</button>
+          </div>
+        </Modal>
+      )}
 
       {showEditModal === 'tutor' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier la séance">
@@ -251,6 +283,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
         </Modal>
       )}
+
       {showEditModal === 'subjects' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
           <div className='p-3'>

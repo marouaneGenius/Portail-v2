@@ -560,6 +560,12 @@ class SessionController extends AbstractController
                 return new JsonResponse(['error' => 'Tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
             }
         }
+
+        if (array_key_exists('updated_by', $data)) {
+            $session->setUpdatedBy($data['updated_by']);
+        }
+
+
     
         // Modifier seulement UNE séance
         if (!$updateAll) {
@@ -567,6 +573,10 @@ class SessionController extends AbstractController
             if ($newTutor) {
                 $session->setIdTutor($newTutor);
             }
+            if (array_key_exists('updated_by', $data)) {
+                $session->setUpdatedBy($data['updated_by']);
+            }
+
             $this->em->persist($session);
             $this->em->flush();
     
@@ -619,6 +629,10 @@ class SessionController extends AbstractController
             if ($newTutor) {
                 $s->setIdTutor($newTutor);
             }
+
+            if (array_key_exists('updated_by', $data)) {
+                $session->setUpdatedBy($data['updated_by']);
+            }
     
             $this->em->persist($s);
             $updated++;
@@ -633,8 +647,156 @@ class SessionController extends AbstractController
             'multiple' => true
         ], JsonResponse::HTTP_OK);
     }
-    
 
+
+    #[Route('/manage/{id}', name: 'session_manage', methods: ['PATCH'])]
+    public function manageSession(
+        int $id,
+        Request $request
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+        }
+    
+        // 1) Récupérer la session ciblée
+        $session = $this->sessionRepo->find($id);
+        if (!$session) {
+            return new JsonResponse(['error' => 'Session introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+    
+        $updateAll = $data['update_all'] ?? false;
+        $studentId = $data['student_id'] ?? null;
+        if (!$studentId) {
+            if ($session->getIdStudent()->count()) {
+                $studentId = $session->getIdStudent()->first()->getId();
+            } else {
+                return new JsonResponse(['error' => 'Aucun étudiant spécifié ou trouvé'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
+    
+        // --------- MODE "TOUTES LES SÉANCES À VENIR" ----------
+        if ($updateAll) {
+            $oldScheduledAt = $session->getScheduledAt();
+            $year = (int)$oldScheduledAt->format('Y');
+            $month = (int)$oldScheduledAt->format('n');
+            if ($month >= 9) {
+                $endPeriod = new \DateTimeImmutable(($year + 1) . '-08-15 23:59:59');
+            } else {
+                $endPeriod = new \DateTimeImmutable($year . '-08-15 23:59:59');
+            }
+            // ⚠️ Prend toutes les séances à partir d'aujourd'hui (pas la date de la session courante)
+            $startPeriod = new \DateTimeImmutable('today');
+    
+            $sessions = $this->sessionRepo->findByStudentAndCenterAndPeriod(
+                $studentId,
+                $session->getCenter(),
+                $startPeriod,
+                $endPeriod
+            );
+
+            // dd($sessions);
+    
+            $updated = 0;
+            foreach ($sessions as $s) {
+                if (array_key_exists('is_canceled', $data)) {
+                    $s->setIsCanceled($data['is_canceled']);
+                }
+                if (array_key_exists('is_absent', $data)) {
+                    $s->setIsAbsent($data['is_absent']);
+                }
+
+                if (array_key_exists('updated_by', $data)) {
+                    $s->setUpdatedBy($data['updated_by']);
+                }
+        
+                if (array_key_exists('absent_by', $data)) {
+                    $s->setAbsentBy($data['absent_by']);
+                }
+        
+                if (array_key_exists('canceled_by', $data)) {
+                    $s->setCanceledBy($data['canceled_by']);
+                }
+            
+                // Gestion des étudiants sur chaque séance
+                if (array_key_exists('student_ids', $data)) {
+                    foreach ($s->getIdStudent() as $stu) {
+                        $s->removeIdStudent($stu);
+                    }
+                    foreach ((array)$data['student_ids'] as $stuId) {
+                        if ($student = $this->studentRepo->find($stuId)) {
+                            $s->addIdStudent($student);
+                        }
+                    }
+                }
+                $this->em->persist($s);
+                $updated++;
+            }
+            $this->em->flush();
+    
+            return new JsonResponse([
+                'count'       => $updated,
+                'student_id'  => $studentId,
+                'is_canceled' => $data['is_canceled'] ?? null,
+                'is_absent'   => $data['is_absent'] ?? null,
+                'multiple'    => true
+            ], JsonResponse::HTTP_OK);
+        }
+    
+        // --------- MODE "UNE SEULE SÉANCE" ----------
+        $updated = false;
+    
+        if (array_key_exists('is_canceled', $data)) {
+            $session->setIsCanceled($data['is_canceled']);
+            $updated = true;
+        }
+        if (array_key_exists('is_absent', $data)) {
+            $session->setIsAbsent($data['is_absent']);
+            $updated = true;
+        }
+
+        if (array_key_exists('updated_by', $data)) {
+            $session->setUpdatedBy($data['updated_by']);
+            $updated = true;
+        }
+
+        if (array_key_exists('absent_by', $data)) {
+            $session->setAbsentBy($data['absent_by']);
+            $updated = true;
+        }
+
+        if (array_key_exists('canceled_by', $data)) {
+            $session->setCanceledBy($data['canceled_by']);
+            $updated = true;
+        }
+    
+        // (optionnel) gestion des étudiants sur la séance si fourni
+        if (array_key_exists('student_ids', $data)) {
+            foreach ($session->getIdStudent() as $stu) {
+                $session->removeIdStudent($stu);
+            }
+            foreach ((array)$data['student_ids'] as $stuId) {
+                if ($student = $this->studentRepo->find($stuId)) {
+                    $session->addIdStudent($student);
+                }
+            }
+            $updated = true;
+        }
+    
+        if ($updated) {
+            $this->em->persist($session);
+            $this->em->flush();
+        }
+    
+        return new JsonResponse([
+            'id'          => $session->getId(),
+            'is_canceled' => $session->isIsCanceled(),
+            'is_absent'   => $session->isIsAbsent(),
+            'student_ids' => array_map(fn($s) => $s->getId(), $session->getIdStudent()->toArray()),
+            'multiple'    => false
+        ], JsonResponse::HTTP_OK);
+    }
+    
 
 
     // #[Route('/{id}/test-sms', name: 'test_sms', methods: ['POST'])]
