@@ -577,8 +577,6 @@ import api from "../../api/aixos";
     });
   }
 
-
-
   function buildPaymentDates(firstDateIso: string, count: number): string[] {
     const dates: string[] = [];
     const first = new Date(firstDateIso);
@@ -590,4 +588,23 @@ import api from "../../api/aixos";
       dates.push(d.toISOString().slice(0, 10));
     }
     return dates;
+  }
+
+
+  export const IsStudentIsMember = async (studentId: number | string) => {
+    if (!studentId) return false;
+    const res = await api.get(`/api/student/is-member/${studentId}`);
+    return res.data.is_member === true;
+  };
+  
+
+
+  export const IsStudentHaveBrothers = async (studentId: number | string) => {
+    if (!studentId) return false;
+    const res = await api.get(`/api/student/has-sibling/${studentId}`);
+    return res.data.has_sibling === true;
+  };
+
+  export const getStudent = (id:any) => {
+    return api.get(`/api/student/${id}`)
   }

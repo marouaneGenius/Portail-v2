@@ -6,6 +6,7 @@ use App\Entity\Student;
 use App\Repository\CenterRepository;
 use App\Repository\StudentParentRepository;
 use App\Repository\StudentRepository;
+use App\Repository\SubscriptionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -153,6 +154,7 @@ class StudentController extends AbstractController
                 'date_slot'      => $s->getDateSlot()->format('Y-m-d'),
                 'session_type'   => $s->getSessionType(),
                 'is_canceled'    => $s->isIsCanceled(),
+                'scheduled_at'    => $s->getScheduledAt(),
                 'tutor_id'       => $s->getIdTutor()?->getId(),
 
             ];
@@ -343,6 +345,60 @@ class StudentController extends AbstractController
 
         return $this->json(array_values($siblings), Response::HTTP_OK);
     }
+
+
+
+    #[Route('/has-sibling/{studentId}', name: 'student_has_sibling', methods: ['GET'])]
+    public function hasSibling(int $studentId, StudentRepository $studentRepo, StudentParentRepository $parentRepo): JsonResponse
+    {
+        // Récupère l’élève
+        $student = $studentRepo->find($studentId);
+        if (!$student) {
+            return new JsonResponse(['error' => 'Élève non trouvé'], 404);
+        }
+
+        // Récupère tous les parents de l’élève
+        $parents = $student->getIdParent();
+        foreach ($parents as $parent) {
+            // Pour chaque parent, check combien d’enfants il a
+            if ($parent->getStudents()->count() > 1) {
+                // Il a au moins un frère/sœur
+                return new JsonResponse(['has_sibling' => true]);
+            }
+        }
+        return new JsonResponse(['has_sibling' => false]);
+    }
+
+    #[Route('/is-member/{studentId}', name: 'student_is_member', methods: ['GET'])]
+
+    public function isMember(
+        int $studentId,
+        SubscriptionRepository $subscriptionRepository
+    ): JsonResponse {
+        // 1) Récupérer toutes les subscriptions du student
+        $subscriptions = $subscriptionRepository->findBy(['id_student' => $studentId]);
+
+        // 2) Pour chaque subscription, checker sur le combined_id
+        foreach ($subscriptions as $subscription) {
+            $combinedId = $subscription->getCombinedId();
+            if (!$combinedId) continue; // Ignore si pas de contrat combiné
+
+            // Récupère toutes les subscriptions ayant ce combined_id
+            $groupedSubscriptions = $subscriptionRepository->findBy(['combined_id' => $combinedId]);
+
+            // Est-ce qu'il y en a AU MOINS UNE avec is_valide=true ?
+            foreach ($groupedSubscriptions as $sub) {
+                if ($sub->isIsValide()) {
+                    return new JsonResponse(['is_member' => true]);
+                }
+            }
+        }
+
+        // Si aucune contract groupé ou aucune n'est valide
+        return new JsonResponse(['is_member' => false]);
+    }
+
+
 
 
 }

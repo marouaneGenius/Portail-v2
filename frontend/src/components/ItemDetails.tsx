@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars } from 'lucide-react';
+import { StudentSubscriptionCard } from './subscriptions/StudentSubscriptionCard';
+import { StudentsSubscriptions } from './subscriptions/StudentsSubscriptions';
 
 export interface DetailPageParams {
   resource: string;
@@ -50,6 +52,7 @@ const ItemDetails: React.FC = () => {
   const [brothers, setBrothers] = useState([]);
   const [error, setError] = useState<string | null>(null);
   const { isOpen, open, close } = useModal();
+  const [students, setStudents] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,6 +89,8 @@ const ItemDetails: React.FC = () => {
   const getBrothers = () => {
     api.get(`/api/student/${id}/siblings`).then(({ data }: any) => setBrothers(data));
   };
+
+
 
   // Ajoute cette fonction pour la suppression
   const handleDelete = async () => {
@@ -215,6 +220,11 @@ const ItemDetails: React.FC = () => {
             </CardContent>
           </Card>
 
+
+
+          <StudentsSubscriptions resource={resource} item={item} id={id} />
+
+
           {/* Cards pour les entités liées */}
           {Object.entries(item).map(([key, value]) => {
             if (key === 'parents')
@@ -257,14 +267,14 @@ const ItemDetails: React.FC = () => {
                   </CardContent>
                 </Card>
               );
-            if (key === 'sessions')
+            if (key === 'sessions' )
               return (
                 <Card key={key} className="border-fading-grey">
                   <CardHeader>
                     <CardTitle className="text-lg text-mister-anthracite">Séances</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CustomSessionComponent currentkey={key} value={value} />
+                    <CustomSessionComponent currentkey={key} value={value} student={item} />
                   </CardContent>
                 </Card>
               );
@@ -281,18 +291,6 @@ const ItemDetails: React.FC = () => {
               );
             return null;
           })}
-
-          {/* Card frères et soeurs pour les étudiants */}
-          {/* {resource === 'student' && (
-            <Card className="border-fading-grey">
-              <CardHeader>
-                <CardTitle className="text-lg text-mister-anthracite">Frères et soeurs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CustomBrothersComponent brothers={brothers} />
-              </CardContent>
-            </Card>
-          )} */}
         </div>
 
         {/* Sidebar infos rapides */}

@@ -2,7 +2,7 @@ import React from 'react';
 import { actions } from '../mocks/mocks';
 import { CustomButton } from './CustomButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Building, MapPin, Phone, Users, User, Mail } from 'lucide-react';
+import { Building, MapPin, Phone, Users, User, Mail, Calendar } from 'lucide-react';
 
 interface CustomAlertProps {
   title?: string;
@@ -287,31 +287,101 @@ export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> = ({
   );
 };
 
-export const CustomSessionComponent: React.FC<CustomComponentProps> = ({ value, currentkey }) => {
-  return (
-    <>
-      {currentkey === 'sessions' && Array.isArray(value) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {value.map((row: Record<string, any>, idx: number) => (
-            <div
-              key={idx}
-              className="bg-white border border-fading-grey rounded-xl shadow p-4 flex flex-col gap-2"
-            >
-              {Object.entries(row).map(([k, v]) => (
-                <div key={k}>
-                  <span className="font-medium capitalize">{k.replace('_', ' ')}:</span>{' '}
-                  <span>{String(v)}</span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
 
-      {currentkey === 'sessions' && value.length === 0 && (
-        <CustomAlert title="Message!" message="Vous n'avez pas de Sessions pour l'instant" />
-      )}
-    </>
+export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
+  // Helper pour formatter la date
+  const formatDate = (dateStr:any) => {
+    const date = new Date(dateStr);
+    // ex: lundi 15 janvier
+    return date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  };
+  const formatTime = (dateStr:any) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  let sessions: any = Array.isArray(value) ? value : [];
+
+  sessions = sessions
+    .filter((s: any) => !!s.scheduled_at)
+    .sort((a: any, b: any) =>
+      new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
+    );
+  
+  // Trouve la prochaine séance (future)
+  const now = new Date();
+  const nextSession = sessions.find((s:any) => new Date(s.scheduled_at) >= now);
+  
+  // Trouve la dernière séance passée
+  const lastSession: any = [...sessions]
+    .filter(s => new Date(s.scheduled_at) < now)
+    .sort((a: any, b: any) =>
+      new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
+    )[0];
+
+
+
+
+    console.log(nextSession, lastSession, value, student)
+
+  // (option) Affichage du prénom de l'enfant si parent
+  const getStudentName = (session:any) =>
+    session.student_firstname && session.student_lastname
+      ? `${session.student_firstname} ${session.student_lastname}`
+      : null;
+
+  return (
+    <div className="p-2">
+      <div className="flex items-center gap-2 mb-2">
+        <Calendar className="text-blue-500" size={20} />
+        <span className="font-semibold text-lg">Séances</span>
+      </div>
+      <div className="space-y-4">
+
+        {/* Prochaine séance */}
+        {nextSession && (
+          <div>
+            <div className="text-gray-600 text-sm mb-1">Prochaine séance</div>
+            <div className="bg-blue-50 rounded-lg px-4 py-3 mb-2">
+              <div className="font-semibold text-base text-blue-900">
+                {formatDate(nextSession.scheduled_at)}
+                {getStudentName(nextSession) && (
+                  <span className="ml-2 text-blue-500 text-xs">
+                    ({getStudentName(nextSession)})
+                  </span>
+                )}
+              </div>
+              <div className="text-blue-900 text-md mt-1">{formatTime(nextSession.scheduled_at)}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Dernière séance */}
+        {lastSession && (
+          <div>
+            <div className="text-gray-600 text-sm mb-1">Dernière séance</div>
+            <div className="bg-gray-100 rounded-lg px-4 py-3">
+              <div className="font-semibold text-base text-gray-800">
+                {formatDate(lastSession.scheduled_at)}
+                {getStudentName(lastSession) && (
+                  <span className="ml-2 text-blue-500 text-xs">
+                    ({getStudentName(lastSession)})
+                  </span>
+                )}
+              </div>
+              <div className="text-gray-800 text-md mt-1">{formatTime(lastSession.scheduled_at)}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Aucun */}
+        {!nextSession && !lastSession && (
+          <div className="text-gray-400 italic text-center">
+            Aucune séance planifiée ou passée.
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -83,17 +83,6 @@ class SubscriptionController extends AbstractController
         $subscription->setSelectedWeeks($data['selected_weeks'] ?? null);
         $subscription->setKnownWeeks($data['known_weeks'] ?? null);
         $subscription->setIsProgramed(false);
-
-
-        // Sessions (si données comme array d’IDs)
-        // if (!empty($data['sessions']) && is_array($data['sessions'])) {
-        //     foreach ($data['sessions'] as $sessionId) {
-        //         $session = $this->sessionRepository->find($sessionId);
-        //         if ($session) {
-        //             $subscription->addSession($session);
-        //         }
-        //     }
-        // }
     
         $this->em->persist($subscription);
         $this->em->flush();
@@ -289,4 +278,84 @@ class SubscriptionController extends AbstractController
             'updated_at' => $subscription->getProgramedAt()?->format(\DateTimeInterface::ATOM),
         ], JsonResponse::HTTP_OK);
     }
+
+    #[Route('/student/{studentId}', name: 'subscriptions_by_student', methods: ['GET'])]
+    public function byStudent(int $studentId): JsonResponse
+    {
+        $student = $this->studentRepository->find($studentId);
+        if (!$student) {
+            return new JsonResponse(['error' => 'Étudiant non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+    
+        // DOCTRINE attend 'id_student' comme dans l'entité
+        $subs = $this->subscriptionRepository->findBy(['id_student' => $student]);
+    
+        $data = array_map(fn($subscription) => [
+            'id'                     => $subscription->getId(),
+            'combined_id'            => $subscription->getCombinedId(),
+            'subscription_type'      => $subscription->getSubscriptionType(),
+            'is_valide'              => $subscription->isIsValide(),
+            'payment_mode'           => $subscription->getPaymentMode(),
+            'subscription_start_date'=> $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+            'subscription_end_date'  => $subscription->getSubscriptionEndDate()?->format('Y-m-d'),
+            'first_debit_date'       => $subscription->getFirstDebitDate()?->format('Y-m-d'),
+            'recurrent_debit_date'   => $subscription->getRecurrentDebitDate(),
+            'installment_count'      => $subscription->getInstallmentCount(),
+            'session_per_week'       => $subscription->getSessionPerWeek(),
+            'week_count'             => $subscription->getWeekCount(),
+            'selected_weeks'         => $subscription->getSelectedWeeks(),
+            'known_weeks'            => $subscription->getKnownWeeks(),
+            'discount'               => $subscription->getDiscount(),
+            'offer_amount'           => $subscription->getOfferAmount(),
+            'offer_type'             => $subscription->getOfferType(),
+            'membership_fee'         => $subscription->getMembershipFee(),
+            'school_subjects'        => $subscription->getSchoolSubjects(),
+            'favorite_slots'         => $subscription->getFavoriteSlots(),
+            'is_programed'           => $subscription->isIsProgramed(),
+            'programed_at'           => $subscription->getProgramedAt(),
+            'created_at'             => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),
+            'created_by'             => $subscription->getCreatedBy(),
+            'updated_at'             => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'updated_by'             => $subscription->getUpdatedBy(),
+            'is_canceled'             => $subscription->isIsCanceled(),
+            'canceled_by'             => $subscription->getCanceledBy(),
+
+
+        ], $subs);
+    
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/{id}/cancel', name: 'subscription_cancel', methods: ['PATCH'])]
+    public function cancelSubscription(int $id, Request $request): JsonResponse
+    {
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            return new JsonResponse(['error' => 'Abonnement introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $canceledBy = $data['canceled_by'] ?? null;
+
+        if (!$canceledBy) {
+            return new JsonResponse(['error' => 'Le champ canceled_by (email) est requis.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $subscription->setIsCanceled(true);
+        $subscription->setCanceledBy($canceledBy);
+        $subscription->setUpdatedAt(new \DateTimeImmutable());
+
+        $this->em->persist($subscription);
+        $this->em->flush();
+
+        return new JsonResponse([
+            'id'           => $subscription->getId(),
+            'is_canceled'  => $subscription->isIsCanceled(),
+            'canceled_by'  => $subscription->getCanceledBy(),
+            'updated_at'   => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+        ], JsonResponse::HTTP_OK);
+    }
+
+    
+
 }

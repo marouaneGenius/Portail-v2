@@ -11,7 +11,7 @@ import DisponibiliteEtAssistanceDomicileComponent from './DisponibiliteEtAssista
 import AbsencesComponent from './AbsencesComponent';
 import CreationGestionCompteURSSAFComponent from './CreationGestionCompteURSSAFComponent';
 import ChequeDeCautionComponent from './ChequeDeCautionComponent';
-import { getNiveauScolaire, getPrice, getStagePrice, showSubscriptionPrice } from '../SubscriptionFunctions';
+import { getNiveauScolaire, getPrice, getStagePrice, IsStudentIsMember, showSubscriptionPrice } from '../SubscriptionFunctions';
 import ProcedureResiliationNotice from './ProcedureResiliationComponent';
 import SignatureComponent from './SignatureComponent';
 
@@ -26,33 +26,64 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
     const [price, setPrice] = useState(0);
     const [showFraisInscriptionComponent, setshowFraisInscriptionComponent] = useState(true);
     const [isCombined, setIsCombined] = useState(Subscription.combined_id ? true : false);
+    
+
+    // useEffect(() => {
+    //     const isMember = false //IsStudentIsMember(student, SubscriptionType);
+    //     const niveau:any = getNiveauScolaire(student.class);
+    //     let newPrice;
+
+    //     if(SubscriptionType === 'stage'){
+    //          newPrice = getStagePrice(Subscription.week_count, isCombined, isMember)
+    //     } else {
+    //          newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
+    //     }
+        
+    //     setPrice(newPrice)
+
+    //     if(isCombined) {
+    //         showSubscriptionPrice(Subscription).then((res) => {
+    //             if(res.includes('annuel') && SubscriptionType == 'annuel') {
+    //                 setshowFraisInscriptionComponent(true)
+    //             } else if(!res.includes('annuel') && res.includes('preinscription') && SubscriptionType == 'preinscription'){
+    //                 setshowFraisInscriptionComponent(true)
+    //             } else {
+    //                 setshowFraisInscriptionComponent(false)
+    //             }
+    //         })
+    //     }
+
+    // } ,[Student, Subscription, SubscriptionType]);
 
     useEffect(() => {
-        const isMember = false //getIfStudentIsMember(student, SubscriptionType);
-        const niveau:any = getNiveauScolaire(student.class);
-        let newPrice;
-
-        if(SubscriptionType === 'stage'){
-             newPrice = getStagePrice(Subscription.week_count, isCombined, isMember)
-        } else {
-             newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
+        async function fetchAndSet() {
+          const isMember = await IsStudentIsMember(student.id); // <-- ici !
+      
+          const niveau:any = getNiveauScolaire(student.class);
+          let newPrice;
+      
+          if(SubscriptionType === 'stage'){
+               newPrice = getStagePrice(Subscription.week_count, isCombined, isMember)
+          } else {
+               newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
+          }
+      
+          setPrice(newPrice);
+      
+          if(isCombined) {
+              showSubscriptionPrice(Subscription).then((res) => {
+                  if(res.includes('annuel') && SubscriptionType == 'annuel') {
+                      setshowFraisInscriptionComponent(true)
+                  } else if(!res.includes('annuel') && res.includes('preinscription') && SubscriptionType == 'preinscription'){
+                      setshowFraisInscriptionComponent(true)
+                  } else {
+                      setshowFraisInscriptionComponent(false)
+                  }
+              })
+          }
         }
-        
-        setPrice(newPrice)
-
-        if(isCombined) {
-            showSubscriptionPrice(Subscription).then((res) => {
-                if(res.includes('annuel') && SubscriptionType == 'annuel') {
-                    setshowFraisInscriptionComponent(true)
-                } else if(!res.includes('annuel') && res.includes('preinscription') && SubscriptionType == 'preinscription'){
-                    setshowFraisInscriptionComponent(true)
-                } else {
-                    setshowFraisInscriptionComponent(false)
-                }
-            })
-        }
-
-    } ,[Student, Subscription, SubscriptionType]);
+        fetchAndSet();
+      }, [student, Subscription, SubscriptionType]);
 
     return (
         <div className="space-y-8 ">

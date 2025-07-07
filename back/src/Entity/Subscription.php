@@ -112,6 +112,12 @@ class Subscription
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $programed_by = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $is_canceled = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $canceled_by = null;
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
@@ -538,6 +544,30 @@ class Subscription
     public function setProgramedBy(?string $programed_by): static
     {
         $this->programed_by = $programed_by;
+
+        return $this;
+    }
+
+    public function isIsCanceled(): ?bool
+    {
+        return $this->is_canceled;
+    }
+
+    public function setIsCanceled(?bool $is_canceled): static
+    {
+        $this->is_canceled = $is_canceled;
+
+        return $this;
+    }
+
+    public function getCanceledBy(): ?string
+    {
+        return $this->canceled_by;
+    }
+
+    public function setCanceledBy(?string $canceled_by): static
+    {
+        $this->canceled_by = $canceled_by;
 
         return $this;
     }
