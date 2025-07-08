@@ -171,5 +171,37 @@ class TutorScheduleController extends AbstractController
         ], 200);
     }
 
+    #[Route('/user/{userId}', name: 'api_tutorschedule_by_user', methods: ['GET'])]
+    public function byUser(int $userId): JsonResponse
+    {
+        $user = $this->userRepository->find($userId);
+        if (!$user) {
+            return $this->json(['error' => 'Tuteur non trouvé'], 404);
+        }
+
+        $schedules = $this->tutorScheduleRepository->findBy(['id_user' => $user]);
+        
+        $data = array_map(function($schedule) {
+            $centers = [];
+            foreach ($schedule->getCenter() as $center) {
+                $centers[] = [
+                    'id' => $center->getId(),
+                    'name' => $center->getName(),
+                ];
+            }
+
+            return [
+                'id'         => $schedule->getId(),
+                'day'        => $schedule->getDay(),
+                'start_hour' => $schedule->getStartHour()?->format('H:i'),
+                'end_hour'   => $schedule->getEndHour()?->format('H:i'),
+                'centers'    => $centers,
+            ];
+        }, $schedules);
+
+        return $this->json($data, 200);
+    }
+
+
 
 }

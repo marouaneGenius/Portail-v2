@@ -318,6 +318,16 @@ const ItemDetails: React.FC = () => {
                   <Badge className={getStatusColor(statusLabel)}>{statusLabel}</Badge>
                 </div>
               </div>
+
+              { item.roles?.[0] === 'ROLE_TUTOR' &&
+                <div className="flex items-center ">
+                  <div className="flex-1">
+                    <p className="text-sm text-mister-anthracite/70">Ajouter des creneaux</p>
+                    <Button onClick={()=> navigate(`/form/tutorschedule/${id}`)} className='bg-red-300' size={'sm'}>Ajouter +</Button>
+                  </div>
+                </div>
+              }
+
             </CardContent>
           </Card>
           {/* Activité récente (exemple) */}

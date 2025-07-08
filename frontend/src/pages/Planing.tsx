@@ -34,6 +34,9 @@ export const Planing: React.FC = () => {
       getCenters()
     ])
       .then(([tutorsRes, centersData]) => {
+
+
+        console.log(tutorsRes)
         setTutors(tutorsRes.data);
         setCenters(centersData);
       })
@@ -51,6 +54,10 @@ export const Planing: React.FC = () => {
           event.centers.some((center: any) => center.id === selectedCenter)
         );
 
+
+
+        console.log(filteredEvents)
+
         return { ...tutor, events: filteredEvents };
       })
       .filter((tutor) => tutor.events.length > 0);
@@ -59,6 +66,9 @@ export const Planing: React.FC = () => {
       resourceId: String(t.id),
       resourceTitle: `${t.firstname} ${t.lastname}`,
     })));
+
+
+    // console.log(filteredTutors, expandSchedulesToWeeklyEvents(filteredTutors, moment().year()))
     setEvents(expandSchedulesToWeeklyEvents(filteredTutors, moment().year()));
   }
 

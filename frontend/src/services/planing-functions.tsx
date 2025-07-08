@@ -13,7 +13,7 @@ const DAY_NAME_TO_ISO = {
 export type RawSchedule = {
   id: number;
   day: string;
-  start_end?: string; // "1970-01-01T10:00:00+00:00"
+  start_hour?: string; // "1970-01-01T10:00:00+00:00"
   end_hour?:  string; // "1970-01-01T18:00:00+00:00"
 };
 
@@ -47,7 +47,7 @@ export function expandSchedulesToWeeklyEvents(
       if (!dow) return;
 
       // on parse en UTC pour éviter le décalage local
-      const mStartUtc = sched.start_end ? moment.utc(sched.start_end) : null;
+      const mStartUtc = sched.start_hour ? moment.utc(sched.start_hour) : null;
       const mEndUtc   = sched.end_hour  ? moment.utc(sched.end_hour)  : null;
       if (!mStartUtc?.isValid() || !mEndUtc?.isValid()) return;
 

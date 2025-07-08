@@ -8,6 +8,8 @@ import { AlertMessage } from '../Alert';
 import { getCenters, getUser } from '../../api/api';
 import { FormField } from '../FormGenerator';
 import { formatTime } from '../../services/functions';
+import api from '@/api/aixos';
+import { Calendar, MapPin } from 'lucide-react';
 
 export interface Schedule {
   day: string;
@@ -42,6 +44,8 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
   const [days, setDays] = useState<any>(dayOptions);
   const [selectedDays, setselectedDays] = useState<any>([]);
+  const [scheduls, setScheduls] = useState([]);
+  const [currentSchedule, setCurrentSchedule] = useState<any>();
 
 
   const addSlot = () => {
@@ -80,6 +84,12 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
     setSchedules(updated);
     onChange?.(updated);
   };
+
+  useEffect(() => {
+      api.get(`/api/tutorschedule/user/${id}`).then((e) => {
+        setScheduls(e.data)
+      })
+  },[])
 
   useEffect(() => {
     if(id){
@@ -239,6 +249,53 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
           </div>
         </div>
       </div>
+
+
+      {
+        scheduls.length !== 0 ?
+        <div className="space-y-3 mt-5 bg-gray-100 w-full p-3">
+        <p>Tous Mes Créneaux</p>
+        {scheduls.map((slot:any, idx) => (
+          <div
+            key={slot.id}
+            onClick={() => setCurrentSchedule(slot)}
+            className={
+              "bg-white rounded-lg shadow-sm border px-4 py-3 flex flex-col gap-1 cursor-pointer transition " +
+              (currentSchedule && currentSchedule.id === slot.id
+                ? "border-blue-400 ring-2 ring-blue-200"
+                : "border-gray-200")
+            }
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              <span className="font-semibold capitalize">{slot.day}</span>
+              <span className="text-xs text-gray-500 ml-2">
+                {slot.start_hour} - {slot.end_hour}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-amber-500" />
+              {slot.centers.map((center:any) => (
+                <span
+                  key={center.id}
+                  className="bg-amber-50 px-2 py-0.5 rounded text-sm font-medium text-amber-700"
+                >
+                  {center.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+  
+        {/* Debug ou affichage du créneau sélectionné */}
+        {currentSchedule && (
+          <div className="mt-3 text-sm text-blue-600">
+            <b>Creneau sélectionné :</b> {currentSchedule.day} {currentSchedule.start_hour} - {currentSchedule.end_hour}
+          </div>
+        )}
+      </div>
+        :  <p>Vous n'avez pas de crenaux</p>
+      }
     </LocalizationProvider>
   );
 };
