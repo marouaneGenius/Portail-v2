@@ -26,10 +26,11 @@ export default Students;
 
 
 /*
-
   - dans le form student sois afficher le parent, sois lier l'enfant a un parent existant
   - revoir le probleme des l'heure sur les seances dans le page student "card seance"
   - revoir l'erreur quand je modifie toutes les prochaine seances dans la page Seances
   - sauvegarder le contrat automatiquement directement apres la generation
-
+  - refaire la vue du planing Tuteur
+  - proposer au tuteur que les centres qu'il a choisi
+  - les classes pour le tuteur ?
 */ 

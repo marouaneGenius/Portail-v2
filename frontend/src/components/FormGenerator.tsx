@@ -130,6 +130,26 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   }, [fields, roleFieldValue]);
 
 
+  const removeShoolSubject = (subjectToRemove:any) => {
+    setValues(prev => ({
+      ...prev,
+      school_subjects: Array.isArray(prev.school_subjects)
+        ? prev.school_subjects.filter((s) => s !== subjectToRemove)
+        : [],
+    }));
+  };
+
+
+  const removeCenter = (center:any) => {
+    setValues(prev => ({
+      ...prev,
+      centers: Array.isArray(prev.centers)
+        ? prev.centers.filter((s:any) => s !== center)
+        : [],
+    }));
+  };
+
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
@@ -238,7 +258,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         )}
                       </button>
                     </div>
-                  ) : f.name === 'centers' && f.multiple ? (
+                  ) : (f.name === 'centers') && f.multiple ? (
                     <>
                       {f.options && (
                         <MultiSelectNoCtrl
@@ -264,7 +284,44 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                               {label}
                               <button
                                 type="button"
-                                // onClick={() => removeCenter(val)}
+                                onClick={() => removeCenter(val)}
+                                className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          );
+                        }
+                        })}
+                      </div>
+                    </>
+                  ): (f.name === 'school_subjects') && f.multiple ? (
+                    <>
+                      {f.options && (
+                        <MultiSelectNoCtrl
+                          options={f.options!}
+                          values={values.school_subjects as string[]}
+                          onChange={(newVals) =>
+                            setValues((prev) => ({ ...prev, school_subjects: newVals }))
+                          }
+                        />
+                      )}
+
+
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {(values[f.name] as string[]).map((val) => {
+
+                          if(Array.isArray(f.options) && f.options) {
+                            const label = f.options!.find((o: any) => o.value === val)?.label || val;
+                          return (
+                            <div
+                              key={val}
+                              className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
+                            >
+                              {label}
+                              <button
+                                type="button"
+                                onClick={() => removeShoolSubject(val)}
                                 className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
                               >
                                 &times;
