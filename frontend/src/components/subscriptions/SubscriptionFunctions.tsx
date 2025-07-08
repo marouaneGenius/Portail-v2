@@ -246,8 +246,8 @@ import api from "../../api/aixos";
         description: "Annuel",
         datePrelevement: fmtFR(prelevementDate),
         nbSeances,
-        tarifAvant: price,
-        tarifApres: tarifMoitie,
+        tarifAvant: price * 2,
+        tarifApres: price,
       });
   
       totalApresReduction += tarifMoitie;
@@ -315,18 +315,18 @@ import api from "../../api/aixos";
   
         // Calcul des prix
         const tarifReduit = price * (1 - remise / 100);
-        const tarifMoitie = price / 2;
-
   
         lignes.push({
           description: `${i + 1}ᵉ – mensualité`,
           datePrelevement: fmtFR(dpStd),
           nbSeances: seancesCeMois,
-          tarifAvant: price,
-          tarifApres: tarifMoitie,
+          tarifAvant: price * 2,
+          tarifApres: price,
         });
+
+
   
-        totalApresReduction += tarifMoitie;
+        totalApresReduction += price;
         totalHeures += seancesCeMois * dureeSeance;
       }
     }
@@ -334,6 +334,10 @@ import api from "../../api/aixos";
     const coutHoraire = totalHeures > 0
       ? totalApresReduction / totalHeures
       : 0;
+
+
+
+      console.log(totalHeures, totalApresReduction, )
 
     return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }

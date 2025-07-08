@@ -59,21 +59,10 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
           !pdfUrl &&
           <div className="p-0 ">
             <Preview id={previewId}>
-              <ContractContentComponent Student={Student} Subscription={Subscription} />
+              <ContractContentComponent Student={Student} Subscription={Subscription}  />
             </Preview>
           </div>
         }
-        {/* {pdfUrl && (
-            <div className="mt-0 w-full h-[1000px] border">
-              <RPConfig>
-                <RPProvider src={pdfUrl} >
-                  <RPDefaultLayout style={{ height: '660px' }}>
-                    <RPPages />
-                  </RPDefaultLayout>
-                </RPProvider>
-              </RPConfig>
-            </div>
-          )} */}
     </div>
   );
 };

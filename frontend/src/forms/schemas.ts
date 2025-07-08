@@ -35,6 +35,9 @@ export const centerFields: FormField[] = [
   { name: 'name', label: 'Nom du centre', type: 'text', required: true },
   { name: 'address', label: 'Adresse', type: 'text', required: true },
   { name: 'city', label: 'Ville', type: 'text', required: true ,className: 'col-span-2'},
+  { name: 'email', label: 'E-mail', type: 'email', required: true ,className: 'col-span-2'},
+  { name: 'phone', label: 'Téléphone', type: 'text', required: true ,className: 'col-span-2'},
+
 ];
 
 export const studentFields: FormField[] = [
@@ -49,7 +52,7 @@ export const studentFields: FormField[] = [
   { name: 'class', label: 'Classe', type: 'select', required: true },
   { name: 'email', label: 'E‑mail', type: 'email', required: true },
   { name: 'id_center', label: 'Centre', type: 'select', required: true },
-  { name: 'school_subjects', label: 'Matieres', type: 'select', className: 'col-span-2', multiple: true , options: []},
+  // { name: 'school_subjects', label: 'Matieres', type: 'select', className: 'col-span-2', multiple: true , options: []},
 ];
 
 export const parentFields: FormField[] = [

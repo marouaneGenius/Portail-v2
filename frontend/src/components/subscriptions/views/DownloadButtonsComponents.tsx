@@ -12,7 +12,6 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   const { user }:any = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [existingSub, setExistingSub] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const isCombined = Array.isArray(subscription);
@@ -224,14 +223,6 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
 
 
             {
-              existingSub ?
-              <button
-                onClick={onGenerate}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Voir le contrat
-              </button>
-              :
               <button
                 onClick={onGenerate}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -239,6 +230,7 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
                 Sauvegarder et Prévisualiser
               </button>
             }
+            
             <button
               onClick={validateContract}
               className={isValide

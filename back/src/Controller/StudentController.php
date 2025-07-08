@@ -186,6 +186,9 @@ class StudentController extends AbstractController
                     'name'    => $user->getIdCenter()->getName(),
                     'address' => $user->getIdCenter()->getAddress(),
                     'city'    => $user->getIdCenter()->getCity(),
+                    'phone'    => $user->getIdCenter()->getPhone(),
+                    'email'    => $user->getIdCenter()->getEmail(),
+
                 ]
                 : null,
             'parents'   => $parents,

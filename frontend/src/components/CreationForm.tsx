@@ -73,19 +73,24 @@ export default function CreationForm() {
         );
 
         //check if we get parent data, to create parent
-        if( created && parentValues ){
-          const { data: parent } = await api.post<Record<string, any>>(
-            `/api/parent`,
-            parentValues,
-          );
-          //check if we create parent and student &  create colone on many to many table
-          if(parent && created) {
-            api.post(`/api/student/${created.id}/parents`, {
-              parentId: parent.id,
-              }).then()
-              .catch(console.error);
+
+        if(resource === 'parent' || resource === 'student') {
+          if( created && parentValues ){
+            const { data: parent } = await api.post<Record<string, any>>(
+              `/api/parent`,
+              parentValues,
+            );
+            //check if we create parent and student &  create colone on many to many table
+            if(parent && created) {
+              api.post(`/api/student/${created.id}/parents`, {
+                parentId: parent.id,
+                }).then()
+                .catch(console.error);
+            }
           }
         }
+
+     
     
         setData(prev => [created, ...prev]);
         return created;
@@ -101,16 +106,26 @@ export default function CreationForm() {
 
   const handleSubmit = async (values: Record<string, any>) => {
     try{
-      const newItem = await postData(values);
+     const r =  await postData(values);
+
+      console.log(r)
+
+
+      if(resource === "tutorschedule") {
+        navigate(`/users`);
+      } else {
+        navigate(`/${resource}s`);
+      }
+
+
+
+
     }catch(err: any){
+      alert('error')
       setError(err.response?.data?.error || 'Erreur lors de la Validation du formulaire');
     }
 
-    if(resource === "tutorschedule") {
-      navigate(`/users`);
-    } else {
-      navigate(`/${resource}s`);
-    }
+  
   };
 
   return (

@@ -46,15 +46,10 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const { id } = useParams<{ id: string }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
-  const isTutor = endpoint === 'tutorschedule';
-  
-
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
     const hasClassField = fields.find((item: any) => item.name === 'class');
-
-    console.log(fields)
     
     if (hasRoleField) {
       const filteredFields = currentFields.filter((item) => !optionalFields.includes(item.name));
@@ -187,20 +182,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     console.log(currentFields)
   }, [emptyFields, endpoint]);
 
-  useEffect(() => {
-    console.log(values)
-  }, [values])
-
-
-  const removeShoolSubject = (subjectToRemove:any) => {
-    setValues(prev => ({
-      ...prev,
-      school_subjects: Array.isArray(prev.school_subjects)
-        ? prev.school_subjects.filter((s) => s !== subjectToRemove)
-        : [],
-    }));
-  };
-  
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -280,7 +261,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                               key={val}
                               className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
                             >
-                              {label.name}
+                              {label}
                               <button
                                 type="button"
                                 // onClick={() => removeCenter(val)}
@@ -294,47 +275,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         })}
                       </div>
                     </>
-                  ) : f.name === 'school_subjects' && f.multiple ? (
-                    <>
-                      {f.options && (
-                        <MultiSelectNoCtrl
-                          options={f.options!}
-                          values={values.school_subjects as string[]}
-                          onChange={(newVals) =>
-                            setValues((prev) => ({ ...prev, school_subjects: newVals }))
-                          }
-                        />
-                      )}
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {
-                        //  values &&  values['school_subjects'].length !== 0 && values[f.].map((subject:any) => console.log(subject))
-                         Array.isArray(values['school_subjects']) && values['school_subjects'].length !== 0
-                         && values[f.name].map((val:any) => {
-
-                            if(Array.isArray(f.options) && f.options) {
-                              const label = f.options!.find((o: any) => o.value === val)?.label || val;
-                              return (
-                                <div
-                                  key={val}
-                                  className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
-                                >
-                                  {label}
-                                  <button
-                                    type="button"
-                                    onClick={() => removeShoolSubject(val)}
-                                    className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
-                                  >
-                                    &times;
-                                  </button>
-                                </div>
-                              );
-                            }
-                          })
-                        
-                        }
-                      </div>
-                    </>
-                  ) : f.type === 'select' ? (
+                  ): f.type === 'select' ? (
                     <select
                       id={f.name}
                       name={f.name}

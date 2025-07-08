@@ -383,6 +383,9 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
 }) => {
   const centers = Array.isArray(value) ? value : value ? [value] : [];
 
+
+  console.log(centers)
+
   if (currentkey !== 'centers') {
     return null;
   }
@@ -417,6 +420,10 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <Phone className="w-4 h-4 text-mister-anthracite/60" />
               <span className="text-mister-anthracite/70">{ctr.phone}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="w-4 h-4 text-mister-anthracite/60" />
+              <span className="text-mister-anthracite/70">{ctr.email}</span>
             </div>
             <div className="flex justify-end">
               <button

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, Clock, XCircle } from "lucide-react";
+import { BadgeCheck, Clock, Eye, XCircle } from "lucide-react";
 import api from "@/api/aixos";
 import { useAuth } from "@/Hooks/auth";
 import { getNiveauScolaire, getPrice, IsStudentIsMember } from "./SubscriptionFunctions";
@@ -49,11 +49,6 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
-  
-
-
-
-
 
   useEffect(() => {
     setLoading(true);
@@ -144,6 +139,12 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
                     <XCircle size={16} /> Rompre
                 </button>
                 )}
+                <button
+                    className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
+                    onClick={() => navigate(`/contract/${sub.id}/${studentId}`)}
+                >
+                    <Eye size={16} /> Voir le contrat
+                </button>
               </div>
               <div className="text-gray-700 text-sm mt-1 mb-2">
                 Du <span className="font-medium">{sub.subscription_start_date && new Date(sub.subscription_start_date).toLocaleDateString("fr-FR")}</span> au <span className="font-medium">{sub.subscription_end_date && new Date(sub.subscription_end_date).toLocaleDateString("fr-FR")}</span>

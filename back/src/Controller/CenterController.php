@@ -44,7 +44,9 @@ class CenterController extends AbstractController
         $center
             ->setName($data['name'])
             ->setAddress($data['address'])
-            ->setCity($data['city']);
+            ->setCity($data['city'])
+            ->setPhone($data['phone'])
+            ->setEmail($data['email']);
 
         $this->em->persist($center);
         $this->em->flush();
@@ -55,6 +57,8 @@ class CenterController extends AbstractController
                 'name'    => $center->getName(),
                 'address' => $center->getAddress(),
                 'city'    => $center->getCity(),
+                'phone'    => $center->getPhone(),
+                'email'    => $center->getEmail(),
             ],
             JsonResponse::HTTP_CREATED
         );
@@ -75,6 +79,9 @@ class CenterController extends AbstractController
             'name'    => $c->getName(),
             'address' => $c->getAddress(),
             'city'    => $c->getCity(),
+            'phone'    => $c->getPhone(),
+            'email'    => $c->getEmail(),
+
         ], $centers);
 
         return $this->json($data);
@@ -91,6 +98,8 @@ class CenterController extends AbstractController
             'name'      => $center->getName(),
             'address'   => $center->getAddress(),
             'city'      => $center->getCity(),
+            'phone'    => $center->getPhone(),
+            'email'    => $center->getEmail(),
             ]);
     }
 
@@ -111,7 +120,7 @@ class CenterController extends AbstractController
         }
 
         // 3. Hydrater les champs éditables
-        foreach (['name', 'address', 'city'] as $field) {
+        foreach (['name', 'address', 'city', 'phone', 'email'] as $field) {
             if (array_key_exists($field, $data)) {
                 $setter = 'set' . ucfirst($field);
                 $center->$setter($data[$field]);
@@ -131,6 +140,9 @@ class CenterController extends AbstractController
             'name'    => $center->getName(),
             'address' => $center->getAddress(),
             'city'    => $center->getCity(),
+            'phone'    => $center->getPhone(),
+            'email'    => $center->getEmail(),
+            
         ]);
     }
 
