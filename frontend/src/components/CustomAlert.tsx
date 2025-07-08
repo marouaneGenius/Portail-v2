@@ -319,11 +319,6 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
       new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
     )[0];
 
-
-
-
-    console.log(nextSession, lastSession, value, student)
-
   // (option) Affichage du prénom de l'enfant si parent
   const getStudentName = (session:any) =>
     session.student_firstname && session.student_lastname
@@ -332,10 +327,6 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
 
   return (
     <div className="p-2">
-      <div className="flex items-center gap-2 mb-2">
-        <Calendar className="text-blue-500" size={20} />
-        <span className="font-semibold text-lg">Séances</span>
-      </div>
       <div className="space-y-4">
 
         {/* Prochaine séance */}

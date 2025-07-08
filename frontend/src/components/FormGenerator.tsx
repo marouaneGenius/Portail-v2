@@ -51,6 +51,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
     const hasClassField = fields.find((item: any) => item.name === 'class');
 
+    console.log(fields)
+    
     if (hasRoleField) {
       const filteredFields = currentFields.filter((item) => !optionalFields.includes(item.name));
       if (roleFieldValue) {
@@ -77,7 +79,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
             return { ...f, options: centerOptions };
           }
           if (f.name === "school_subjects") {
-            console.log(f)
             return { ...f, options: SchoolSubjects };
           }
           return f as FormField;
@@ -113,6 +114,12 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
             if (f.name === 'class') {
               return { ...f, options: ClassesOptions };
             }
+
+                if (f.name === "school_subjects") {
+            return { ...f, options: SchoolSubjects };
+          }
+
+
             return f as FormField;
           });
           setFields(updatedFields);
@@ -124,15 +131,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }
   }, [fields, roleFieldValue]);
 
-// pour supprimer une valeur du champ multi select
-  const removeValueFromField = (field: any, value: any) => {
-    setValues((prev: any) => ({
-      ...prev,
-      [field]: Array.isArray(prev[field])
-        ? prev[field].filter((v: any) => (typeof v === 'object' ? v.value || v.id : v) !== (typeof value === 'object' ? value.value || value.id : value))
-        : prev[field],
-    }));
-  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
@@ -183,7 +181,23 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       const withParentKeys: any = renameFields(currenParentFields);
       setCurrenParentFields(withParentKeys);
     }
+    console.log(currentFields)
   }, [emptyFields, endpoint]);
+
+  useEffect(() => {
+    console.log(values)
+  }, [values])
+
+
+  const removeShoolSubject = (subjectToRemove:any) => {
+    setValues(prev => ({
+      ...prev,
+      school_subjects: Array.isArray(prev.school_subjects)
+        ? prev.school_subjects.filter((s) => s !== subjectToRemove)
+        : [],
+    }));
+  };
+  
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -251,6 +265,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                           }
                         />
                       )}
+
+
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(values[f.name] as string[]).map((val) => {
 
@@ -273,6 +289,46 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                           );
                         }
                         })}
+                      </div>
+                    </>
+                  ) : f.name === 'school_subjects' && f.multiple ? (
+                    <>
+                      {f.options && (
+                        <MultiSelectNoCtrl
+                          options={f.options!}
+                          values={values.school_subjects as string[]}
+                          onChange={(newVals) =>
+                            setValues((prev) => ({ ...prev, school_subjects: newVals }))
+                          }
+                        />
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {
+                        //  values &&  values['school_subjects'].length !== 0 && values[f.].map((subject:any) => console.log(subject))
+                         Array.isArray(values['school_subjects']) && values['school_subjects'].length !== 0
+                         && values[f.name].map((val:any) => {
+
+                            if(Array.isArray(f.options) && f.options) {
+                              const label = f.options!.find((o: any) => o.value === val)?.label || val;
+                              return (
+                                <div
+                                  key={val}
+                                  className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
+                                >
+                                  {label}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeShoolSubject(val)}
+                                    className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              );
+                            }
+                          })
+                        
+                        }
                       </div>
                     </>
                   ) : f.type === 'select' ? (

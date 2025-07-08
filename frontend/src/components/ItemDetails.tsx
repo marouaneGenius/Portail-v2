@@ -271,17 +271,7 @@ const ItemDetails: React.FC = () => {
                   </CardContent>
                 </Card>
               );
-            if (key === 'sessions' )
-              return (
-                <Card key={key} className="border-fading-grey">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-mister-anthracite">Séances</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CustomSessionComponent currentkey={key} value={value} student={item} />
-                  </CardContent>
-                </Card>
-              );
+
             if (key === 'centers')
               return (
                 <Card key={key} className="border-fading-grey">
