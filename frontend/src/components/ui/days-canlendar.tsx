@@ -3,7 +3,10 @@
 
 import * as React from "react"
 import {DayPicker } from "react-day-picker"
+import { fr } from "react-day-picker/locale";
 import { cn } from "@/lib/utils"
+import "react-day-picker/style.css";
+import { Calendar } from "lucide-react"
 
 // shadcn/ui popover primitives
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -22,19 +25,24 @@ export function DaysCalendar({
   onChange,
   label = "Sélectionnez une date",
   placeholder = "— Choisir —",
-}: DaysCalendarProps) {
+  buttonClassName = "w-full min-h-[48px]", // Ajouté
+}: DaysCalendarProps & { buttonClassName?: string }) {
   const [open, setOpen] = React.useState(false)
 
   return (
     <div className="flex flex-col">
-      <label className="mb-1 font-medium">{label}</label>
+      <label className="mb-2 font-medium flex items-center gap-2">
+        <Calendar className="w-5 h-5 text-crazy-magenta" />
+        {label}
+      </label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "w-40 justify-between font-normal",
-              !value && "text-gray-400"
+              buttonClassName,
+              "justify-between font-normal rounded-xl border-2 border-fading-grey bg-white text-mister-anthracite px-4 py-3 shadow-sm transition-all focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow",
+              !value && "text-mister-anthracite/40"
             )}
           >
             {value
@@ -45,6 +53,7 @@ export function DaysCalendar({
         </PopoverTrigger>
         <PopoverContent className="p-0 w-auto">
           <DayPicker
+            locale={fr}
             mode="single"
             selected={value}
             onSelect={(date) => {
@@ -53,7 +62,6 @@ export function DaysCalendar({
                 setOpen(false)
               }
             }}
-            showOutsideDays
             className="p-4"
           />
         </PopoverContent>

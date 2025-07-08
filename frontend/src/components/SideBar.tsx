@@ -28,8 +28,8 @@ const menuItems = [
   { title: 'Centres', url: '/centers', icon: Building },
   { title: 'Étudiants', url: '/students', icon: GraduationCap },
   { title: 'Parents', url: '/parents', icon: UserCheck },
-  { title: 'Mon profil', url: '/profile', icon: User },
   { title: 'Séances', url: '/session-calendar', icon: Calendar },
+  { title: 'Mon profil', url: '/profile', icon: User },
 
 ];
 
