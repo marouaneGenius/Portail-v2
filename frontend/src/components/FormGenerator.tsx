@@ -46,6 +46,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const { id } = useParams<{ id: string }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
+  const isTutor = endpoint === 'tutorschedule';
+  
+
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
@@ -207,7 +210,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   if (loading) return <p>Chargement …</p>;
 
   return (
-    <div className="p-4 flex items-center justify-center">
+    <div className="p-4 flex items-center justify-center flex-col justify-between">
       <div className="bg-[#FFFFFF] w-3/5 p-6 rounded shadow-lg border border-[#F2F2F2]">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -430,6 +433,10 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           </div>
         </form>
       </div>
+
+
+
+
     </div>
   );
 };
