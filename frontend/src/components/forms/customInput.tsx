@@ -56,11 +56,11 @@ export function MultiSelectNoCtrl({
       <select
         multiple
         size={options.length}
-        className="w-full  rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-900 h-64"
+        className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm h-64"
       >
         {
         options.map((opt:any) => {
-          // const isSelected = values && (values.includes(opt.value));
+          // const isSelected = values and (values.includes(opt.value));
           const isSelected = Array.isArray(values) && (values.includes(opt.value) || values.includes(opt.label));
 
           return (
@@ -73,10 +73,10 @@ export function MultiSelectNoCtrl({
               }}
               // applique une classe différente si sélectionné
               className={`
-                block cursor-pointer border-2 my-1 p-2 rounded
+                block cursor-pointer border-2 my-1 p-2 rounded-xl
                 ${isSelected
-                  ? 'bg-indigo-600 text-white border-indigo-700'
-                  : 'bg-gray-100 text-gray-800 border-transparent'}
+                  ? 'bg-hello-yellow text-mister-anthracite border-hello-yellow font-semibold'
+                  : 'bg-white text-mister-anthracite border-fading-grey hover:bg-hello-yellow/10'}
               `}
               selected={isSelected}
             >
@@ -108,13 +108,13 @@ export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:
           return (
             <div
               key={key}
-              className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
+              className="inline-flex items-center bg-hello-yellow/20 text-mister-anthracite px-3 py-1 rounded-full font-medium shadow-sm border border-hello-yellow/40"
             >
               {label}
               <button
                 type="button"
                 onClick={() => removeValueFromField(f.name, val)}
-                className="ml-2 text-indigo-500 hover:text-indigo-700"
+                className="ml-2 text-crazy-magenta hover:text-crazy-magenta/80 font-bold"
               >
                 &times;
               </button>
@@ -161,13 +161,13 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
             return (
               <div
                 key={key}
-                className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full"
+                className="inline-flex items-center bg-hello-yellow/20 text-mister-anthracite px-3 py-1 rounded-full font-medium shadow-sm border border-hello-yellow/40"
               >
                 {label}
                 <button
                   type="button"
                   onClick={() => removeValueFromField(fieldName, val)}
-                  className="ml-2 text-indigo-500 hover:text-indigo-700"
+                  className="ml-2 text-crazy-magenta hover:text-crazy-magenta/80 font-bold"
                 >
                   &times;
                 </button>
@@ -415,7 +415,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
         value={f.multiple ? values[f.name] ?? [] : values[f.name] || ''}
         // onChange={handleChange}
         onChange={(e) => handleChange(e)}
-        className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
+        className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm"
         required={!!f.required && !f.multiple}
         multiple={!!f.multiple}
       >
@@ -436,9 +436,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       type={f.type}
       checked={f.type === 'checkbox' ? values[f.name] : undefined}
       value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
-      // onChange={handleChange}
       onChange={(e) => handleChange(e)}
-      className="w-full rounded border px-3 py-2 outline-none focus:ring focus:ring-blue-300 border color-border"
+      className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite placeholder:text-mister-anthracite/40 transition shadow-sm"
       required={!!f.required}
     />
   );

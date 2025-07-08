@@ -1,5 +1,5 @@
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import api from '../api/aixos';
 import { useModal } from '../Hooks/useModal';
 import Modal from './Modal';
@@ -19,9 +19,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars } from 'lucide-react';
 import { StudentSubscriptionCard } from './subscriptions/StudentSubscriptionCard';
 import { StudentsSubscriptions } from './subscriptions/StudentsSubscriptions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars, FileText, Building, CalendarCheck, CreditCard, CalendarDays, Zap, ShieldCheck, UserRound, GraduationCap } from 'lucide-react';
+import { actions } from '../mocks/mocks'; // Assure-toi que le chemin est correct
 
 export interface DetailPageParams {
   resource: string;
@@ -32,7 +34,7 @@ export interface DetailPageParams {
 const getRoleColor = (role: string) => {
   if (!role) return 'bg-fading-grey text-mister-anthracite border-fading-grey';
   if (role.includes('ADMIN')) return 'bg-crazy-magenta/10 text-crazy-magenta border-crazy-magenta/20';
-  if (role.includes('COORDINATOR')) return 'bg-hello-yellow/10 text-orange-600 border-orange-200';
+  if (role.includes('USER')) return 'bg-hello-yellow/10 text-orange-600 border-orange-200';
   if (role.includes('TUTOR')) return 'bg-blue-100 text-blue-600 border-blue-200';
   return 'bg-fading-grey text-mister-anthracite border-fading-grey';
 };
@@ -61,7 +63,6 @@ const ItemDetails: React.FC = () => {
     api
       .get(`/api/${resource}/${id}`)
       .then(({ data }: any) => {
-        delete data.id;
         setItem(data);
       })
       .catch((err: any) => {
@@ -118,7 +119,7 @@ const ItemDetails: React.FC = () => {
     (key) =>
       !mainFields.includes(key) &&
       !addressFields.includes(key) &&
-      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects','is_active'].includes(key)
+      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active'].includes(key)
   );
 
   // Pour le badge statut
@@ -173,7 +174,7 @@ const ItemDetails: React.FC = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {mainFields.map((key) =>
-                  item[key] !== undefined && key !== 'firstname' && key !== 'lastname'? (
+                  item[key] !== undefined && key !== 'firstname' && key !== 'lastname' ? (
                     <div key={key} className="flex items-center gap-3">
                       {key === 'email' && <Mail className="w-5 h-5 text-mister-anthracite/50" />}
                       {key === 'phone' && <Phone className="w-5 h-5 text-mister-anthracite/50" />}
@@ -230,20 +231,23 @@ const ItemDetails: React.FC = () => {
             if (key === 'parents')
               return (
                 <Card key={key} className="border-fading-grey">
-                    <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} action={open} />
+                  <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} action={open} />
                 </Card>
               );
             if (key === 'students')
               return (
                 <Card key={key} className="border-fading-grey">
-                    <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
+                  <CustomStudentsComponent currentkey={key} value={value} onRedirect={redirection} />
                 </Card>
               );
             if (key === 'reports')
               return (
                 <Card key={key} className="border-fading-grey">
                   <CardHeader>
-                    <CardTitle className="text-lg text-mister-anthracite">Rapports</CardTitle>
+                    <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-crazy-magenta" />
+                      Rapports
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CustomReportsComponent currentkey={key} value={value} />
@@ -282,7 +286,10 @@ const ItemDetails: React.FC = () => {
               return (
                 <Card key={key} className="border-fading-grey">
                   <CardHeader>
-                    <CardTitle className="text-lg text-mister-anthracite">Centre d'affectation</CardTitle>
+                    <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                      <Building className="w-5 h-5 text-hello-yellow" />
+                      Centre d'affectation
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CustomCenterComponent currentkey={key} value={value} onRedirect={redirection} />
@@ -297,29 +304,118 @@ const ItemDetails: React.FC = () => {
         <div className="space-y-6">
           <Card className="border-fading-grey">
             <CardHeader>
-              <CardTitle className="text-lg text-mister-anthracite">Statut</CardTitle>
+              <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                <Shield className="w-5 h-5 text-blue-500" />
+                Statut
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-mister-anthracite/50" />
-                <div className="flex-1">
-                  <p className="text-sm text-mister-anthracite/70">Rôle</p>
-                  <Badge className={getRoleColor(item.roles?.[0] || '')}>
-                    {item.roles?.[0]?.replace('ROLE_', '') || 'Utilisateur'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 flex items-center justify-center">
-                  <div className={`w-3 h-3 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-400'}`} />
-                </div>
                 <div className="flex-1">
                   <p className="text-sm text-mister-anthracite/70">Statut du compte</p>
                   <Badge className={getStatusColor(statusLabel)}>{statusLabel}</Badge>
+                  {/* Affiche le rôle si la ressource est "user" */}
+                  {resource === "user" && item.roles && (
+                    <div className="flex items-center gap-2 mt-2">
+                      {/* Badge rôle dans le style DataTable */}
+                      {(() => {
+                        const role = item.roles[0];
+                        const roleMap: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+                          ROLE_ADMIN: {
+                            label: 'Admin',
+                            color: 'bg-crazy-magenta/10 text-crazy-magenta',
+                            icon: <ShieldCheck className="w-3 h-3 mr-1" />,
+                          },
+                          ROLE_USER: {
+                            label: 'Utilisateur',
+                            color: 'bg-fading-grey text-mister-anthracite',
+                            icon: <UserRound className="w-3 h-3 mr-1" />,
+                          },
+                          ROLE_TUTOR: {
+                            label: 'Tuteur',
+                            color: 'bg-blue-100 text-blue-600',
+                            icon: <GraduationCap className="w-3 h-3 mr-1" />,
+                          },
+                        };
+                        const roleStyle = roleMap[role] || roleMap.ROLE_USER;
+                        return (
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <p className="text-sm text-mister-anthracite/70">Rôle</p>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleStyle.color}`}>
+                                {roleStyle.icon} {roleStyle.label}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Séances */}
+          {item.sessions && (
+            <Card className="border-fading-grey">
+              <CardHeader>
+                <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                  <CalendarCheck className="w-5 h-5 text-hello-yellow" />
+                  Séances
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CustomSessionComponent currentkey="sessions" value={item.sessions} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Actions rapides */}
+          {resource === "student" && (
+            <Card className="border-fading-grey">
+              <CardHeader>
+                <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-crazy-magenta" />
+                  Actions rapides
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <TooltipProvider>
+                    {/* Exemple générique pour tous les boutons */}
+                    {[
+                      { icon: <FileText className="w-6 h-6 text-orange-600" />, label: "Abonnement", href: actions[1].to(item.id), tooltip: "Ajouter un abonnement", hover: "hover:bg-orange-50" },
+                      { icon: <Calendar className="w-6 h-6 text-blue-500" />, label: "Séance d'essai", href: actions[2].to(item.id), tooltip: "Créer une séance d'essai", hover: "hover:bg-hello-yellow/10" },
+                      { icon: <CreditCard className="w-6 h-6 text-crazy-magenta" />, label: "Ajouter facture", href: actions[4].to(item.id), tooltip: "Créer une facture", hover: "hover:bg-crazy-magenta/10" },
+                      { icon: <CalendarDays className="w-6 h-6 text-green-600" />, label: "Re-planifier", href: actions[6].to(item.id), tooltip: "Re-planifier les séances", hover: "hover:bg-green-50" },
+                    ].map(({ icon, label, href, tooltip, hover }, i) => (
+                      <Tooltip key={i}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            asChild
+                            variant="outline"
+                            className={`w-full min-h-[90px] p-4 flex flex-col items-center justify-center gap-2 border-fading-grey text-center ${hover} overflow-hidden`}
+                          >
+                            <a
+                              href={href}
+                              className="w-full flex flex-col items-center justify-center text-wrap break-words text-sm max-w-full"
+                            >
+                              {icon}
+                              <span className="leading-tight text-sm">{label}</span>
+                            </a>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{tooltip}</TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </TooltipProvider>
+                </div>
+              </CardContent>
+            </Card>
+
+          )}
+
           {/* Activité récente (exemple) */}
           {item.last_login && (
             <Card className="border-fading-grey">
@@ -349,7 +445,7 @@ const ItemDetails: React.FC = () => {
       >
         <ParentSelector student={item} onClose={close} updateItem={updateCurrentItem} />
       </Modal>
-    </div>
+    </div >
   );
 };
 
