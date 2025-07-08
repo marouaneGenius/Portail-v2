@@ -122,6 +122,10 @@ class UserController extends AbstractController
             'centers' => array_map(fn(Center $c) => [
                 'id'   => $c->getId(),
                 'name' => $c->getName(),
+                'city' => $c->getCity(),
+                'phone' => $c->getPhone(),
+                'email' => $c->getEmail(),
+
             ], $user->getCentres()->toArray()),
         ], JsonResponse::HTTP_CREATED);
     }
@@ -177,6 +181,9 @@ class UserController extends AbstractController
                 'centers'   => array_map(fn(Center $c) => [
                     'id'   => $c->getId(),
                     'name' => $c->getName(),
+                    'city' => $c->getCity(),
+                    'phone' => $c->getPhone(),
+                    'email' => $c->getEmail(),
                 ], $ts->getCenter()->toArray()),
             ], $user->getTutorSchedules()->toArray()),
 
@@ -191,6 +198,8 @@ class UserController extends AbstractController
                 'name'        => $c->getName(),
                 'address'     => $c->getAddress(),
                 'city'        => $c->getCity(),
+                'phone' => $c->getPhone(),
+                'email' => $c->getEmail(),
             ], $user->getCentres()->toArray()),
 
 
@@ -224,6 +233,9 @@ class UserController extends AbstractController
                 'centers'   => array_map(fn(Center $center) => [
                     'id'   => $center->getId(),
                     'name' => $center->getName(),
+                    'city' => $center->getCity(),
+                    'phone' => $center->getPhone(),
+                    'email' => $center->getEmail(),
                 ], $tutorSchedule->getCenter()->toArray()),
             ], $u->getTutorSchedules()->toArray()),
         ], $users);
