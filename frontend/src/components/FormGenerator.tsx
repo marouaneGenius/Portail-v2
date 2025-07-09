@@ -4,11 +4,10 @@ import { ClassesOptions, Days, SchoolSubjects} from '../mocks/mocks';
 import { parentFields } from '../forms/schemas';
 import {renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
-import { getCenters } from '../api/api';
+import { getCenters, getUser } from '../api/api';
 import { MultiSelectNoCtrl, RenderField } from './forms/customInput';
 import { useParams } from 'react-router-dom';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
-
 
 export interface FormField {
   name: string;
@@ -43,7 +42,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [currenParentFields, setCurrenParentFields] = useState(parentFields);
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: any }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
 
@@ -106,6 +105,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           }
 
           const updatedFields: FormField[] = fieldWithOutRequired.map((f: any) => {
+
             if (f.name === 'id_center') {
               return { ...f, options: centerOptions };
             }
@@ -113,7 +113,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               return { ...f, options: ClassesOptions };
             }
 
-                if (f.name === "school_subjects") {
+            if (f.name === "school_subjects") {
             return { ...f, options: SchoolSubjects };
           }
 
@@ -129,7 +129,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }
   }, [fields, roleFieldValue]);
 
-
   const removeShoolSubject = (subjectToRemove:any) => {
     setValues(prev => ({
       ...prev,
@@ -139,7 +138,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }));
   };
 
-
   const removeCenter = (center:any) => {
     setValues(prev => ({
       ...prev,
@@ -148,7 +146,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         : [],
     }));
   };
-
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
@@ -177,6 +174,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
             label: c.name,
           }));
           const updatedFields: FormField[] = fields.map((f: any) => {
+
+            console.log()
             if (f.name === 'centers') {
               return { ...f, options: centerOptions };
             }
@@ -199,9 +198,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       const withParentKeys: any = renameFields(currenParentFields);
       setCurrenParentFields(withParentKeys);
     }
-    console.log(currentFields)
   }, [emptyFields, endpoint]);
-
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

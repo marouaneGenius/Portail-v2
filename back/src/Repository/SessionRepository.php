@@ -114,20 +114,15 @@ class SessionRepository extends ServiceEntityRepository
 
     public function getTutorsAndSessionsWithStudentsByCenterAndDate(Center $center, \DateTimeImmutable $date): array
     {
-        // Préparer bornes du jour
-        $startOfDay = $date->setTime(0, 0, 0);
-        $endOfDay   = $date->setTime(23, 59, 59);
-
         $tutors = [];
         foreach ($center->getUsers() as $user) {
             if (!in_array('ROLE_TUTOR', $user->getRoles())) continue; // Prend seulement les tuteurs
 
             // Filtre les sessions de ce tuteur sur ce centre et ce jour
-            $sessionsDuJour = $user->getSessions()->filter(function($session) use ($center, $startOfDay, $endOfDay) {
+            $sessionsDuJour = $user->getSessions()->filter(function($session) use ($center, $date) {
                 return $session->getCenter()?->getId() === $center->getId()
                     && $session->getScheduledAt() !== null
-                    && $session->getScheduledAt() >= $startOfDay
-                    && $session->getScheduledAt() <= $endOfDay;
+                    && $session->getScheduledAt()->format('Y-m-d') === $date->format('Y-m-d');
             });
 
             $sessionsArr = [];
@@ -205,9 +200,4 @@ class SessionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-    
-    
-
-    
-    
 }

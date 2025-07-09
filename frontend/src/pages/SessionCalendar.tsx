@@ -72,6 +72,8 @@ export default function SessionCalendar() {
         params: { date: formatDate(date) }
       })
         .then(({ data }) => {
+          console.log(data)
+
           const filteredTutors = data.map((item: any) => {
 
             return {
@@ -79,6 +81,8 @@ export default function SessionCalendar() {
               sessions: item.sessions
             }
           })
+
+
           setTutors(filteredTutors)
         })
     }

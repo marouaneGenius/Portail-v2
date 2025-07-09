@@ -323,8 +323,6 @@ import api from "../../api/aixos";
           tarifAvant: price * 2,
           tarifApres: price,
         });
-
-
   
         totalApresReduction += price;
         totalHeures += seancesCeMois * dureeSeance;
@@ -334,10 +332,6 @@ import api from "../../api/aixos";
     const coutHoraire = totalHeures > 0
       ? totalApresReduction / totalHeures
       : 0;
-
-
-
-      console.log(totalHeures, totalApresReduction, )
 
     return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }
