@@ -25,7 +25,6 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
   
     return '';
   };
-
   return (
     <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
       <div className="flex items-start gap-2 mb-3">
@@ -60,15 +59,16 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
             <div className="mt-2 flex items-center gap-1 text-xs text-gray-600">
               <ClockIcon className="h-3 w-3" />
               <span>Dispo :</span>
-              {tutor.events.slice(0, 2).map((event:any, i:any) => (
-                <span key={i} className="capitalize">
-                  {event.day} {formatTime(event.start_hour)}-{formatTime(event.end_hour)}
-                  {i < tutor.events.length - 1 && i < 1 ? ', ' : ''}
-                </span>
-              ))}
-              {tutor.events.length > 2 && (
-                <span className="text-amber-600">+{tutor.events.length - 2}</span>
-              )}
+                  <ul className="text-xs text-gray-600 mt-1 space-y-1">
+                  {tutor.events.map((event:any, index:any) => {
+                   return ( <li className='bg-gray-200 p-1 rounded' key={index}>
+                      {event.day}: {formatTime(event.start_hour)} - {formatTime(event.end_hour)} à 
+                      <span className={`${student.centers.name === event.centers.name ? 'bg-red-100 ': ''} p-1 rounded ml-1`}>{event.centers.name}</span> 
+                    </li>)
+                    }
+                  )}
+                </ul>
+  
             </div>
           </div>
         ))}

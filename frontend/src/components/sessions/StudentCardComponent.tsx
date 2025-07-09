@@ -34,7 +34,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
   const [isAbsent, setIsAbsent] = useState(student.session.is_absent);
   const [applyAll, setApplyAll] = useState<any>(false);
-  const [dateTimeSchedule, setDateTimeSchedule] = useState<any>(null);
   const [values, setValues] = useState<any>({
     school_subjects: student.session.school_subjects || [],
     scheduled_at: student.session.scheduled_at
@@ -129,7 +128,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     transition: isDragging ? 'none' : 'transform 0.2s ease',
   };
 
-
   const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked,  options }:any = e.target ;
     const multiple = e.target.multiple ;
@@ -213,12 +211,12 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           </div>
         )}
         <div className='mt-2'>
-        {
-          values.school_subjects.map((matiere:any, index:any) => (
-            <span key={index} className='rounded bg-blue-400 text-white text-sm m-1 p-1'>{matiere}</span>
-          )) 
-        }
-      </div>
+          {
+            values.school_subjects.map((matiere:any, index:any) => (
+              <span key={index} className='rounded bg-blue-400 text-white text-sm m-1 p-1'>{matiere}</span>
+            )) 
+          }
+        </div>
       </div>
 
 
@@ -247,28 +245,21 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
       {showEditModal === 'tutor' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier la séance">
-
-
           <div className='p-2 m-2 bg-gray-100 rounded'>
             <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
-          </div>
-
-          <div>
-
-            {/*  */}
           </div>
 
           <div className='p-2 m-2 bg-gray-100 rounded'>
             {UpdateSlotForm.map((field:any) => (
               <div key={field.name} className="space-y-2">
                   <RenderTrialField
-                      f={field}
-                      values={values}
-                      setValues={setValues}
-                      handleChange={handleChange}
-                      removeValueFromField={removeValueFromField}
-                      fieldName={field.name}
-                      student={student.student}
+                    f={field}
+                    values={values}
+                    setValues={setValues}
+                    handleChange={handleChange}
+                    removeValueFromField={removeValueFromField}
+                    fieldName={field.name}
+                    student={student.student}
                   />
               </div>
           ))}

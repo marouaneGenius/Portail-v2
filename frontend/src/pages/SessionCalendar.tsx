@@ -72,8 +72,6 @@ export default function SessionCalendar() {
         params: { date: formatDate(date) }
       })
         .then(({ data }) => {
-          console.log(data)
-
           const filteredTutors = data.map((item: any) => {
 
             return {

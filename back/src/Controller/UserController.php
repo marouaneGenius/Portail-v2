@@ -230,13 +230,18 @@ class UserController extends AbstractController
                 'day' => $tutorSchedule->getDay(),
                 'start_hour' => $tutorSchedule->getStartHour(),
                 'end_hour' => $tutorSchedule->getEndHour(),
-                'centers'   => array_map(fn(Center $center) => [
-                    'id'   => $center->getId(),
-                    'name' => $center->getName(),
-                    'city' => $center->getCity(),
-                    'phone' => $center->getPhone(),
-                    'email' => $center->getEmail(),
-                ], $tutorSchedule->getCenter()->toArray()),
+                'centers' => (function() use ($tutorSchedule) {
+                        $centers = $tutorSchedule->getCenter()->toArray();
+                        $first = $centers[0] ?? null;
+                        if (!$first) return null;
+                        return [
+                            'id'    => $first->getId(),
+                            'name'  => $first->getName(),
+                            'city'  => $first->getCity(),
+                            'phone' => $first->getPhone(),
+                            'email' => $first->getEmail(),
+                        ];
+            })(),
             ], $u->getTutorSchedules()->toArray()),
         ], $users);
 
