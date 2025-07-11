@@ -607,9 +607,19 @@ import api from "../../api/aixos";
     return api.get(`/api/student/${id}`)
   }
 
-  export const hasLevelForSubject = (tutor: any, studentClass: any, subject: any) => {
-    const level: any = classLevel(studentClass);
-    return !!tutor.class.find((e:any) => e.subject === subject[0]  && Number(e.level) >= Number(level))
+  export const hasLevelForSubject = (tutor: any, studentClass: any, subjects: any[]) => {
+    const level = classLevel(studentClass);
+  
+    const result = subjects.every((subj) => {
+      const found = tutor.class.find((e:any) =>
+        e.subject === subj && Number(e.level) >= Number(level)
+      );
+      if (!found) {
+        console.log(`Pas trouvé: ${subj} pour niveau >= ${level}`);
+      }
+      return !!found;
+    });
+    return result;
   };
 
   export const classLevel = (studentClass:any) =>{

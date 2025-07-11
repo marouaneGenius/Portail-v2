@@ -6,6 +6,7 @@ import { TrialSession } from "@/forms/schemas";
 import { SchoolSubjects } from "@/mocks/mocks";
 import api from "@/api/aixos";
 import { useNavigate } from "react-router-dom";
+import { StudentInfoCard } from "./StudentInfoCard";
 
 const TrialSessionComponent: React.FC<any> =  ({student}) => {
     const { user }:any = useAuth();
@@ -79,12 +80,11 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
             {
-                student && <>
+                student && <div className="mb-4">
                         <h1 className="text-2xl font-bold mb-6">Créer une session d'essai Pour {`${student.firstname} ${student.lastname}`}</h1>
-                        <h3 className="my-5">
-                            centre : {student.centers.name}
-                        </h3>
-                </>
+                       <StudentInfoCard student={student} />
+
+                </div>
             }
             <form onSubmit={handleSubmit} className="space-y-6">
                 {fields.map((field:any) => (

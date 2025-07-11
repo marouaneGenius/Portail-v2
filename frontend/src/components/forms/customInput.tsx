@@ -163,25 +163,17 @@ export function MultiSelectSchoolSubjectsWithLevels({
   );
 }
 
-
-
-export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any, onlyOnesubject?:boolean) => (
+export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any) => (
   <>
-    <div
-      className={`relative ${onlyOnesubject && Array.isArray(values?.school_subjects) && values.school_subjects.length !== 0 ? 'opacity-50 pointer-events-none' : ''}`}
-
-    >
-      {f.options && (
-        <MultiSelectNoCtrl
-          options={f.options}
-          values={values[fieldName]}
-          onChange={(newVals) =>
-            setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
-          }
-        />
-      )}
-    </div>
-
+    {f.options && (
+      <MultiSelectNoCtrl
+        options={f.options}
+        values={values[fieldName]}
+        onChange={(newVals) =>
+          setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
+        }
+      />
+    )}
 
     <div className="flex flex-wrap gap-2 mt-2  ">
       {Array.isArray(values[fieldName]) && values[fieldName].map((val) => {
