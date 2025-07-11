@@ -53,10 +53,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   }, [values.school_subjects, values.scheduled_at, student]);
 
   const fetchAvailableTutors = async () => {
-
     try {
       setLoading(true);
-      
       // Vérifier qu'on a les données nécessaires
       if (!values.school_subjects?.length || !values.scheduled_at) {
         return;
@@ -136,8 +134,6 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     setSelectedTutor(tutorId);
     onSelect(tutorId);
   };
-
-  useEffect(() => {}, [])
 
   if (loading) {
     return (

@@ -27,8 +27,11 @@ export const userFields: FormField[] = [
   { name: 'price_per_hour', label: 'Prix Par Heure', type: 'text' },
   { name: 'max_session', label: 'Nombre de seance Max', type: 'text' },
   { name: 'siret', label: 'Siret', type: 'text', className: 'col-span-2' },
-  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true },
   { name: 'centers', label: 'Centers', type: 'select',  multiple: true },
+  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true },
+  { name: 'class', label: 'Matieres', type: 'select',  multiple: true },
+
+  // { name: 'class', label: 'Classes', type: 'select',  className: 'col-span-2', multiple: true},
 ];
 
 export const centerFields: FormField[] = [
@@ -52,7 +55,6 @@ export const studentFields: FormField[] = [
   { name: 'class', label: 'Classe', type: 'select', required: true },
   { name: 'email', label: 'E‑mail', type: 'email', required: true },
   { name: 'id_center', label: 'Centre', type: 'select', required: true },
-  // { name: 'school_subjects', label: 'Matieres', type: 'select', className: 'col-span-2', multiple: true , options: []},
 ];
 
 export const parentFields: FormField[] = [
@@ -111,7 +113,6 @@ export const AnnuelFields: FormField[] = [
   { name: 'offer_amount', label: 'Offre', type: 'text'},
 ];
 
-
 export const TrialSession: FormField[] = [
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   // { name: 'payment_date', label: 'Date de paiement', type: 'date'},
@@ -168,7 +169,6 @@ export const PreinscriptionFields: FormField[] = [
     ] 
   },
 ]
-
 
 export const UpdateSlotForm: FormField[] = [
   { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'date'},

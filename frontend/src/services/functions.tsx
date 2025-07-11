@@ -387,9 +387,15 @@ export const timeToMinutes = (time: string | DoctrineDate): number => {
     time = time.date;
   }
 
+  if (typeof time === 'string' && /^\d{2}:\d{2}$/.test(time)) {
+    const [hour, minute] = time.split(':');
+    return Number(hour) * 60 + Number(minute);
+  }
+  
+
   if (typeof time === 'string' && time.includes('T')) {
     const date = new Date(time);
-    return date.getHours() * 60 + date.getMinutes();
+    return date.getUTCHours() * 60 + date.getUTCMinutes();
   }
 
   if (typeof time === 'string' && time.match(/^\d{4}-\d{2}-\d{2} /)) {

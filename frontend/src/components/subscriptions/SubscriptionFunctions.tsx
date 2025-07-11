@@ -1,5 +1,5 @@
 import axios from "axios";
-import { nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
+import { ClassesOptionsLevel, nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
 import { TarificationLigne } from "./views/LevyTableComponent";
 import { ContractData } from "./views/TarificationCalculator";
 import api from "../../api/aixos";
@@ -605,4 +605,19 @@ import api from "../../api/aixos";
 
   export const getStudent = (id:any) => {
     return api.get(`/api/student/${id}`)
+  }
+
+  export const hasLevelForSubject = (tutor: any, studentClass: any, subject: any) => {
+    const level: any = classLevel(studentClass);
+    return !!tutor.class.find((e:any) => e.subject === subject[0]  && Number(e.level) >= Number(level))
+  };
+
+  export const classLevel = (studentClass:any) =>{
+    const level=  ClassesOptionsLevel.find((subjectLevel:any) => subjectLevel.value === studentClass );
+    return level?.level
+  }
+
+  export const getLevelOfClass = (tutorLevel:any) =>{
+    const level=  ClassesOptionsLevel.find((subjectLevel:any) => subjectLevel.level === tutorLevel );
+    return level?.value
   }

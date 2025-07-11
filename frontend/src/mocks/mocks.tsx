@@ -136,3 +136,19 @@ export const ClassesOptions = [
   export const MEMEBERSHIP_FEE = 90;
 
   export const StandardDays = [5, 15, 28];
+
+
+  export const ClassesOptionsLevel = [
+    { value: 'CP',        level: '1' },
+    { value: 'CE1',       level: '2' },
+    { value: 'CE2',       level: '3' },
+    { value: 'CM1',       level: '4' },
+    { value: 'CM2',       level: '5' },
+    { value: '6ème',      level: '6' },
+    { value: '5ème',      level: '7' },
+    { value: '4ème',      level: '8' },
+    { value: '3ème',      level: '9' },
+    { value: '2nde',      level: '10' },
+    { value: '1ère',      level: '11' },
+    { value: 'Terminale', level: '12' },
+  ];

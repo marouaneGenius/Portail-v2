@@ -1,6 +1,6 @@
 import { DateTimePickerToolbar } from "@mui/x-date-pickers/DateTimePicker/DateTimePickerToolbar";
 import { FIXED_END_DATE } from "../../mocks/constants";
-import { WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
+import { ClassesOptions, WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
 import SlotSelector from "../subscriptions/SlotSelector";
 import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
 import VacationWeekSelector from "../subscriptions/WeeksAvailiabilityPicker";
@@ -41,7 +41,6 @@ export function MultiSelectNoCtrl({
     values: string[];
     onChange: (newValues: string[]) => void;
   }) {
-
     
     const toggleOption = (value: string) => {
       const safeValues = Array.isArray(values) ? values : [];
@@ -60,8 +59,14 @@ export function MultiSelectNoCtrl({
       >
         {
         options.map((opt:any) => {
-          // const isSelected = values and (values.includes(opt.value));
-          const isSelected = Array.isArray(values) && (values.includes(opt.value) || values.includes(opt.label));
+          // const isSelected = Array.isArray(values) && (values.includes(opt.value) || values.includes(opt.label) || values.includes(opt.name));
+          const isSelected =
+          Array.isArray(values) &&
+          values.some(
+            (v:any) =>
+              (typeof v === "object" && String(v.id) === String(opt.value)) ||
+              v === opt.value // fallback si jamais values contient aussi des strings
+          );
 
           return (
             <option
@@ -88,17 +93,96 @@ export function MultiSelectNoCtrl({
     );
 }
 
-export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any) => (
+
+export function MultiSelectSchoolSubjectsWithLevels({
+  subjectOptions,
+  values,
+  setValues,
+}:any) {
+  const toggleSubject = (subject:any) => {
+    let newSubjects = Array.isArray(values.school_subjects) ? [...values.school_subjects] : [];
+    let newClassLevels = Array.isArray(values.class) ? [...values.class] : [];
+    if (newSubjects.includes(subject)) {
+      newSubjects = newSubjects.filter(s => s !== subject);
+      newClassLevels = newClassLevels.filter(cl => cl.subject !== subject);
+    } else {
+      newSubjects.push(subject);
+      newClassLevels.push({ subject, level: "" }); // Ajout à compléter après
+    }
+    setValues((prev:any) => ({ ...prev, school_subjects: newSubjects, class: newClassLevels }));
+  };
+
+  // Changer la classe max d'une matière
+  const handleLevelChange = (subject:any, level:any) => {
+    let newClassLevels = Array.isArray(values.class) ? [...values.class] : [];
+    const idx = newClassLevels.findIndex(cl => cl.subject === subject);
+    if (idx !== -1) newClassLevels[idx] = { subject, level };
+    else newClassLevels.push({ subject, level });
+    setValues((prev:any) => ({ ...prev, class: newClassLevels }));
+  };
+
+  return (
+    <div>
+      <label className="block font-semibold mb-2">Matières</label>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {subjectOptions.map((opt:any) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggleSubject(opt.value)}
+            className={
+              (values.school_subjects?.includes(opt.value)
+                ? "bg-yellow-300 border-yellow-500"
+                : "bg-white border-gray-300") +
+              " border px-3 py-1 rounded-full"
+            }
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {values.school_subjects?.map((subject:any) => (
+        <div key={subject} className="mb-3">
+          <label className="text-sm">
+            Jusqu’à quelle classe peux-tu enseigner <b>{subject}</b> ?
+          </label>
+          <select
+            className="border rounded w-full mt-1"
+            value={values.class?.find((cl:any) => cl.subject === subject)?.level || ""}
+            onChange={e => handleLevelChange(subject, e.target.value)}
+          >
+            <option value="">Sélectionner une classe</option>
+            {ClassesOptions.map((opt, i) => (
+              <option key={opt.value} value={i+1}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+
+export const renderMultiSelect = (f:any, values:any, fieldName:string,setValues:any, removeValueFromField:any, onlyOnesubject?:boolean) => (
   <>
-    {f.options && (
-      <MultiSelectNoCtrl
-        options={f.options}
-        values={values[fieldName]}
-        onChange={(newVals) =>
-          setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
-        }
-      />
-    )}
+    <div
+      className={`relative ${onlyOnesubject && Array.isArray(values?.school_subjects) && values.school_subjects.length !== 0 ? 'opacity-50 pointer-events-none' : ''}`}
+
+    >
+      {f.options && (
+        <MultiSelectNoCtrl
+          options={f.options}
+          values={values[fieldName]}
+          onChange={(newVals) =>
+            setValues((prev:any) => ({ ...prev, [fieldName]: newVals }))
+          }
+        />
+      )}
+    </div>
+
+
     <div className="flex flex-wrap gap-2 mt-2  ">
       {Array.isArray(values[fieldName]) && values[fieldName].map((val) => {
         if (f.options) {
@@ -183,7 +267,6 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
   const todayISO = new Date().toISOString().split('T')[0];
 
 
-  console.log(todayISO)
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Annuel'){

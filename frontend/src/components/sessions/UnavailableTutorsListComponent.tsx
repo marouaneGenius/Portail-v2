@@ -1,4 +1,5 @@
 import { ClockIcon, XCircleIcon } from "lucide-react";
+import { getLevelOfClass } from "../subscriptions/SubscriptionFunctions";
 
 interface Tutor {
   id: number;
@@ -21,10 +22,25 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
   
     // Si format simple: "12:30:00" ou "12:30"
     const simpleMatch = timeString.match(/^(\d{2}:\d{2})/);
+
+
+    
+
     if (simpleMatch) return simpleMatch[1];
   
     return '';
   };
+
+  function getLevelForSubject(tutor:any, subject:any) {
+    const found = tutor.class.find((classSubject:any) => classSubject.subject === subject);
+    if (found) {
+      const tutorClass = getLevelOfClass(found.level)
+      return ` jusqu'au ${tutorClass}`;
+    }
+    return 'Pas de niveau trouvé';
+  }
+
+
   return (
     <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
       <div className="flex items-start gap-2 mb-3">
@@ -47,12 +63,16 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
 
             <div className="flex flex-wrap gap-1 mt-2">
               {tutor.school_subjects.map((subject:any) => (
-                <span 
-                  key={subject} 
-                  className="px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-800"
-                >
-                  {subject}
-                </span>
+                  <>
+                    <span 
+                      key={subject} 
+                      className="px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-800"
+                    >
+                      {subject} -  
+                      {getLevelForSubject(tutor, subject)}
+
+                    </span>
+                  </>
               ))}
             </div>
 
