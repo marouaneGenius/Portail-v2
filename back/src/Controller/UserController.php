@@ -68,6 +68,8 @@ class UserController extends AbstractController
         $user->setPricePerHour($data['price_per_hour'] ?? null);
         $user->setRoles([$data['role']]?? ['ROLE_USER']);
         $user->setSchoolSubjects($data['school_subjects'] ?? null);
+        $user->setClass($data['class'] ?? null);
+
 
         if (!empty($data['centers']) && is_array($data['centers'])) {
             foreach ($data['centers'] as $centerId) {
@@ -172,7 +174,8 @@ class UserController extends AbstractController
             'updated_by'        => $user->getUpdatedBy(),
             'max_session'       => $user->getMaxSession(),
             'price_per_hour'    => $user->getPricePerHour(),
-            'school_subjects'   => $user->getSchoolSubjects(),
+            'school_subjects'   => $user->getSchoolSubjects()?? [],
+            'class'             => $user->getClass()?? [],
             'tutor_schedules' => array_map(fn($ts) => [
                 'id'         => $ts->getId(),
                 'day'        => $ts->getDay(),
@@ -207,7 +210,6 @@ class UserController extends AbstractController
         ]);
     }
 
-
     #[Route('/tutors', name: 'api_tutors_list', methods: ['GET'])]
     public function tutorsList(): JsonResponse
     {
@@ -225,6 +227,7 @@ class UserController extends AbstractController
                 'id'   => $c->getId(),
                 'name' => $c->getName(),
             ], $u->getCentres()->toArray()),
+            'class'    => $u->getClass(),
             'events' => array_map(fn(TutorSchedule $tutorSchedule) => [
                 'id'   => $tutorSchedule->getId(),
                 'day' => $tutorSchedule->getDay(),
@@ -323,7 +326,7 @@ class UserController extends AbstractController
         }
         
 
-        foreach (['firstname','lastname','siret','max_session','price_per_hour', 'school_subjects'] as $f) {
+        foreach (['firstname','lastname','siret','max_session','price_per_hour', 'school_subjects', 'class'] as $f) {
             if (array_key_exists($f, $data)) {
                 $setter = 'set' . $this->snakeToCamel($f);
                 // Vérification que la méthode existe bien
@@ -333,8 +336,6 @@ class UserController extends AbstractController
                 $user->$setter($data[$f]);
             }
         }
-
-
 
         if (isset($data['is_active'])) {
             $user->setIsActive((bool)$data['is_active']);
@@ -423,7 +424,6 @@ class UserController extends AbstractController
     public function me(): JsonResponse
     {
         $user = $this->getUser();                
-
         if (!$user) {
             return $this->json(['message' => 'Non authentifié'], 401);
         }
