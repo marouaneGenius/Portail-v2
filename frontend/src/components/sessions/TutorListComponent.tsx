@@ -1,6 +1,7 @@
 import api from '@/api/aixos';
 import React, { useEffect, useState } from 'react';
 import { UnavailableTutorsListComponent } from './UnavailableTutorsListComponent';
+import { getLevelForSubject, hasLevelForSubject } from '../subscriptions/SubscriptionFunctions';
 
 interface Tutor {
   id: number;
@@ -45,7 +46,6 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
            })
         }
       })
-
       setTutors(filteresTutorsPeStudentCenter);
     })
 
@@ -61,6 +61,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
       }
 
       const subjectsOfTutor = filterTutorBySchoolSubject(tutors);
+
       if(subjectsOfTutor) {
         const dateFilteredTutors = filterAvailableTutors(subjectsOfTutor)
         setAvailableTutors(dateFilteredTutors)
@@ -85,18 +86,13 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     }
 
     return tutorsList.filter(tutor => {
-      // S’assure que tutor.school_subjects est bien un tableau
-      const have = Array.isArray(tutor.school_subjects)
-        ? tutor.school_subjects
-        : [];
-  
-      // On ne garde que si chaque matière recherchée est présente
-      // return wanted.every(subj => have.includes(subj));
+      // const have = Array.isArray(tutor.school_subjects)
+      //   ? tutor.school_subjects
+      //   : [];
 
-
-      // On ne garde que si y'a au moins une matière recherchée est présente
-      return wanted.some(subj => have.includes(subj));
-
+      const hasLevel = hasLevelForSubject(tutor, student.class, values.school_subjects)
+  //wanted.some(subj => have.includes(subj)) && 
+      return hasLevel;
     });
   };
 
@@ -111,21 +107,25 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     const totalScheduledMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
 
     return tutorsList.filter(tutor => {
+
       return tutor.events.some(event => {
         if (event.day.toLowerCase() !== dayOfWeek) {
           return false;
         }
-  
-        // b) convertir start_hour / end_hour en objets Date
-        const start = new Date(event.start_hour);
-        const end   = new Date(event.end_hour);
-  
-        const startMinutes = start.getHours() * 60 + start.getMinutes();
-        const endMinutes   = end.getHours()   * 60 + end.getMinutes();
-  
-        // c) inclusion de l’heure planifiée dans l’intervalle [start, end]
-        return totalScheduledMinutes >= startMinutes
-            && totalScheduledMinutes <= endMinutes;
+
+        if(student.centers.name  === event.centers.name ) {
+          // b) convertir start_hour / end_hour en objets Date
+          const start = new Date(event.start_hour);
+          const end   = new Date(event.end_hour);
+    
+          const startMinutes = start.getHours() * 60 + start.getMinutes();
+          const endMinutes   = end.getHours()   * 60 + end.getMinutes();
+    
+          // c) inclusion de l’heure planifiée dans l’intervalle [start, end]
+          return totalScheduledMinutes >= startMinutes
+              && totalScheduledMinutes <= endMinutes;
+        }
+
       });
     });
   };
@@ -187,7 +187,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
                 <p className="text-sm text-gray-600 mt-1">
                   {
                     tutor.school_subjects.map((s) => (
-                      <span className='bg-blue-200 m-1 rounded p-1 text-xs'>{s}</span>
+                      <span className='bg-blue-200 m-1 rounded p-1 text-xs m-1'>{s} -  
+                      {getLevelForSubject (tutor, s)}
+                      </span>
                     ))
                   }
                 </p>

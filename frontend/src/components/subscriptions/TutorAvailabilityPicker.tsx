@@ -65,8 +65,6 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
               return hasLevelForSubject(item,studentRes.data.class, school_subjects )
             })  
 
-            console.log(filterBySchoolSubject)
-
             if(filterBySchoolSubject.length === 0 && availabilitys.length === 0 && school_subjects.length !== 0) {
               console.log(school_subjects)
               setErrorMessage(`❌ Aucun tuteur disponible n’enseigne ${school_subjects.join()} pour  ${studentRes.data.class}`);

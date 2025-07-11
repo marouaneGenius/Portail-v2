@@ -16,6 +16,7 @@ import SessionScopeRadio from './SessionScopeRadio';
 import { UpdateSlotForm } from '@/forms/schemas';
 import { useAuth } from '@/Hooks/auth';
 import { school_subjects_field } from '../subscriptions/TutorAvailabilityPicker';
+import { StudentInfoCard } from './StudentInfoCard';
 
 interface StudentCardProps {
   student: any;
@@ -242,6 +243,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       {showEditModal === 'tutor' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier la séance">
           <div className='p-2 m-2 bg-gray-100 rounded'>
+            <StudentInfoCard student={student.student} />
             <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
           </div>
 

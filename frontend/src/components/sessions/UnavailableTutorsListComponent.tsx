@@ -1,5 +1,5 @@
 import { ClockIcon, XCircleIcon } from "lucide-react";
-import { getLevelOfClass } from "../subscriptions/SubscriptionFunctions";
+import { getLevelForSubject, getLevelOfClass } from "../subscriptions/SubscriptionFunctions";
 
 interface Tutor {
   id: number;
@@ -31,14 +31,7 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
     return '';
   };
 
-  function getLevelForSubject(tutor:any, subject:any) {
-    const found = tutor.class.find((classSubject:any) => classSubject.subject === subject);
-    if (found) {
-      const tutorClass = getLevelOfClass(found.level)
-      return ` jusqu'au ${tutorClass}`;
-    }
-    return 'Pas de niveau trouvé';
-  }
+
 
 
   return (

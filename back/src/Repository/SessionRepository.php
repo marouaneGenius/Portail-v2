@@ -135,6 +135,7 @@ class SessionRepository extends ServiceEntityRepository
                         'lastname'  => $student->getLastname(),
                         'email'     => $student->getEmail(),
                         'session_id' => $session->getId(), 
+                        'class' => $student->getClass(), 
                         'centers' => $student->getIdCenter()
                         ? [
                             'id'      => $student->getIdCenter()->getId(),
