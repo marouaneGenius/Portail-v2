@@ -11,11 +11,12 @@ import {
 import { MoreHorizontal, MoreVertical } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { renderMultiSelect, RenderTrialField } from '../forms/customInput';
-import { school_subjects_file } from '../subscriptions/TutorAvailabilityPicker';
 import api from '@/api/aixos';
 import SessionScopeRadio from './SessionScopeRadio';
 import { UpdateSlotForm } from '@/forms/schemas';
 import { useAuth } from '@/Hooks/auth';
+import { school_subjects_field } from '../subscriptions/TutorAvailabilityPicker';
+import { StudentInfoCard } from './StudentInfoCard';
 
 interface StudentCardProps {
   student: any;
@@ -34,7 +35,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
   const [isAbsent, setIsAbsent] = useState(student.session.is_absent);
   const [applyAll, setApplyAll] = useState<any>(false);
-  const [dateTimeSchedule, setDateTimeSchedule] = useState<any>(null);
   const [values, setValues] = useState<any>({
     school_subjects: student.session.school_subjects || [],
     scheduled_at: student.session.scheduled_at
@@ -81,7 +81,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
   const sessionManagement = () => {
     const canceled = isCanceled ? false : true;
-    console.log(applyAll)
     return api.patch(`/api/sessions/manage/${currentSession.id}`, {
       student_ids: [currentStudent.id],
       update_all:   applyAll,
@@ -110,7 +109,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
-
   const removeValueFromField = (field: any, value: any) => {
     setValues((prev: any) => ({
       ...prev,
@@ -128,7 +126,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     zIndex: isDragging ? 100 : 'auto',
     transition: isDragging ? 'none' : 'transform 0.2s ease',
   };
-
 
   const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked,  options }:any = e.target ;
@@ -213,15 +210,13 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           </div>
         )}
         <div className='mt-2'>
-        {
-          values.school_subjects.map((matiere:any, index:any) => (
-            <span key={index} className='rounded bg-blue-400 text-white text-sm m-1 p-1'>{matiere}</span>
-          )) 
-        }
+          {
+            values.school_subjects.map((matiere:any, index:any) => (
+              <span key={index} className='rounded bg-blue-400 text-white text-sm m-1 p-1'>{matiere}</span>
+            )) 
+          }
+        </div>
       </div>
-      </div>
-
-
 
       {showEditModal === 'cancel' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
@@ -247,40 +242,30 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
       {showEditModal === 'tutor' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier la séance">
-          {/* <FrenchDatePicker
-            selectedDate={dateTimeSchedule}
-            onDateChange={handleDateChange}
-          /> */}
-
           <div className='p-2 m-2 bg-gray-100 rounded'>
+            <StudentInfoCard student={student.student} />
             <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
-
           </div>
 
           <div className='p-2 m-2 bg-gray-100 rounded'>
             {UpdateSlotForm.map((field:any) => (
               <div key={field.name} className="space-y-2">
                   <RenderTrialField
-                      f={field}
-                      values={values}
-                      setValues={setValues}
-                      handleChange={handleChange}
-                      removeValueFromField={removeValueFromField}
-                      fieldName={field.name}
-                      student={student.student}
+                    f={field}
+                    values={values}
+                    setValues={setValues}
+                    handleChange={handleChange}
+                    removeValueFromField={removeValueFromField}
+                    fieldName={field.name}
+                    student={student.student}
                   />
               </div>
           ))}
           </div>
 
-  
-
-
           <div className='p-2 m-2 bg-gray-100 rounded flex  '>
             <button onClick={updateStudentSlots} className='bg-green-500 text-white rounded p-3 w-full m-1' >Sauvegarder</button>
-            {/* <button onClick={()=>setValues({...values, scheduled_at: '' })} className='bg-gray-500 text-white rounded p-3 w-full m-1' >Reset</button> */}
           </div>
-
         </Modal>
       )}
 
@@ -290,7 +275,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             <div className='p-3'> 
               <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
               {
-                renderMultiSelect(school_subjects_file, values, 'school_subjects', setValues, removeValueFromField)
+                renderMultiSelect(school_subjects_field, values, 'school_subjects', setValues, removeValueFromField)
               }
             </div>
             <button onClick={updateSchoolSubjects} className='bg-green-500 text-white rounded p-3 w-full' >Sauvegarder</button>

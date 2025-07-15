@@ -72,8 +72,6 @@ export default function CreationForm() {
           mainValues ? mainValues : values,
         );
 
-        //check if we get parent data, to create parent
-
         if(resource === 'parent' || resource === 'student') {
           if( created && parentValues ){
             const { data: parent } = await api.post<Record<string, any>>(
@@ -90,8 +88,6 @@ export default function CreationForm() {
           }
         }
 
-     
-    
         setData(prev => [created, ...prev]);
         return created;
       } catch (err: any) {
@@ -107,25 +103,15 @@ export default function CreationForm() {
   const handleSubmit = async (values: Record<string, any>) => {
     try{
      const r =  await postData(values);
-
-      console.log(r)
-
-
       if(resource === "tutorschedule") {
         navigate(`/users`);
       } else {
         navigate(`/${resource}s`);
       }
-
-
-
-
     }catch(err: any){
       alert('error')
       setError(err.response?.data?.error || 'Erreur lors de la Validation du formulaire');
     }
-
-  
   };
 
   return (

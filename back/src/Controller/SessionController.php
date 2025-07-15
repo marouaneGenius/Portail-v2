@@ -146,25 +146,27 @@ class SessionController extends AbstractController
 
 
     #[Route('/center/{id}/sessions-by-date', name: 'sessions_by_center_date', methods: ['GET'])]
-    public function sessionsByCenterAndScheduledDate( int     $id, Request $request,  CenterRepository $centerRepo): JsonResponse {
-
+    public function sessionsByCenterAndScheduledDate(int $id, Request $request,  CenterRepository $centerRepo): JsonResponse 
+    {
         $center = $centerRepo->find($id);
         if (!$center) {
             return new JsonResponse(['error' => 'Centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
         }
-    
-        $dateParam = $request->query->get('date');
+
+        $dateParam = $request->query->get('date'); // ex: 2025-09-15
         $date = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
+        
         if (!$date) {
             return new JsonResponse(
                 ['error' => 'Paramètre date invalide, format attendu YYYY-MM-DD'],
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-    
-        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $date);
-        return new JsonResponse($data);
         
+        $start = $date->setTime(0, 0, 0);
+        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start);
+
+        return new JsonResponse($data);
     }
 
 
@@ -391,9 +393,6 @@ class SessionController extends AbstractController
             'multiple' => true
         ], JsonResponse::HTTP_OK);
     }
-    
-
-
 
     #[Route('/{id}/action', name: 'action', methods: ['PATCH'])]
     public function cancel(Session $session, Request $request): JsonResponse
@@ -564,8 +563,6 @@ class SessionController extends AbstractController
         if (array_key_exists('updated_by', $data)) {
             $session->setUpdatedBy($data['updated_by']);
         }
-
-
     
         // Modifier seulement UNE séance
         if (!$updateAll) {

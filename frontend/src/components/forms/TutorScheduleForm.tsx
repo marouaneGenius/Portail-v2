@@ -99,17 +99,25 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         })
         const filteredDays = dayOptions.filter((day:any) => !selectedDaysByTutor.includes(day.value));
         setDays(filteredDays)
+        if(res.centers.length === 0) {
+          getCenters().then((res) => {
+            const centerOptions = res.map((c:any) => ({
+              value: String(c.id),
+              label: c.name,
+            }));
+            setCenters(centerOptions)
+          })
+        }else{
+          const centerOptions = res.centers.map((c:any) => ({
+            value: String(c.id),
+            label: c.name,
+          }));
+          setCenters(centerOptions)
+        }
         }
       );
     }
- 
-    getCenters().then((res) => {
-      const centerOptions = res.map((c:any) => ({
-        value: String(c.id),
-        label: c.name,
-      }));
-      setCenters(centerOptions)
-    })
+
   }, [])
 
   useEffect(() => {

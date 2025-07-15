@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, Clock, Eye, XCircle } from "lucide-react";
+import { BadgeCheck, Check, Clock, Eye, ProportionsIcon, XCircle } from "lucide-react";
 import api from "@/api/aixos";
 import { useAuth } from "@/Hooks/auth";
 import { getNiveauScolaire, getPrice, IsStudentIsMember } from "./SubscriptionFunctions";
 import { useNavigate } from "react-router-dom";
+import { buildSessions } from "@/services/functions";
+import { LoaderOverlay } from "../LoaderOverlay";
+import { BadgeMark } from "@mui/material";
 
 type Subscription = {
   id: number;
@@ -20,6 +23,8 @@ type Subscription = {
   is_canceled: boolean;
   session_per_week:any;
   is_combined:boolean;
+  url:string;
+  is_programed:boolean;
 };
 
 type Props = {
@@ -29,26 +34,36 @@ type Props = {
 
 const statusStyle = {
   active: "bg-green-100 text-green-800",
-  expired: "bg-gray-100 text-gray-500",
+  expired: "bg-orange-100 text-orange-500",
 };
 
 const badgeContent = (isActive: boolean) =>
   isActive ? (
     <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${statusStyle.active}`}>
-      <BadgeCheck size={16} /> Active
+      <BadgeCheck size={16} /> validé
     </span>
   ) : (
     <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${statusStyle.expired}`}>
-      <Clock size={16} /> Expired
+      <Clock size={16} /> Pas encore validé
     </span>
   );
 
+  const programedbadgeContent = (isProgramed: boolean) =>{
+     return (
+      <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-500`}>
+        <Clock size={16} /> Programé
+      </span>
+     )
+}
+
 export function StudentSubscriptionCard({ studentId, student }: Props) {
-    const [subs, setSubs] = useState<Subscription[]>([]);
-    const [isMember, setIsMember] = useState<any>([]);
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [isMember, setIsMember] = useState<any>([]);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [isValide, setIsValide] = useState<boolean>();
+  const [isProgramed, setIsProgramed] = useState<boolean>( );
+  const { user } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -56,9 +71,23 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
       .get(`/api/subs/student/${studentId}`)
       .then(res => setSubs(res.data))
       .finally(() => setLoading(false));
-      IsStudentIsMember(studentId).then(setIsMember)
-  }, [studentId]);
+      IsStudentIsMember(studentId).then(setIsMember);
+  }, [studentId, ]);
 
+  const validateContract = async (subscription:any) => {
+    try {
+      const res = await api.patch(
+        `/api/subs/${subscription.id}/validate`,
+        { updated_by: user?.email }
+      );
+      if (res.status === 200) {
+        alert('Le contrat a été validé')
+        setIsValide(true);
+      }
+    } catch (err) {
+      console.error("Erreur de validation :", err);
+    }
+  }
 
   const handleCancel = async (subscriptionId: number) => {
     if (!window.confirm("Confirmer la rupture de l'abonnement ?")) return;
@@ -75,7 +104,79 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
       );
   };
 
-  if (loading) return <div>Chargement...</div>;
+  const programeContract = async (subscription:any) => {
+    try {
+      const res = await api.patch(
+        `/api/subs/${subscription.id}/programed`,
+        { programed_by: user?.email }
+      );
+      if (res.status === 200) {
+        alert('Le contrat a été programé')
+        setIsProgramed(true);
+      }
+    } catch (err) {
+      console.error("Erreur de validation :", err);
+    }
+  }
+
+  const programSessions = (subscription:any) => {
+    const sub = subscription.isCombined ? (Array.isArray(subscription) ?subscription.find((item) => item.subscription_type === 'annuel') : null ): subscription
+    if (!sub) {
+      alert('Aucune subscription valide trouvée.');
+      console.warn('Aucune subscription valide trouvée.');
+      return;
+    }
+
+    const allSessions = buildSessions(
+      sub.subscription_start_date,
+      sub.subscription_end_date,
+      sub.favorite_slots,
+      sub.session_per_week
+    );
+
+    handleCreateSessidons(allSessions, sub)
+  }
+
+  const handleCreateSessidons = async (allSessions:any, subscription:any) => {
+    setLoading(true);
+
+    try {
+      const promises = allSessions.map((sess:any) => {
+        const now = new Date();
+        const datePart = now.toISOString().split('T')[0];
+
+        const payload = {
+          payment_date: datePart,
+          date_slot: sess.scheduled_at.split(' ')[0] || sess.scheduled_at.split('T')[0],
+          scheduled_at: sess.scheduled_at,
+          tutor_id: sess.tutor_id,
+          student_ids: [student.id],
+          subscription_ids:[subscription.id],
+          school_subjects: sess.school_subjects,
+          created_by: user?.email,
+          updated_by: user?.email,
+          is_paid: true,
+          is_absent: false,
+          session_type: 'standard',
+          is_canceled: false,
+          center_id: student.centers.id
+        };
+
+       
+        return api.post('/api/sessions', payload);
+      });
+
+      // on attend que tous les calls se terminent
+      await Promise.all(promises);
+      alert('Toutes les séances ont été créées !');
+      programeContract(subscription)
+    } catch (e) {
+      console.error('Erreur création séances', e);
+      alert('Une erreur est survenue lors de la création des séances');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm border">
@@ -94,26 +195,20 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
           <span className="text-lg font-bold">+</span> Nouveau contrat
         </button>
       </div>
+      <LoaderOverlay isLoading={loading} />
 
       <div className="space-y-6">
         {subs.length === 0 && <div className="text-gray-400 italic">Aucun abonnement trouvé.</div>}
         {subs.map((sub, i) => {
-          // Statut
-            const today = new Date();
-            const start = new Date(sub.subscription_start_date);
-            const end = new Date(sub.subscription_end_date);
-            const isActive = sub.is_valide && today <= end && today >= start;
+            const isActive = sub.is_valide ;
+            const isProgramed = sub.is_programed ;
 
             const isCanceled = !!sub.is_canceled;
-
-            // Heures utilisées (exemple, tu dois adapter la logique)
             const used = sub.used_hours ?? 0;
             const total = sub.total_hours ?? 60; // par défaut 60h, à remplacer selon tes données
             const niveau = getNiveauScolaire(student.class)
             const price = getPrice(sub.subscription_type, sub?.session_per_week, niveau, { combined: sub?.is_combined ? true : false, isMember: isMember })
-
-          // Pourcent (progression)
-          const percent = Math.min(100, Math.round((used / total) * 100));
+            const percent = Math.min(100, Math.round((used / total) * 100));
 
           return (
             <div key={sub.id}   className={
@@ -140,11 +235,51 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
                 </button>
                 )}
                 <button
-                    className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
-                    onClick={() => navigate(`/contract/${sub.id}/${studentId}`)}
+                  className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
+                  onClick={e => {
+                    e.preventDefault();
+                    window.open(sub.url, '_blank');
+                  }}
                 >
-                    <Eye size={16} /> Voir le contrat
+                  <Eye size={16} /> Voir 
                 </button>
+
+                {
+                  !isActive &&
+                  <button
+                  className="border border-orange-300 text-orange-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
+                  onClick={e => validateContract(sub)}
+                >
+                  <Check size={16} /> Valider 
+                  </button>
+                }
+
+                {
+                  isProgramed && programedbadgeContent(isProgramed)
+                }
+
+                {
+                  !isProgramed &&
+                    <button
+                      className="border border-blue-300 text-blue-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
+                      onClick={e => programSessions(sub)}
+                    >
+                      <ProportionsIcon size={16} /> Programer 
+                    </button>
+                }
+
+
+                {
+                !isActive &&
+                  <button
+                  className="border border-orange-300 text-orange-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
+                  onClick={e => validateContract(sub)}
+                >
+                  <Check size={16} /> Valider 
+                </button>
+                }
+
+
               </div>
               <div className="text-gray-700 text-sm mt-1 mb-2">
                 Du <span className="font-medium">{sub.subscription_start_date && new Date(sub.subscription_start_date).toLocaleDateString("fr-FR")}</span> au <span className="font-medium">{sub.subscription_end_date && new Date(sub.subscription_end_date).toLocaleDateString("fr-FR")}</span>

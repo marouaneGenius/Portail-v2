@@ -383,9 +383,6 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
 }) => {
   const centers = Array.isArray(value) ? value : value ? [value] : [];
 
-
-  console.log(centers)
-
   if (currentkey !== 'centers') {
     return null;
   }

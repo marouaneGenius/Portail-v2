@@ -79,6 +79,8 @@ export default function SessionCalendar() {
               sessions: item.sessions
             }
           })
+
+
           setTutors(filteredTutors)
         })
     }

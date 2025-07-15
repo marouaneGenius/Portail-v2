@@ -31,6 +31,5 @@ export default Students;
   - revoir l'erreur quand je modifie toutes les prochaine seances dans la page Seances
   - sauvegarder le contrat automatiquement directement apres la generation
   - refaire la vue du planing Tuteur
-  - proposer au tuteur que les centres qu'il a choisi
   - les classes pour le tuteur ?
 */ 

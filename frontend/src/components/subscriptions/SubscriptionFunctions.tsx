@@ -1,5 +1,5 @@
 import axios from "axios";
-import { nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
+import { ClassesOptionsLevel, nbSeancesMap, nbSeancesperWeek, StandardDays } from "../../mocks/mocks";
 import { TarificationLigne } from "./views/LevyTableComponent";
 import { ContractData } from "./views/TarificationCalculator";
 import api from "../../api/aixos";
@@ -323,8 +323,6 @@ import api from "../../api/aixos";
           tarifAvant: price * 2,
           tarifApres: price,
         });
-
-
   
         totalApresReduction += price;
         totalHeures += seancesCeMois * dureeSeance;
@@ -334,10 +332,6 @@ import api from "../../api/aixos";
     const coutHoraire = totalHeures > 0
       ? totalApresReduction / totalHeures
       : 0;
-
-
-
-      console.log(totalHeures, totalApresReduction, )
 
     return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }
@@ -611,4 +605,38 @@ import api from "../../api/aixos";
 
   export const getStudent = (id:any) => {
     return api.get(`/api/student/${id}`)
+  }
+
+  export const hasLevelForSubject = (tutor: any, studentClass: any, subjects: any[]) => {
+    const level = classLevel(studentClass);
+  
+    const result = subjects.every((subj) => {
+      const found = tutor.class.find((e:any) =>
+        e.subject === subj && Number(e.level) >= Number(level)
+      );
+      if (!found) {
+        console.log(`Pas trouvé: ${subj} pour niveau >= ${level}`);
+      }
+      return !!found;
+    });
+    return result;
+  };
+
+  export const classLevel = (studentClass:any) =>{
+    const level=  ClassesOptionsLevel.find((subjectLevel:any) => subjectLevel.value === studentClass );
+    return level?.level
+  }
+
+  export const getLevelOfClass = (tutorLevel:any) =>{
+    const level=  ClassesOptionsLevel.find((subjectLevel:any) => subjectLevel.level === tutorLevel );
+    return level?.value
+  }
+
+  export function getLevelForSubject(tutor:any, subject:any) {
+    const found = tutor.class.find((classSubject:any) => classSubject.subject === subject);
+    if (found) {
+      const tutorClass = getLevelOfClass(found.level)
+      return ` jusqu'au ${tutorClass}`;
+    }
+    return 'Pas de niveau trouvé';
   }

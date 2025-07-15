@@ -88,6 +88,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: SubscriptionURL::class)]
     private Collection $subscriptionURLs;
 
+    #[ORM\Column(nullable: true)]
+    private ?array $class = null;
+
 
 
     public function __construct()
@@ -492,6 +495,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $subscriptionURL->setIdUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getClass(): ?array
+    {
+        return $this->class;
+    }
+
+    public function setClass(?array $class): static
+    {
+        $this->class = $class;
 
         return $this;
     }

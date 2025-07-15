@@ -319,6 +319,8 @@ class SubscriptionController extends AbstractController
             'updated_by'             => $subscription->getUpdatedBy(),
             'is_canceled'             => $subscription->isIsCanceled(),
             'canceled_by'             => $subscription->getCanceledBy(),
+            'url' => $subscription->getSubscriptionURLs()->first()?->getUrl()
+
 
 
         ], $subs);

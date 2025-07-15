@@ -33,10 +33,6 @@ export default function StudentSubscriptions() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => {
-    console.log("Student data loaded:", student, contracts);
-  }, [student])
-
   if (!user) return <Navigate to="/login" replace />;
   if (loading) return <p>Chargement…</p>;
   if (error)   return <p className="text-red-600">{error}</p>;
@@ -103,8 +99,7 @@ export default function StudentSubscriptions() {
             )
         }
         {/* 2) Visionneuse en grand */}
-
-
+        
         {selected && (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-2">

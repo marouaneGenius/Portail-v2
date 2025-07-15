@@ -51,7 +51,8 @@ export default function EditionForm() {
         payload[field.name] = values[field.name];
       }
     });
-  
+
+
     await api.put(`/api/${resource}/${id}`, payload);
     navigate(`/${resource}s`);
   };

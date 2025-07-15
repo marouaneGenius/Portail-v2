@@ -4,11 +4,10 @@ import { ClassesOptions, Days, SchoolSubjects} from '../mocks/mocks';
 import { parentFields } from '../forms/schemas';
 import {renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
-import { getCenters } from '../api/api';
-import { MultiSelectNoCtrl, RenderField } from './forms/customInput';
+import { getCenters, getUser } from '../api/api';
+import { MultiSelectNoCtrl, MultiSelectSchoolSubjectsWithLevels, RenderField } from './forms/customInput';
 import { useParams } from 'react-router-dom';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
-
 
 export interface FormField {
   name: string;
@@ -33,7 +32,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const defaultValues = endpoint === "user" ? {
     centers: [],   
     school_subjects: [],
-
+    // class: [],
     ...initialValues,
   }: {...initialValues};
 
@@ -43,9 +42,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [currenParentFields, setCurrenParentFields] = useState(parentFields);
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: any }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
-  const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers'];
+  const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects', 'class'];
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
@@ -79,6 +78,10 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           if (f.name === "school_subjects") {
             return { ...f, options: SchoolSubjects };
           }
+          if (f.name === 'class') {
+            return { ...f, options: ClassesOptions };
+          }
+
           return f as FormField;
         });
         setFields(updatedFields);
@@ -90,7 +93,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       setFields(fieldWithOutRequired);
     }
 
-    if (hasClassField) {
+    if (hasClassField && !hasRoleField ) {
       let fieldWithOutRequired: any = [];
       getCenters()
         .then((res) => {
@@ -112,12 +115,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
             if (f.name === 'class') {
               return { ...f, options: ClassesOptions };
             }
-
-                if (f.name === "school_subjects") {
-            return { ...f, options: SchoolSubjects };
-          }
-
-
             return f as FormField;
           });
           setFields(updatedFields);
@@ -128,7 +125,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       setLoading(false);
     }
   }, [fields, roleFieldValue]);
-
 
   const removeShoolSubject = (subjectToRemove:any) => {
     setValues(prev => ({
@@ -149,14 +145,12 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }));
   };
 
-
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
 
     //pour gerer les select multiple
     setValues(prev => ({
-
       ...prev,
       [name]: multiple
         ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
@@ -177,6 +171,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
             label: c.name,
           }));
           const updatedFields: FormField[] = fields.map((f: any) => {
+
             if (f.name === 'centers') {
               return { ...f, options: centerOptions };
             }
@@ -199,9 +194,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       const withParentKeys: any = renameFields(currenParentFields);
       setCurrenParentFields(withParentKeys);
     }
-    console.log(currentFields)
   }, [emptyFields, endpoint]);
-
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -216,7 +209,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-
             {endpoint !== 'tutorschedule' &&
               currentFields.map((f: any) => (
                 <div key={f.name} className={f.className ?? ''}>
@@ -224,7 +216,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     htmlFor={f.name}
                     className="block text-sm font-semibold text-[#333333] mb-1 px-1 py-1 rounded"
                   >
-                    {f.label}
+                    {f.name !== 'class' && f.label}
                   </label>
 
                   {/* Mot de passe avec visibilité */}
@@ -272,23 +264,25 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
 
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {(values[f.name] as string[]).map((val) => {
+                        {(values[f.name] as string[]).map((val:any) => {
 
                           if(Array.isArray(f.options) && f.options) {
-                            const label = f.options!.find((o: any) => o.value === val)?.label || val;
+                            const option:any = f.options!.find((o: any) => o.value === val);
+                            const label = typeof option?.label === "object" ? option.label.name  : option?.label || val;
+
                           return (
                             <div
-                              key={val}
+                              key={val.id}
                               className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
                             >
-                              {label}
-                              <button
-                                type="button"
-                                onClick={() => removeCenter(val)}
-                                className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
-                              >
-                                &times;
-                              </button>
+                                {label.name ? label.name : label}
+                               <button
+                                 type="button"
+                                 onClick={() => removeCenter(val)}
+                                 className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                               >
+                                 &times;
+                               </button>
                             </div>
                           );
                         }
@@ -297,13 +291,11 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     </>
                   ): (f.name === 'school_subjects') && f.multiple ? (
                     <>
-                      {f.options && (
-                        <MultiSelectNoCtrl
-                          options={f.options!}
-                          values={values.school_subjects as string[]}
-                          onChange={(newVals) =>
-                            setValues((prev) => ({ ...prev, school_subjects: newVals }))
-                          }
+                     {f.options && (
+                        <MultiSelectSchoolSubjectsWithLevels
+                          subjectOptions={SchoolSubjects} 
+                          values={values}
+                          setValues={setValues}
                         />
                       )}
 
@@ -312,7 +304,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         {(values[f.name] as string[]).map((val) => {
 
                           if(Array.isArray(f.options) && f.options) {
-                            const label = f.options!.find((o: any) => o.value === val)?.label || val;
+                            const option = f.options!.find((o: any) => o.value === val);
+                            const label = typeof option?.label === "object" ? option.label.name  : option?.label || val;
+                            
                           return (
                             <div
                               key={val}
@@ -330,9 +324,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                           );
                         }
                         })}
-                      </div>
+                      </div> 
                     </>
-                  ): f.type === 'select' ? (
+                  ): f.name !== 'class' && f.type === 'select' ? (
                     <select
                       id={f.name}
                       name={f.name}
@@ -349,7 +343,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         </option>
                       ))}
                     </select>
-                  ) : (
+                  ) : f.name !== 'class' &&(
                     <input
                       id={f.name}
                       name={f.name}
