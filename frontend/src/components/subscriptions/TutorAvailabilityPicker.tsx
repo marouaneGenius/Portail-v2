@@ -230,12 +230,12 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
       {/* Durée */}
       <div>
-        <label className="block mb-1 font-medium">Durée de cours par semaine</label>
+        <label className="block mb-1 font-medium">Heure du cours</label>
         <select
           onChange={(e) => handleSessionChange(e.target.value)}
           className="w-full border px-3 py-2 rounded"
         >
-          <option value="">Choisir une durée</option>
+          <option value="">Choisir une heure</option>
           {hoursList.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}

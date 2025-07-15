@@ -7,7 +7,7 @@ import {
   Calendar,
   User,
   LogOut,
-  Zap,
+  CalendarRange
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -28,8 +28,8 @@ const menuItems = [
   { title: 'Centres', url: '/centers', icon: Building },
   { title: 'Étudiants', url: '/students', icon: GraduationCap },
   { title: 'Parents', url: '/parents', icon: UserCheck },
-  { title: 'Séances', url: '/session-calendar', icon: Calendar },
-  { title: 'Planing des Tuteurs',url: '/planing', icon: Calendar },
+  { title: 'Planning séances', url: '/session-calendar', icon: Calendar },
+  { title: 'Planning tuteurs',url: '/planing', icon: CalendarRange },
   { title: 'Mon profil', url: '/profile', icon: User },
 ];
 
@@ -37,18 +37,6 @@ const CustomSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   if (!user) return null;
 
- /* const menu = [
-    { to: '/users', icon: <HiUsers className='h-7 w-7' />, label: 'Utilisateurs' },
-    { to: '/centers', icon: <HiOfficeBuilding className='h-7 w-7' />, label: 'Centres' },
-    { to: '/students', icon: <HiAcademicCap className='h-7 w-7' />, label: 'Étudiants' },
-    { to: '/parents', icon: <HiOutlineUsers className='h-7 w-7 ' />, label: 'Parents' },
-    { to: '/sessions', icon: <HiOfficeBuilding className='h-7 w-7 ' />, label: 'Séances' },
-    { to: '/profile', icon: <HiUserCircle className='h-7 w-7 ' />, label: 'Mon profil' },
-    { to: '/planing', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Planing' },
-    // { to: '/abonnements', icon: <HiViewGridAdd className='h-7 w-7 ' />, label: 'Abonnements' },
-    // { to: '/tutor-schedule', icon: <HiCalendar className='h-7 w-7 ' />, label: 'Dispo Tuteur' },
-  ];
-*/
   return (
     <Sidebar className="border-r border-fading-grey bg-white">
       <SidebarHeader className="border-b border-fading-grey p-4 sm:p-6">
