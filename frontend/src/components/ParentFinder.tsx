@@ -31,7 +31,7 @@ interface ParentSelectorProps {
   updateItem: (res:any)=> void;
 }
 
-const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, updateItem}) => {
+const ParentSelector: React.FC<ParentSelectorProps> = ({onClose, updateItem}) => {
     const [search, setSearch] = useState('');
     const [parents, setParents] = useState<Parent[]>([]);
     const [filteredParents, setFilteredParents] = useState<Parent[]>([]);
@@ -39,6 +39,7 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
     const [creating, setCreating] = useState(false);
     const noResults = !loading && search.trim() !== '' && parents.length === 0;
     const { id } = useParams();
+    const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -68,28 +69,21 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
         setFilteredParents(filteredItems)
     };
 
-    const handleCreate = (values: Record<string, any>) => {
-        api
-        .post<Parent>('/api/parent', values)
-        .then((res:any) => {
-            onSelect(res.data);
-        })
-        .catch(console.error);
-    };
-
     const onSelect = async (parent:any) => {
-        try {
-            api.post(`/api/student/${id}/parents`, {
-            parentId: parent.id,
-            }).then((res:any) => {
-                onClose()
-                updateItem(res)
-            })
-            .catch(console.error);
+        setSelectedParentId(parent.id);
+        updateItem(parent)
+    //     try {
+    //         api.post(`/api/student/${id}/parents`, {
+    //         parentId: parent.id,
+    //         }).then((res:any) => {
+    //             onClose()
+    //             updateItem(res)
+    //         })
+    //         .catch(console.error);
 
-        } catch (err) {
-            console.error('Erreur liaison parent/élève', err);
-        }
+    //     } catch (err) {
+    //         console.error('Erreur liaison parent/élève', err);
+    //     }
     } 
 
     return (
@@ -107,7 +101,6 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
             {!creating && (
                 <div className="max-h-60 overflow-auto">
                 {loading && <p>Chargement…</p>}
-
                 {!loading && parents.length > 0 && (
                     <ul className="divide-y border rounded">
 
@@ -115,7 +108,12 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
                         <li
                         key={p.id}
                         onClick={() => onSelect(p)}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between"
+                        className={
+                            `px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between ` +
+                            (selectedParentId === p.id
+                              ? 'bg-blue-100 font-semibold'
+                              : '')
+                          }
                         >
                         <span>{p.firstname} {p.lastname}</span>
                         <span className="text-sm text-gray-500">{p.email}</span>
@@ -125,7 +123,7 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
                 )}
                 </div>
             )}
-            <p className="text-sm text-gray-500">
+            {/* <p className="text-sm text-gray-500">
                 <button
                 onClick={() => setCreating(true)}
                 className="text-blue-600 hover:underline"
@@ -133,14 +131,13 @@ const ParentSelector: React.FC<ParentSelectorProps> = ({student, onClose, update
                 Créer un nouveau parent
                 </button>
             </p>
-
             {creating && (
                 <FormGenerator
                 fields={parentFields}
                 onSubmit={handleCreate}
                 initialValues={{}}
                 />
-            )}
+            )} */}
         </div>
     );
 };

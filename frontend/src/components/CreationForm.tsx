@@ -72,21 +72,22 @@ export default function CreationForm() {
           mainValues ? mainValues : values,
         );
 
-        if(resource === 'parent' || resource === 'student') {
-          if( created && parentValues ){
-            const { data: parent } = await api.post<Record<string, any>>(
-              `/api/parent`,
-              parentValues,
-            );
-            //check if we create parent and student &  create colone on many to many table
-            if(parent && created) {
-              api.post(`/api/student/${created.id}/parents`, {
-                parentId: parent.id,
-                }).then()
-                .catch(console.error);
-            }
-          }
-        }
+        // if(resource === 'parent' || resource === 'student') {
+        //   if( created && parentValues ){
+        //     const { data: parent } = await api.post<Record<string, any>>(
+        //       `/api/parent`,
+        //       parentValues,
+        //     );
+        //     console.log(created, resource)
+        //     //check if we create parent and student &  create colone on many to many table
+        //     if(parent && created) {
+        //       api.post(`/api/student/${created.id}/parents`, {
+        //         parentId: parent.id,
+        //         }).then()
+        //         .catch(console.error);
+        //     }
+        //   }
+        // }
 
         setData(prev => [created, ...prev]);
         return created;
@@ -101,8 +102,9 @@ export default function CreationForm() {
   };
 
   const handleSubmit = async (values: Record<string, any>) => {
+
     try{
-     const r =  await postData(values);
+     await postData(values);
       if(resource === "tutorschedule") {
         navigate(`/users`);
       } else {
