@@ -1,145 +1,97 @@
 // src/components/ParentSelector.tsx
 import React, { useState, useEffect } from 'react';
 import api from '../api/aixos';
-import FormGenerator from './FormGenerator';
-import { parentFields } from '../forms/schemas';
-import { useParams } from 'react-router-dom';
+import { debounce } from 'lodash';           // ≈ 2 ko dans le bundle
 
-export interface Parent {
+interface Parent {
   id: number;
   firstname: string;
   lastname: string;
   email: string;
   phone: string;
-  address: string;
-  zip_code?: string;
-  city?: string;
 }
 
-export interface Student {
-    id: number;
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone: string;
-    center?:any
-  }
-
-interface ParentSelectorProps {
-  student?: any
+interface Props {
   onClose: () => void;
-  updateItem: (res:any)=> void;
+  updateItem: (p: Parent) => void;
 }
 
-const ParentSelector: React.FC<ParentSelectorProps> = ({onClose, updateItem}) => {
-    const [search, setSearch] = useState('');
-    const [parents, setParents] = useState<Parent[]>([]);
-    const [filteredParents, setFilteredParents] = useState<Parent[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [creating, setCreating] = useState(false);
-    const noResults = !loading && search.trim() !== '' && parents.length === 0;
-    const { id } = useParams();
-    const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+const ParentSelector: React.FC<Props> = ({ onClose, updateItem }) => {
+  const [term, setTerm] = useState('');
+  const [results, setResults] = useState<Parent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-    useEffect(() => {
-        setLoading(true);
-        api.get<Parent[]>(`/api/parent`)
-        .then((res) => {
-            setParents(res.data)
-            setFilteredParents(res.data)
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false))
-    }, []);
+  const doSearch = React.useCallback(
+    debounce(async (q: string) => {
+      if (!q.trim()) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const { data } = await api.get<Parent[]>('/api/parent/search', {
+          params: { q }
+        });
+        setResults(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }, 300),
+    []
+  );
 
-    const findParent = (term: string) => {
-        setSearch(term);
-        const t = term.trim().toLowerCase();
 
-        if (!t) {
-          setFilteredParents(parents);
-          return;
-        }
-    
-        const filteredItems =  parents.filter((item) => {
-            if(item.firstname.toLowerCase().includes(t) || item.lastname.toLowerCase().includes(t) ) {
-                return item;
-            }
-        })
-        setFilteredParents(filteredItems)
-    };
+  useEffect(() => {
+    doSearch(term);
+  }, [term, doSearch]);
 
-    const onSelect = async (parent:any) => {
-        setSelectedParentId(parent.id);
-        updateItem(parent)
-    //     try {
-    //         api.post(`/api/student/${id}/parents`, {
-    //         parentId: parent.id,
-    //         }).then((res:any) => {
-    //             onClose()
-    //             updateItem(res)
-    //         })
-    //         .catch(console.error);
+  const handleSelect = (p: Parent) => {
+    setSelectedId(p.id);
+    updateItem(p);
+  };
 
-    //     } catch (err) {
-    //         console.error('Erreur liaison parent/élève', err);
-    //     }
-    } 
+  return (
+    <div className="space-y-4">
+      <input
+        type="text"
+        placeholder="Rechercher un parent…"
+        value={term}
+        onChange={(e) => setTerm(e.target.value)}
+        className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
+      />
 
-    return (
-        <div className="space-y-4">
-            <input
-                type="text"
-                placeholder="Rechercher un parent…"
-                value={search}
-                onChange={e => {
-                    findParent(e.target.value);
-                    setCreating(false);
-                }}
-                className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
-            />
-            {!creating && (
-                <div className="max-h-60 overflow-auto">
-                {loading && <p>Chargement…</p>}
-                {!loading && parents.length > 0 && (
-                    <ul className="divide-y border rounded">
+      {/* Résultats ------------------------------------------------ */}
+      {loading && <p>Chargement…</p>}
 
-                    { filteredParents.map((p) => (
-                        <li
-                        key={p.id}
-                        onClick={() => onSelect(p)}
-                        className={
-                            `px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between ` +
-                            (selectedParentId === p.id
-                              ? 'bg-blue-100 font-semibold'
-                              : '')
-                          }
-                        >
-                        <span>{p.firstname} {p.lastname}</span>
-                        <span className="text-sm text-gray-500">{p.email}</span>
-                        </li>
-                    ))}
-                    </ul>
-                )}
-                </div>
-            )}
-            {/* <p className="text-sm text-gray-500">
-                <button
-                onClick={() => setCreating(true)}
-                className="text-blue-600 hover:underline"
-                >
-                Créer un nouveau parent
-                </button>
-            </p>
-            {creating && (
-                <FormGenerator
-                fields={parentFields}
-                onSubmit={handleCreate}
-                initialValues={{}}
-                />
-            )} */}
-        </div>
-    );
+      {!loading && term && results.length === 0 && (
+        <p className="text-sm text-gray-500">Aucun parent trouvé.</p>
+      )}
+
+      {!loading && results.length > 0 && (
+        <ul className="max-h-60 overflow-auto divide-y border rounded">
+          {results.map((p) => (
+            <li
+              key={p.id}
+              onClick={() => handleSelect(p)}
+              className={
+                'px-4 py-2 cursor-pointer flex justify-between hover:bg-gray-100 ' +
+                (selectedId === p.id ? 'bg-blue-100 font-semibold' : '')
+              }
+            >
+              <span>
+                {p.firstname} {p.lastname}
+              </span>
+              <span className="text-sm text-gray-500">{p.email}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 };
 
 export default ParentSelector;
