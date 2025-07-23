@@ -24,7 +24,7 @@ export function StudentsSubscriptions({ resource, item, id }:any) {
   // Cas parent : affiche les cartes de tous ses enfants
   if (resource === "parent") {
     if (loading) return <div>Chargement...</div>;
-    if (!students.length) return <div className="text-gray-400 italic">PAS DE CONTRAT</div>;
+    if (!students.length) return null;
     return (
       <div className="flex flex-col gap-8">
         {students.map((student: any) => (
@@ -47,5 +47,5 @@ export function StudentsSubscriptions({ resource, item, id }:any) {
   }
 
   // Par défaut : rien à afficher
-  return <div className="text-gray-400 italic">PAS DE CONTRAT</div>;
+  return null;
 }

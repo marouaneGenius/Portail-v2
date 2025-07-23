@@ -636,7 +636,7 @@ import api from "../../api/aixos";
     const found = tutor.class.find((classSubject:any) => classSubject.subject === subject);
     if (found) {
       const tutorClass = getLevelOfClass(found.level)
-      return ` jusqu'au ${tutorClass}`;
+      return ` jusqu'en ${tutorClass}`;
     }
     return 'Pas de niveau trouvé';
   }

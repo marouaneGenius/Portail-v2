@@ -268,18 +268,6 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
                     </button>
                 }
 
-
-                {
-                !isActive &&
-                  <button
-                  className="border border-orange-300 text-orange-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
-                  onClick={e => validateContract(sub)}
-                >
-                  <Check size={16} /> Valider 
-                </button>
-                }
-
-
               </div>
               <div className="text-gray-700 text-sm mt-1 mb-2">
                 Du <span className="font-medium">{sub.subscription_start_date && new Date(sub.subscription_start_date).toLocaleDateString("fr-FR")}</span> au <span className="font-medium">{sub.subscription_end_date && new Date(sub.subscription_end_date).toLocaleDateString("fr-FR")}</span>

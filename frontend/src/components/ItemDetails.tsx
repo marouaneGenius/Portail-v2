@@ -24,6 +24,7 @@ import { StudentsSubscriptions } from './subscriptions/StudentsSubscriptions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars, FileText, Building, CalendarCheck, CreditCard, CalendarDays, Zap, ShieldCheck, UserRound, GraduationCap } from 'lucide-react';
 import { actions } from '../mocks/mocks'; // Assure-toi que le chemin est correct
+import { getLevelOfClass } from './subscriptions/SubscriptionFunctions';
 
 export interface DetailPageParams {
   resource: string;
@@ -188,6 +189,35 @@ const ItemDetails: React.FC = () => {
                     </div>
                   ) : null
                 )}
+                {/* Ajout matières du tuteur */}
+                {item.school_subjects && Array.isArray(item.school_subjects) && item.school_subjects.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <GraduationCap className="w-5 h-5 text-mister-anthracite/50" />
+                    <div>
+                      <p className="text-sm text-mister-anthracite/70">Matières enseignées</p>
+                      <p className="font-medium text-mister-anthracite">
+                        {item.school_subjects.map((sub: any, i: number) => {
+                          // Cherche le niveau correspondant dans item.class
+                          const levelObj = Array.isArray(item.class)
+                            ? item.class.find((cl: any) => cl.subject === (sub.value || sub.label || sub))
+                            : null;
+                          const label = sub.label || sub.value || sub;
+                          return (
+                            <span key={label} className="inline-block mr-2">
+                              {label}
+                              {levelObj && (
+                                <span className="ml-1 text-xs text-mister-anthracite/60">
+                                  (Jusqu'en {getLevelOfClass(levelObj.level)})
+                                </span>
+                              )}
+                              {i < item.school_subjects.length - 1 && ','}
+                            </span>
+                          );
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
               {/* <Separator /> */}
               {/* Adresse */}
@@ -343,16 +373,6 @@ const ItemDetails: React.FC = () => {
                   )}
                 </div>
               </div>
-
-              { item.roles?.[0] === 'ROLE_TUTOR' &&
-                <div className="flex items-center ">
-                  <div className="flex-1">
-                    <p className="text-sm text-mister-anthracite/70">Ajouter des creneaux</p>
-                    <Button onClick={()=> navigate(`/form/tutorschedule/${id}`)} className='bg-red-300' size={'sm'}>Ajouter +</Button>
-                  </div>
-                </div>
-              }
-
             </CardContent>
           </Card>
 
@@ -429,6 +449,49 @@ const ItemDetails: React.FC = () => {
                     <p className="text-sm text-mister-anthracite/70">Dernière connexion</p>
                     <p className="font-medium text-mister-anthracite">{item.last_login}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Créneaux de disponibilité */}
+          {item.roles?.[0] === 'ROLE_TUTOR' && (
+            <Card className="border-fading-grey">
+              <CardHeader className="flex flex-row items-start justify-between">
+                <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+                  <CalendarCheck className="w-5 h-5 text-blue-500" />
+                  Créneaux de disponibilité
+                </CardTitle>
+                <Button
+                  onClick={() => navigate(`/form/tutorschedule/${id}`)}
+                  className="bg-red-300"
+                  size="sm"
+                >
+                  Ajouter des créneaux +
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 mb-4">
+                  {item.tutor_schedules && Array.isArray(item.tutor_schedules) && item.tutor_schedules.length > 0 ? (
+                    item.tutor_schedules.map((slot: any, i: number) => (
+                      <div key={slot.id || i} className="flex items-center gap-2 text-mister-anthracite">
+                        <span className="inline-flex items-center gap-1 font-medium">
+                          <Calendar className="w-4 h-4 text-hello-yellow" />
+                          {slot.day}
+                        </span>
+                        <span className="text-sm text-mister-anthracite/70">
+                          {slot.start_hour?.slice(0,5)} - {slot.end_hour?.slice(0,5)}
+                        </span>
+                        {slot.centers && Array.isArray(slot.centers) && slot.centers.length > 0 && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                            {slot.centers.map((c: any) => c.name).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-mister-anthracite/50 italic">Aucun créneau renseigné pour ce tuteur.</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
