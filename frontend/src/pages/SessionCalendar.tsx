@@ -68,11 +68,15 @@ export default function SessionCalendar() {
   useEffect(() => {
     if (selectedDate) {
       const date = new Date(selectedDate);
+      console.log(date, selectedCenter)
+
       api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
         params: { date: formatDate(date) }
       })
         .then(({ data }) => {
+
           const filteredTutors = data.map((item: any) => {
+
 
             return {
               tutor: item,

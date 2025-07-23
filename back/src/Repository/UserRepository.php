@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Center;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -52,6 +53,48 @@ class UserRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->andWhere('u.id IN (:ids)')
             ->setParameter('ids', array_keys($ids))
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function getUsersByCenter(Center $center): array
+    {
+        // Vérifie qu’on a bien un centre géré (flushé) :
+        if ($center->getId() === null) {
+            throw new \InvalidArgumentException(
+                'Le Center passé à getUsersByCenter() doit avoir un ID (il doit venir d’un find() ou avoir été flushé).'
+            );
+        }
+    
+        // Requête join explicite : doctrine ne cherche que les users reliés au centre.
+        return $this->createQueryBuilder('u')
+            ->innerJoin('u.centres', 'c')
+            ->andWhere('c = :center')
+            ->setParameter('center', $center)
+            ->getQuery()
+            ->getResult();         // ← tableau d’objets User
+    }
+
+
+    public function findTutorsAvailableInCenter(Center $center): array
+    {
+        // 1. Récupérer simplement la liste d’IDs
+        $ids = $this->createQueryBuilder('u')
+            ->select('DISTINCT u.id')
+            ->innerJoin('u.tutorSchedules', 'ts')
+            ->innerJoin('ts.center',        'c')
+            ->andWhere('c = :center')
+            ->setParameter('center', $center)
+            ->getQuery()
+            ->getSingleColumnResult();   // => [3, 5, 12, …]
+    
+        if (!$ids) {
+            return [];
+        }
+    
+        return $this->createQueryBuilder('u')
+            ->where('u.id IN (:ids)')
+            ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
     }
