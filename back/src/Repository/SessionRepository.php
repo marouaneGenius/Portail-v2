@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Center;
 use App\Entity\Session;
 use App\Entity\TutorSchedule;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -112,17 +113,17 @@ class SessionRepository extends ServiceEntityRepository
         }, $sessions);
     }
 
-    public function getTutorsAndSessionsWithStudentsByCenterAndDate(Center $center, \DateTimeImmutable $date): array
+    public function getTutorsAndSessionsWithStudentsByCenterAndDate(Center $center, \DateTimeImmutable $date, $users): array
     {
         $tutors = [];
-        foreach ($center->getUsers() as $user) {
-            if (!in_array('ROLE_TUTOR', $user->getRoles())) continue; // Prend seulement les tuteurs
+        foreach ($users as $user) {
+            if (!in_array('ROLE_TUTOR', $user->getRoles())) continue; 
 
-            // Filtre les sessions de ce tuteur sur ce centre et ce jour
             $sessionsDuJour = $user->getSessions()->filter(function($session) use ($center, $date) {
-                return $session->getCenter()?->getId() === $center->getId()
+                   return $session->getCenter()?->getId() === $center->getId()
                     && $session->getScheduledAt() !== null
-                    && $session->getScheduledAt()->format('Y-m-d') === $date->format('Y-m-d');
+                    && $session->getScheduledAt()->format('Y-m-d') === $date->format('Y-m-d')
+                    ;
             });
 
             $sessionsArr = [];
@@ -158,7 +159,6 @@ class SessionRepository extends ServiceEntityRepository
                 ];
             }
 
-            // ⬇️ Ajoute cette ligne :
             if (empty($sessionsArr)) continue;
 
             $tutors[] = [
@@ -177,7 +177,6 @@ class SessionRepository extends ServiceEntityRepository
             ];
         }
         return $tutors;
-
     }
 
 

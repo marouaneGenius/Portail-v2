@@ -500,14 +500,14 @@ const ItemDetails: React.FC = () => {
       </div>
 
       {/* Modal parent */}
-      <Modal
+      {/* <Modal
         isOpen={isOpen}
         title="Attacher ou créer le parent"
         onClose={close}
         footer={<Button variant="outline" onClick={close}>Fermer</Button>}
       >
         <ParentSelector student={item} onClose={close} updateItem={updateCurrentItem} />
-      </Modal>
+      </Modal> */}
     </div >
   );
 };

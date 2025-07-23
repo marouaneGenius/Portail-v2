@@ -29,7 +29,6 @@ export const userFields: FormField[] = [
   { name: 'siret', label: 'Siret', type: 'text', className: 'col-span-2' },
   { name: 'centers', label: 'Centers', type: 'select',  multiple: true },
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true },
-  { name: 'class', label: 'Matieres', type: 'select',  multiple: true },
 
   // { name: 'class', label: 'Classes', type: 'select',  className: 'col-span-2', multiple: true},
 ];

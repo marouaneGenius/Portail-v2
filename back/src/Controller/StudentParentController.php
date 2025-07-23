@@ -111,7 +111,7 @@ class StudentParentController extends AbstractController
 
 
 
-    #[Route('/{id}', methods: ['GET'])]
+    #[Route('/{id<\d+>}', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         $parent = $this->parentRepo->find($id);
@@ -148,6 +148,12 @@ class StudentParentController extends AbstractController
             'students'    => $students,
         ]);
     }
+
+    // webhook declanche une music et elle s'arrete que quand y'a autre webhook 
+    // declanche new lead
+    // l'apelle passe et arrete la music
+    // le numero du telephone c'est le meme 
+    // idee une list des apelle en attente
 
     #[Route('/{id}', name: 'api_parents_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
@@ -209,6 +215,38 @@ class StudentParentController extends AbstractController
 
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
+
+
+
+    #[Route('/search', name: 'api_parent_search', methods: ['GET'])]
+    public function search(Request $request, StudentParentRepository $repo): JsonResponse
+    {
+        $q = trim((string) $request->query->get('q', ''));
+        if ($q === '') {
+            return $this->json([]);         
+        }
+
+        $parts = array_filter(explode(' ', $q));
+
+        $qb = $repo->createQueryBuilder('p');
+        foreach ($parts as $k => $part) {
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('LOWER(p.firstname)', ":t$k"),
+                    $qb->expr()->like('LOWER(p.lastname)' , ":t$k")
+                )
+            )
+            ->setParameter("t$k", '%'.strtolower($part).'%');
+        }
+
+        $parents = $qb
+            ->setMaxResults(20)          
+            ->getQuery()
+            ->getArrayResult();          
+
+        return $this->json($parents);
+    }
+
 
 
 }

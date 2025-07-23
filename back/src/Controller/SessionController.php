@@ -153,7 +153,7 @@ class SessionController extends AbstractController
             return new JsonResponse(['error' => 'Centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        $dateParam = $request->query->get('date'); // ex: 2025-09-15
+        $dateParam = $request->query->get('date'); 
         $date = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
         
         if (!$date) {
@@ -162,9 +162,15 @@ class SessionController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
+
+
         
         $start = $date->setTime(0, 0, 0);
-        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start);
+        $users = $this->userRepo->findTutorsAvailableInCenter($center);
+
+
+        // dd( $users);
+        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start, $users);
 
         return new JsonResponse($data);
     }

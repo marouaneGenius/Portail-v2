@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Student;
+use App\Entity\StudentParent;
 use App\Repository\CenterRepository;
 use App\Repository\StudentParentRepository;
 use App\Repository\StudentRepository;
@@ -73,6 +74,54 @@ class StudentController extends AbstractController
             );
         }
         $student->setIdCenter($center);
+
+        if (!empty($data['parent'])) {
+
+            $pData = $data['parent'];
+        
+            /** ----- 3.a  Parent EXISTANT (parent.id fourni) ----------------- */
+            if (!empty($pData['id'])) {
+                $parent = $this->studentParentRepository->find($pData['id']);
+        
+                if (!$parent) {
+                    return $this->json(
+                        ['error' => 'Parent introuvable.'],
+                        JsonResponse::HTTP_BAD_REQUEST
+                    );
+                }
+            } else {
+                $parentRequired = ['firstname', 'lastname', 'gender', 'email'];
+                foreach ($parentRequired as $f) {
+                    if (empty($pData[$f] ?? null)) {
+                        return $this->json(
+                            ['error' => sprintf('Le champ parent.%s est requis.', $f)],
+                            JsonResponse::HTTP_BAD_REQUEST
+                        );
+                    }
+                }
+        
+                // (Optionnel) – éviter les doublons : regarder si un parent avec même email existe
+                $parent = $this->studentParentRepository->findOneBy(['email' => $pData['email']]);
+                if (!$parent) {                               // pas trouvé, donc on le crée
+                    $parent = (new StudentParent())
+                        ->setFirstname($pData['firstname'])
+                        ->setLastname($pData['lastname'])
+                        ->setGender($pData['gender'])
+                        ->setEmail($pData['email'])
+                        ->setPhone($pData['phone'] ?? null)
+                        ->setAddress($pData['address'] ?? null)
+                        ->setZipCode($pData['zip_code'] ?? null)
+                        ->setCity($pData['city'] ?? null)
+                        ->setCreatedAt(new \DateTimeImmutable())
+                        ->setCreatedBy($this->getUser()->getUserIdentifier());
+        
+                    $this->em->persist($parent);
+                }
+            }
+        
+            // Dans les deux cas (existant ou créé) on lie le parent à l’élève
+            $student->addIdParent($parent);
+        }
 
         $this->em->persist($student);
         $this->em->flush();

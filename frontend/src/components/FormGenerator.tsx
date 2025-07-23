@@ -8,6 +8,9 @@ import { getCenters, getUser } from '../api/api';
 import { MultiSelectNoCtrl, MultiSelectSchoolSubjectsWithLevels, RenderField } from './forms/customInput';
 import { useParams } from 'react-router-dom';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
+import { useModal } from '@/Hooks/useModal';
+import ParentSelector from './ParentFinder';
+import ParentFormOrModal from './ParentFormOrModal';
 
 export interface FormField {
   name: string;
@@ -35,21 +38,23 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     // class: [],
     ...initialValues,
   }: {...initialValues};
-
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [currentFields, setFields] = useState(fields);
   const [roleFieldValue, useRoleFieldValue] = useState<Boolean>(false);
   const [currenParentFields, setCurrenParentFields] = useState(parentFields);
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
+  const [parentData, setParentData] = useState<any[]>([]);
+  const [parentValues, setParentValues] = useState<Record<string, any>>(defaultValues);
   const { id } = useParams<{ id: any }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects', 'class'];
+  const { isOpen, open, close } = useModal();
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
     const hasClassField = fields.find((item: any) => item.name === 'class');
-    
+
     if (hasRoleField) {
       const filteredFields = currentFields.filter((item) => !optionalFields.includes(item.name));
       if (roleFieldValue) {
@@ -59,11 +64,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       }
     } 
 
-    // For all forms to remove required for all fields to update only wanted fields
     if (!emptyFields) {
-      // Retirer la propriété 'required' des champs actuels
       const fieldsWithoutRequired = currentFields.map(({ required, ...rest }) => rest);
-      // Récupérer les centres et mettre à jour les options si nécessaire
 
       getCenters().then((res) => {
         const centerOptions = res.map((c: any) => ({
@@ -135,7 +137,6 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }));
   };
 
-
   const removeCenter = (center:any) => {
     setValues(prev => ({
       ...prev,
@@ -189,9 +190,34 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }
   };
 
+  const handleChangeParentFields = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, type, value, checked, options }: any = e.target;
+    const multiple = e.target.multiple;
+    
+    setParentValues(prev => ({
+      ...prev,
+      [name]: multiple
+        ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
+        : type === 'checkbox'
+        ? checked
+        : value,
+    }));
+
+    if(e.target.id.includes('_parent')){
+      const key = name.replace(/_parent$/, '');
+      setParentData(prev =>  ({...prev, [key]: value }));
+    }
+
+    setValues(prev =>({
+      ...prev,
+      parent :parentData
+    }))
+  }
+
   useEffect(() => {
     if (endpoint === 'student' && emptyFields) {
       const withParentKeys: any = renameFields(currenParentFields);
+
       setCurrenParentFields(withParentKeys);
     }
   }, [emptyFields, endpoint]);
@@ -199,6 +225,13 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit(values);
+  };
+
+  const getParent = (parent: any) => {
+    setValues(prev => ({
+      ...prev,
+      parent: parent
+    }));
   };
 
   if (loading) return <p>Chargement …</p>;
@@ -216,7 +249,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     htmlFor={f.name}
                     className="block text-sm font-semibold text-[#333333] mb-1 px-1 py-1 rounded"
                   >
-                    {f.name !== 'class' && f.label}
+                    {f.label}
                   </label>
 
                   {/* Mot de passe avec visibilité */}
@@ -326,7 +359,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         })}
                       </div> 
                     </>
-                  ): f.name !== 'class' && f.type === 'select' ? (
+                  ):  f.type === 'select' ? (
                     <select
                       id={f.name}
                       name={f.name}
@@ -343,7 +376,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         </option>
                       ))}
                     </select>
-                  ) : f.name !== 'class' &&(
+                  ) : (
                     <input
                       id={f.name}
                       name={f.name}
@@ -356,56 +389,24 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                     />
                   )}
                 </div>
-              ))}
+              ))
+            }
 
-            {endpoint === 'student' && emptyFields && (
-              <>
-                <h1 className="col-span-2 text-xl font-semibold bg-[#F2F2F2] text-center rounded p-2 border-b-2 border-[#FFB800] my-3">
-                  Ajouter le Parent
-                </h1>
-
-                {currenParentFields.map((f: any) => (
-                  <div key={f.name} className={f.className ?? ''}>
-                    <label
-                      htmlFor={f.name}
-                      className="block text-sm font-semibold text-[#333333] mb-1 bg-[#F2F2F2] px-2 py-2 rounded"
-                    >
-                      {f.label}
-                    </label>
-                    {f.type === 'select' ? (
-                      <select
-                        id={f.name}
-                        name={f.name}
-                        value={values[f.name] || ''}
-                        onChange={handleChange}
-                        className="w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333]"
-                        required={!!f.required}
-                      >
-                        <option value="">—</option>
-                        {(f.options || []).map((opt: any) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        id={f.name}
-                        name={f.name}
-                        type={f.type}
-                        checked={f.type === 'checkbox' ? values[f.name] : undefined}
-                        value={f.type !== 'checkbox' ? values[f.name] || '' : undefined}
-                        onChange={handleChange}
-                        className="w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333]"
-                        required={!!f.required}
-                      />
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
           </div>
-
+          {
+            endpoint == "student" && 
+              <ParentFormOrModal
+                endpoint={endpoint} 
+                emptyFields={emptyFields}
+                currenParentFields={currenParentFields}
+                values={parentValues}
+                handleChange={handleChangeParentFields}
+                isOpen={isOpen}
+                close={close}
+                getParent={getParent}
+                ParentSelector={ParentSelector} 
+              />
+          }
           {endpoint === 'tutorschedule' && (
             <ScheduleArrayField
               dayOptions={Days}
