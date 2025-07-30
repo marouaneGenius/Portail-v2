@@ -312,7 +312,7 @@ import api from "../../api/aixos";
         const dp = new Date(first_debit_date);
         dp.setMonth(dp.getMonth() + i);
         const dpStd = getClosestStandardDate(dp);
-  
+
         // Calcul des prix
         const tarifReduit = price * (1 - remise / 100);
   

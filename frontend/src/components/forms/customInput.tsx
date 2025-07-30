@@ -93,7 +93,6 @@ export function MultiSelectNoCtrl({
     );
 }
 
-
 export function MultiSelectSchoolSubjectsWithLevels({
   subjectOptions,
   values,
@@ -284,8 +283,9 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
           fields={[
             {
               name: 'subscription_start_date',
-              label: 'On commaence le',
+              label: 'On commence le',
               type: 'date',
+              required: true,
               value: values.subscription_start_date,
               onChange: handleChange,
               min: todayISO,
@@ -295,6 +295,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               name: 'subscription_end_date',
               label: 'Finis le',
               type: 'date',
+              
               value: values.subscription_end_date,
               onChange: handleChange,
               defaultValue: FIXED_END_DATE, // default value for annual subscription
@@ -316,6 +317,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
                 { value: '15', label: '15 du mois' },
                 { value: '28', label: '28 du mois' },
               ],
+              required: true,
               value: values.recurrent_debit_date,
               onChange: handleChange,
             },
@@ -323,6 +325,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               type: 'date',
               value: values.first_debit_date,
               onChange: handleChange,
+              defaultValue: todayISO,
               min: todayISO,
             },
           ]}
@@ -517,8 +520,6 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
     />
   );
 };
-
-
 
 export const RenderTrialField: React.FC<RenderFieldProps> = ({
   f,

@@ -1,3 +1,4 @@
+import { TranslateHeaderNames } from "@/services/functions";
 import React from "react";
 import { HiPencil, HiCheckCircle } from "react-icons/hi";
 
@@ -8,10 +9,36 @@ export interface ReviewStepProps {
   onConfirm: () => void;
 }
 
-
-
-/** Affiche un récapitulatif lisible et permet de revenir en arrière avant l'envoi. */
 const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfirm }) => {
+
+  const renderValue = (key:any, value:any) => {
+    
+    if((Array.isArray(value) && value.length ===0 )|| value === null) {
+      delete values.annuel[key]
+      return null;
+    }
+
+
+    if (key === "favorite_slots" && Array.isArray(value)) {
+      return value.map((slot, i) => (
+        <div key={i} className="pl-4">
+          <div>Jour : <b>{slot.day}</b></div>
+          <div>Heure : <b>{slot.hour}</b></div>
+          <div>
+            Matières :{" "}
+            {Array.isArray(slot.matieres) ? slot.matieres.join(", ") : slot.matieres}
+          </div>
+        </div>
+      ));
+    }
+  
+    if (Array.isArray(value)) {
+      return value.length ? value.join(", ") : "—";
+    }
+  
+    return String(value);
+  };
+  
   return (
     <div className="space-y-10">
       {order.map((type) => {
@@ -37,9 +64,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfir
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(data).map(([k, v]) => (
                 <div key={k} className="flex flex-col text-sm">
-                  <dt className="font-semibold text-mister-anthracite/70">{k}</dt>
+                  <dt className="font-semibold text-mister-anthracite/70">
+                    {k !== "school_subjects" &&  TranslateHeaderNames(k)}
+                  </dt>
                   <dd className="text-mister-anthracite break-words">
-                    {Array.isArray(v) ? v.join(", ") : String(v)}
+                    {renderValue(k, v)}
                   </dd>
                 </div>
               ))}

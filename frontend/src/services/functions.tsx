@@ -224,6 +224,22 @@ export const TranslateHeaderNames = (value:String) => {
         return 'Élèves'
       case 'google_id':
         return 'Type de Compte'
+      case 'payment_mode':
+        return 'Type de Paiement'
+      case 'recurrent_debit_date':
+        return 'Prelever tous les'
+      case 'favorite_slots':
+        return 'Créneaux choisis'
+      case 'subscription_start_date':
+        return 'Date du debut d\'abonnement'
+      case 'offer_amount':
+        return 'L\'offre'
+      case 'discount':
+        return 'Remise'
+      case 'offer_type':
+        return 'Type d\'offre'
+      case  'first_debit_date':
+        return 'Date du premier prélèvement'
     }
 }
   
@@ -237,7 +253,6 @@ export const formatTime = (d: Date) => {
   const m = d.getMinutes().toString().padStart(2, '0');
   return `${h}:${m}`;
 };
-
 
 export const normalizeHour = (str: string) => {
   const match = str.match(/^(\d{1,2})h(\d{0,2})$/);

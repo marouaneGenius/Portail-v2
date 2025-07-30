@@ -99,6 +99,11 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+
+    /**
+     * on doit recup les clients
+     */
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */

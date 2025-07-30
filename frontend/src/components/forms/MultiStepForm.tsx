@@ -16,14 +16,13 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   const [showReview, setShowReview] = useState(false);
 
   const handleNextStep = (section: string, stepValues: Record<string, any>) => {
-    /* on range les valeurs par section (annuel / stage…) */
     setCollectedValues((prev) => ({
       ...prev,
       [section.toLowerCase()]: stepValues,
     }));
 
     if (isLastStep) {
-      setShowReview(true);              // on passe à l’écran récap
+      setShowReview(true);              
     } else {
       setStepIndex((i) => i + 1);
     }
@@ -40,6 +39,7 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   };
 
   const handleConfirm = () => {
+    // console.log(collectedValues)
     onSubmit(collectedValues);          // POST final
   };
 

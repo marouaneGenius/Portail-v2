@@ -66,8 +66,10 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
             })  
 
             if(filterBySchoolSubject.length === 0 && availabilitys.length === 0 && school_subjects.length !== 0) {
-              console.log(school_subjects)
-              setErrorMessage(`❌ Aucun tuteur disponible n’enseigne ${school_subjects.join()} pour  ${studentRes.data.class}`);
+              console.log(school_subjects, school_subjects.join())
+              setErrorMessage(`❌ Aucun tuteur disponible n’enseigne ${school_subjects.join().toUpperCase() } pour  ${studentRes.data.class}`);
+            } else {
+              setErrorMessage('');
             }
 
             if (day && selectedHour && filterBySchoolSubject) {

@@ -20,7 +20,6 @@ const ContractContentComponent: React.FC<FullContractProps>  = ({ Student, Subsc
         }
     }, [Student, Subscription]);
 
-
   return (
     <div className="space-y-8 flex ">
         <div className='mx-auto w-5/6 rounded'>

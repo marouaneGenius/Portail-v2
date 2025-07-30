@@ -25,7 +25,12 @@ interface CalculatorProps {
 /** Composant wrapper : calcule puis affiche la table */
 const TarificationCalculator: React.FC<CalculatorProps> = ({ data, price }) => {
   const { lignes, totalApresReduction, coutHoraire } = computeTarification(data, price);
+
+
+
   return (
+
+    lignes &&
     <TarificationTable
       lignes={lignes}
       totalApresReduction={totalApresReduction}

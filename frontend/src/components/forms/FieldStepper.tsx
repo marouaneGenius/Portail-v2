@@ -30,10 +30,17 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   const value = values[current.name];
   const isRequiredAndEmpty = current.required && (!value || value === '');
   const [showError, setShowError] = useState(false);
+  const todayISO = new Date().toISOString().split('T')[0];
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
+
+
+
+
+
+
     setValues(prev => ({
       ...prev,
       [name]: multiple
@@ -51,6 +58,19 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
       setIndex(0);
     }
   }, [fields]);
+
+
+
+  useEffect(() => {
+    if(values.recurrent_debit_date && !values.first_debit_date){
+      setValues((prev) => ({
+        ...prev,
+        first_debit_date: todayISO,
+      }));
+    }
+
+
+  }, [values]);
 
   const next = () => {
     if (isRequiredAndEmpty) return;

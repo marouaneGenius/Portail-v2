@@ -1,7 +1,7 @@
 // src/components/ParentSelector.tsx
 import React, { useState, useEffect } from 'react';
 import api from '../api/aixos';
-import { debounce } from 'lodash';           // ≈ 2 ko dans le bundle
+import { debounce } from 'lodash';           
 
 interface Parent {
   id: number;
@@ -43,7 +43,6 @@ const ParentSelector: React.FC<Props> = ({ onClose, updateItem }) => {
     }, 300),
     []
   );
-
 
   useEffect(() => {
     doSearch(term);

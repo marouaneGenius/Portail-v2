@@ -26,34 +26,6 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
     const [price, setPrice] = useState(0);
     const [showFraisInscriptionComponent, setshowFraisInscriptionComponent] = useState(true);
     const [isCombined, setIsCombined] = useState(Subscription.combined_id ? true : false);
-    
-
-    // useEffect(() => {
-    //     const isMember = false //IsStudentIsMember(student, SubscriptionType);
-    //     const niveau:any = getNiveauScolaire(student.class);
-    //     let newPrice;
-
-    //     if(SubscriptionType === 'stage'){
-    //          newPrice = getStagePrice(Subscription.week_count, isCombined, isMember)
-    //     } else {
-    //          newPrice = getPrice(SubscriptionType, Subscription.session_per_week, niveau, { combined: isCombined, isMember: isMember })
-    //     }
-        
-    //     setPrice(newPrice)
-
-    //     if(isCombined) {
-    //         showSubscriptionPrice(Subscription).then((res) => {
-    //             if(res.includes('annuel') && SubscriptionType == 'annuel') {
-    //                 setshowFraisInscriptionComponent(true)
-    //             } else if(!res.includes('annuel') && res.includes('preinscription') && SubscriptionType == 'preinscription'){
-    //                 setshowFraisInscriptionComponent(true)
-    //             } else {
-    //                 setshowFraisInscriptionComponent(false)
-    //             }
-    //         })
-    //     }
-
-    // } ,[Student, Subscription, SubscriptionType]);
 
     useEffect(() => {
         async function fetchAndSet() {
