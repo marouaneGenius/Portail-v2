@@ -11,6 +11,7 @@ import { DetailsItemSidebar } from '../components/DetailsItemSideBar';
 import { ScheduleArrayField } from '../components/forms/TutorScheduleForm';
 import { Days } from '../mocks/mocks';
 import { getFrenchDayLabel } from '../services/functions';
+import { eC } from '@fullcalendar/core/internal-common';
 
 export const Planing: React.FC = () => {
   const { user } = useAuth();
@@ -34,8 +35,6 @@ export const Planing: React.FC = () => {
       getCenters()
     ])
       .then(([tutorsRes, centersData]) => {
-
-
         console.log(tutorsRes)
         setTutors(tutorsRes.data);
         setCenters(centersData);
@@ -48,27 +47,19 @@ export const Planing: React.FC = () => {
   }, []);
 
   const loadEvents = () => {
-    const filteredTutors = tutors
-      .map((tutor) => {
-        const filteredEvents = tutor.events.filter((event: any) =>
-          event.centers.some((center: any) => center.id === selectedCenter)
-        );
-
-
-
-        console.log(filteredEvents)
-
+    const filteredTutors = tutors .map((tutor) => {
+      const filteredEvents = tutor.events.filter((event: any) => {
+        if(event.centers) {
+          return event.centers.id === selectedCenter
+        }
+      });
         return { ...tutor, events: filteredEvents };
-      })
-      .filter((tutor) => tutor.events.length > 0);
-
-    setResources(filteredTutors.map((t) => ({
-      resourceId: String(t.id),
-      resourceTitle: `${t.firstname} ${t.lastname}`,
-    })));
-
-
-    // console.log(filteredTutors, expandSchedulesToWeeklyEvents(filteredTutors, moment().year()))
+      }) .filter((tutor) => tutor.events.length > 0);
+      setResources(filteredTutors.map((t) => ({
+        resourceId: String(t.id),
+        resourceTitle: `${t.firstname} ${t.lastname}`,
+      }) )
+    );
     setEvents(expandSchedulesToWeeklyEvents(filteredTutors, moment().year()));
   }
 
@@ -147,6 +138,7 @@ export const Planing: React.FC = () => {
           .then((tutorsRes) => {
             setTutors(tutorsRes.data); // Mettre à jour les tuteurs
             loadEvents(); // Recharger les événements
+            
           })
           .catch((error) => {
             console.error('Erreur lors du rechargement des tuteurs :', error);
