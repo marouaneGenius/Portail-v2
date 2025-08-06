@@ -47,7 +47,6 @@ export const router = createBrowserRouter([
             { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
             { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
             { path: "/session-calendar", element: <SessionCalendar /> },
-
           ],
         },
       ],

@@ -230,6 +230,9 @@ import api from "../../api/aixos";
     if(data.subscription_type === 'preinscription') {
        return computePreInscription(data, data.student.class, price);
     }
+
+
+
   
     if (payment_mode === "annuel") {
       // Ajustement date début lundi et fin dimanche
@@ -253,7 +256,7 @@ import api from "../../api/aixos";
       totalApresReduction += tarifMoitie;
       totalHeures += nbSeances * dureeSeance;
   
-    } else if (payment_mode === "trimestriel") {
+    } else if (payment_mode === "trimeslle") {
       const debut = new Date(subscription_start_date);
       const fin = new Date(subscription_end_date);
       const moisTotal = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth());
@@ -270,30 +273,27 @@ import api from "../../api/aixos";
         while (qEnd.getDay() !== 0) qEnd.setDate(qEnd.getDate() - 1);
   
         const nbWeeks = qStart <= qEnd ? weeksBetween(qStart, qEnd) : 0;
-        const nbSeances = seancesParSemaine * nbWeeks;
-        const tarifMoitie = price / 2;
-
+        const nbSeances = (seancesParSemaine * nbWeeks) * 3;
+        prelevementDate.setMonth(prelevementDate.getMonth() + 3);
   
+        // Affichage de la date de prélèvement
+        // console.log(prelevementDate);
+
         lignes.push({
-          description: `${t + 1}ᵉ – trimestriel`,
+          description: `${t + 1}ᵉ – trimestrielle`,
           datePrelevement: fmtFR(prelevementDate),
           nbSeances,
-          tarifAvant: price,
-          tarifApres: tarifMoitie,
+          tarifAvant: (price * 2) *3,
+          tarifApres: price * 3, 
         });
   
-        totalApresReduction += tarifMoitie;
+        totalApresReduction += price;
         totalHeures += nbSeances * dureeSeance;
       }
-  
     } else {
-
-
       // Mensualités
       const debut = new Date(subscription_start_date);
       const fin = new Date(subscription_end_date);
-
-      // console.log(debut, fin)
 
       const diffDays = Math.ceil((fin.getTime() - debut.getTime() + 1) / (1000*60*60*24));
       const nbSemaines = diffDays > 8
@@ -332,6 +332,9 @@ import api from "../../api/aixos";
     const coutHoraire = totalHeures > 0
       ? totalApresReduction / totalHeures
       : 0;
+
+    console.log(coutHoraire, totalHeures, totalApresReduction)
+
 
     return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }

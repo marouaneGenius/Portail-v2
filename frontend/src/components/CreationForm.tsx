@@ -46,7 +46,6 @@ export default function CreationForm() {
         '/api/user',
         payload
       );
-  
       // mise à jour locale, navigation, etc.
       console.log('Utilisateur créé', createdUser);
     } catch (err: any) {
@@ -63,32 +62,12 @@ export default function CreationForm() {
     if(values.centers) {
       insertMultipleCenters(values)
     } else {
-      // get parent & student data
       const { mainValues, parentValues } =  splitParentKeys(values, resource);
       try {
-        // create item
         const { data: created } = await api.post<Record<string, any>>(
           `/api/${resource}`,
           mainValues ? mainValues : values,
         );
-
-        // if(resource === 'parent' || resource === 'student') {
-        //   if( created && parentValues ){
-        //     const { data: parent } = await api.post<Record<string, any>>(
-        //       `/api/parent`,
-        //       parentValues,
-        //     );
-        //     console.log(created, resource)
-        //     //check if we create parent and student &  create colone on many to many table
-        //     if(parent && created) {
-        //       api.post(`/api/student/${created.id}/parents`, {
-        //         parentId: parent.id,
-        //         }).then()
-        //         .catch(console.error);
-        //     }
-        //   }
-        // }
-
         setData(prev => [created, ...prev]);
         return created;
       } catch (err: any) {
@@ -102,13 +81,13 @@ export default function CreationForm() {
   };
 
   const handleSubmit = async (values: Record<string, any>) => {
-
     try{
-     await postData(values);
+     const result:any = await postData(values);
       if(resource === "tutorschedule") {
         navigate(`/users`);
       } else {
-        navigate(`/${resource}s`);
+        // console.log(result.id)
+        navigate(`/${resource}/${result.id}`);
       }
     }catch(err: any){
       alert('error')

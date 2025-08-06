@@ -29,7 +29,6 @@ const TarificationCalculator: React.FC<CalculatorProps> = ({ data, price }) => {
 
 
   return (
-
     lignes &&
     <TarificationTable
       lignes={lignes}

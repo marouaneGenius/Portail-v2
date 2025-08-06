@@ -24,12 +24,10 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
 
   const isStage = subscription_type === "stage";
 
-
   return (
     <>    
     {
       isStage ? 
-      
       <table className="table-auto w-full my-4 text-sm border-separate border-spacing-y-2">
         <thead>
           <tr>
