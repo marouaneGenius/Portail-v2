@@ -66,7 +66,7 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
         </a>
         &nbsp;aux dates indiquées ci-dessous (tous les 3 mois).
       </p>
-      <ul className="list-disc list-inside space-y-2 text-sm text-muted">
+      <ul className="list-disc list-inside space-y-2 text-sm">
         {items.map(({ endFr, deadlineFr }, idx) => (
           <li key={idx}>
             {endFr} <br />
