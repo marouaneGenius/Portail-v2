@@ -157,6 +157,7 @@ export function validatePasswords(
 }
 
 export const TranslateHeaderNames = (value:String) => {
+  console.log(value)
     switch(value) {
       case 'id':
         return 'ID'
@@ -240,6 +241,21 @@ export const TranslateHeaderNames = (value:String) => {
         return 'Type d\'offre'
       case  'first_debit_date':
         return 'Date du premier prélèvement'
+      case  'week_count':
+        return 'Nombre de semaines'
+      case 'known_weeks':
+        return 'Nombre de semaines'
+      case 'installment_count':
+        return 'Nombre de versements'
+      case 'selected_weeks':
+        return 'Semaines sélectionnées'
+      case 'session_per_week':
+        return 'Séances par semaine'
+      case 'caution':
+        return 'Caution'
+      case 'favorite_slots_mode':
+        return 'Creneaux choisis'
+
     }
 }
   

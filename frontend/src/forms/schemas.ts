@@ -129,7 +129,7 @@ export const StageFields: FormField[] = [
     ] },
   { name: 'first_debit_date', label: ' ', type: 'date', required: true},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  { name: 'discount', label: '', type: 'text', required: true },
+  { name: 'discount', label: '', type: 'text'},
   // { name: 'known_weeks', label: 'semaines choisis', type: 'select', required: true, options: [
   //   { value: 'known', label: 'Je connais toutes mes semaines' },
   //   { value: 'unknown', label: 'Dates non connues pour le moment' },

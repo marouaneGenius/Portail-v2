@@ -30,6 +30,7 @@ type Subscription = {
 type Props = {
   studentId: any;
   student:any;
+  hasParent: boolean;
 };
 
 const statusStyle = {
@@ -56,7 +57,7 @@ const badgeContent = (isActive: boolean) =>
      )
 }
 
-export function StudentSubscriptionCard({ studentId, student }: Props) {
+export function StudentSubscriptionCard({ studentId, student, hasParent }: Props) {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [isMember, setIsMember] = useState<any>([]);
   const navigate = useNavigate();
@@ -190,12 +191,17 @@ export function StudentSubscriptionCard({ studentId, student }: Props) {
             Contrats & Abonnements
           </span>
         </div>
-        <button className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold rounded px-4 py-2 flex items-center gap-2 text-sm transition"
+        <button 
+          disabled={hasParent} 
+          // className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold rounded px-4 py-2 flex items-center gap-2 text-sm transition"
+          className={`${hasParent ? 'bg-gray-300 ' :  'bg-yellow-400 hover:bg-yellow-500'} text-white font-semibold rounded px-4 py-2 flex items-center gap-2 text-sm transition`}
             onClick={()=>navigate(`/abonnements/${studentId}`)}>
           <span className="text-lg font-bold">+</span> Nouveau contrat
         </button>
       </div>
       <LoaderOverlay isLoading={loading} />
+
+      {hasParent && <p className="text-red-500 text-xs py-6">Pour créer un contrat, vous devez attacher ou créer un parent pour cet eleve!</p>}
 
       <div className="space-y-6">
         {subs.length === 0 && <div className="text-gray-400 italic">Aucun abonnement trouvé.</div>}

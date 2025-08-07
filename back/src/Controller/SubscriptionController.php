@@ -320,9 +320,6 @@ class SubscriptionController extends AbstractController
             'is_canceled'             => $subscription->isIsCanceled(),
             'canceled_by'             => $subscription->getCanceledBy(),
             'url' => $subscription->getSubscriptionURLs()->first()?->getUrl()
-
-
-
         ], $subs);
     
         return new JsonResponse($data, JsonResponse::HTTP_OK);

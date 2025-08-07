@@ -12,12 +12,13 @@ export interface ReviewStepProps {
 const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfirm }) => {
 
   const renderValue = (key:any, value:any) => {
-    
+    console.log(key, value)
     if((Array.isArray(value) && value.length ===0 )|| value === null) {
-      delete values.annuel[key]
-      return null;
+      if(values.annuel) {
+        delete values.annuel[key]
+        return null;
+      }
     }
-
 
     if (key === "favorite_slots" && Array.isArray(value)) {
       return value.map((slot, i) => (
@@ -64,8 +65,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfir
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(data).map(([k, v]) => (
                 <div key={k} className="flex flex-col text-sm">
+
                   <dt className="font-semibold text-mister-anthracite/70">
-                    {k !== "school_subjects" &&  TranslateHeaderNames(k)}
+                    { TranslateHeaderNames(k)}
                   </dt>
                   <dd className="text-mister-anthracite break-words">
                     {renderValue(k, v)}

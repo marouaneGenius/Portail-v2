@@ -6,6 +6,7 @@ import { StudentSubscriptionCard } from "./StudentSubscriptionCard";
 export function StudentsSubscriptions({ resource, item, id }:any) {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const hasParent = item.parents.length === 0;
 
   // Si le resource est un parent, on charge les étudiants détaillés (API)
   useEffect(() => {
@@ -32,7 +33,7 @@ export function StudentsSubscriptions({ resource, item, id }:any) {
             <div className="font-bold text-base mb-2">
               {student.firstname} {student.lastname}
             </div>
-            <StudentSubscriptionCard studentId={student.id} student={student} />
+            <StudentSubscriptionCard studentId={student.id} student={student} hasParent={hasParent} />
           </div>
         ))}
       </div>
@@ -42,7 +43,7 @@ export function StudentsSubscriptions({ resource, item, id }:any) {
   // Cas étudiant : affiche une seule carte
   if (resource === "student") {
     return (
-      <StudentSubscriptionCard studentId={id} student={item} />
+      <StudentSubscriptionCard studentId={id} student={item} hasParent={hasParent} />
     );
   }
 

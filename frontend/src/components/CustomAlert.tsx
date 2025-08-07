@@ -57,6 +57,7 @@ export function CustomParentComponent({
   onRedirect,
   action,
 }: CustomComponentProps): React.ReactNode {
+  console.log(value)
   if (currentkey !== 'parents' || !Array.isArray(value)) return null;
 
   // Si aucun parent
@@ -64,7 +65,7 @@ export function CustomParentComponent({
     return (
       <CustomAlert
         title="Attention !"
-        message="L'élève n'a pas de parent ! Cliquez ici pour créer ou l'attacher."
+        message="L'élève n'a pas de parent !"
         action={action}
       />
     );
