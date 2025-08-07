@@ -257,11 +257,10 @@ export const MultiSelectWrapper: React.FC<MultiSelectWrapperProps> = ({
 export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, removeValueFromField, handleChange, fieldName, tutors, title}) => {
   const todayISO = new Date().toISOString().split('T')[0];
 
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Annuel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Annuel'){
-    if(f.name === 'favorite_slots' || f.name === 'session_per_week'){
+    if(title === 'Annuel' && (f.name === 'favorite_slots_annuel' || f.name === 'session_per_week')){
       return  <TutorAvailabilityPicker
                   school_subjects={values.school_subjects}
                   // f={f} 
@@ -271,7 +270,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
                   onSelect={(slots: any[]) => {
                     setValues((prev: any) => ({
                       ...prev,
-                      favorite_slots: slots
+                      favorite_slots_annuel: slots
                     }));
                   }}
                 />
@@ -440,7 +439,9 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Pré-inscription ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Preinscription'){
-    if(f.name === 'favorite_slots'){
+    if(f.name === 'favorite_slots' && title === 'Preinscription') {
+
+
       return <SlotSelector
         form_values={values}
         onSelect={(data:any) => {

@@ -98,7 +98,7 @@ export const tutorScheduleFields: (FormField|ArrayField)[] = [
 
 export const AnnuelFields: FormField[] = [
   // { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  { name: 'favorite_slots', label: 'Tuteur planing', type: 'select',  multiple: true, required: true },
+  { name: 'favorite_slots_annuel', label: 'Tuteur planing', type: 'select',  multiple: true, required: true },
   { name: 'payment_mode', label: 'Le Mode de paiment', type: 'select',
     options: [ 
       { value: 'mensuelle', label: 'Mensuelle' }, 

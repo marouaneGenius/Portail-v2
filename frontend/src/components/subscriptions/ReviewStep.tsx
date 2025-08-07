@@ -12,7 +12,6 @@ export interface ReviewStepProps {
 const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfirm }) => {
 
   const renderValue = (key:any, value:any) => {
-    console.log(key, value)
     if((Array.isArray(value) && value.length ===0 )|| value === null) {
       if(values.annuel) {
         delete values.annuel[key]
@@ -20,7 +19,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfir
       }
     }
 
-    if (key === "favorite_slots" && Array.isArray(value)) {
+    if (key === "favorite_slots_annuel"  && Array.isArray(value)) {
       return value.map((slot, i) => (
         <div key={i} className="pl-4">
           <div>Jour : <b>{slot.day}</b></div>

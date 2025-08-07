@@ -63,7 +63,6 @@ const SubscriptionsFormView: React.FC<any> = () => {
       created_by      : author,
       combined_id       : combined ?? null,
     };
-
     if (type === 'annuel') {
       return {
         ...common,

@@ -6,7 +6,7 @@ import { StudentSubscriptionCard } from "./StudentSubscriptionCard";
 export function StudentsSubscriptions({ resource, item, id }:any) {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const hasParent = item.parents.length === 0;
+  const hasParent = item.parents && item.parents.length === 0;
 
   // Si le resource est un parent, on charge les étudiants détaillés (API)
   useEffect(() => {

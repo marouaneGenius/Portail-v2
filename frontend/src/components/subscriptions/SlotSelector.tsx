@@ -10,6 +10,8 @@ const SlotSelector = ({ onSelect, form_values }: any) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+
+    console.log(form_values)
     onSelect({ slots, mode });
   }, [slots, mode]);
 

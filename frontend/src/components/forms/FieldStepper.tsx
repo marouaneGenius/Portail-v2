@@ -36,11 +36,6 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
 
-
-
-
-
-
     setValues(prev => ({
       ...prev,
       [name]: multiple
@@ -60,7 +55,6 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   }, [fields]);
 
 
-
   useEffect(() => {
     if(values.recurrent_debit_date && !values.first_debit_date){
       setValues((prev) => ({
@@ -69,21 +63,31 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
       }));
     }
 
-
   }, [values]);
+
+  useEffect(() => {
+    // title OU fields si c’est plus fiable
+    setValues(initialValues ?? {});
+    setIndex(0);
+    setTouched(false);
+  }, [title]);
+
 
   const next = () => {
     if (isRequiredAndEmpty) return;
+  
+    // console.log(values)
     if (isFinalField) {
-      onNext(title, values);
+      onNext(title, structuredClone(values));
+      setValues({});
     } else {
-      setIndex((i) => i + 1);
+      setIndex(i => i + 1);
       setTouched(false);
     }
   };
+  
 
   const prev = () => setIndex((i) => Math.max(i - 1, 0));
-
   const removeValueFromField = (field: any, value: any) => {
     setValues((prev: any) => ({
       ...prev,

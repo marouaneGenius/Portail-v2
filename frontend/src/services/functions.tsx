@@ -144,10 +144,6 @@ export function validatePasswords(
     errors.push("Les mots de passe ne correspondent pas.");
   }
 
-  console.log(password, confirm_password)
-
-
-
 
   // if(password.length > 8 && /[A-Z]/.test(password) && /[!@#$%^&*(),.?\":{}|<>]/.test(password) && password == confirm_password ) {
   //   console.log('bon')
@@ -157,7 +153,6 @@ export function validatePasswords(
 }
 
 export const TranslateHeaderNames = (value:String) => {
-  console.log(value)
     switch(value) {
       case 'id':
         return 'ID'

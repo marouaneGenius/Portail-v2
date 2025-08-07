@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormField } from '../FormGenerator';
 import FieldStepper from './FieldStepper';
 import ReviewStep from '../subscriptions/ReviewStep';
@@ -16,17 +16,21 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   const [showReview, setShowReview] = useState(false);
 
   const handleNextStep = (section: string, stepValues: Record<string, any>) => {
-    setCollectedValues((prev) => ({
+    // setCollectedValues((prev) => ({
+    //   ...prev,
+    //   [section.toLowerCase()]: stepValues,
+    // }));
+    setCollectedValues(prev => ({
       ...prev,
-      [section.toLowerCase()]: stepValues,
+      [section.toLowerCase()]: structuredClone(stepValues),
     }));
-
     if (isLastStep) {
       setShowReview(true);              
     } else {
       setStepIndex((i) => i + 1);
     }
   };
+
 
   const handleEdit = (section: string) => {
     const newIdx = steps.findIndex(
@@ -39,8 +43,12 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   };
 
   const handleConfirm = () => {
-    // console.log(collectedValues)
-    onSubmit(collectedValues);          // POST final
+    const payload = structuredClone(collectedValues);
+    if (payload.annuel?.favorite_slots_annuel) {
+      payload.annuel.favorite_slots = payload.annuel.favorite_slots_annuel;
+      delete payload.annuel.favorite_slots_annuel;
+    }
+    onSubmit(payload);         
   };
 
 
@@ -69,7 +77,9 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
             title={currentStep.title}
             fields={currentStep.fields}
             isLast={isLastStep}
-            initialValues={collectedValues}
+            // initialValues={collectedValues}
+            initialValues={collectedValues[currentStep.title.toLowerCase()] ?? {}}
+
             onBack={handleBack}
             onNext={handleNextStep}
           />
