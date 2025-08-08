@@ -6,8 +6,8 @@ import { useAuth, User } from '../../Hooks/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
+  const API_URL = import.meta.env.VITE_API_URL || 'http://3.89.92.167:8080';
+console.log(API_URL)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
