@@ -7,7 +7,6 @@ const api = axios.create({
   withCredentials: true,                 
 });
 
-
 // → Avant chaque requête : injecte le JWT si présent
 api.interceptors.request.use((config) => {
   const token = useAuth.getState().accessToken;
