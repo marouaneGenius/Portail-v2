@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Check, Clock, Eye, ProportionsIcon, XCircle } from "lucide-react";
 import api from "@/api/aixos";
 import { useAuth } from "@/Hooks/auth";
@@ -23,6 +23,8 @@ type Subscription = {
   is_canceled: boolean;
   session_per_week:any;
   is_combined:boolean;
+  combined_id:boolean;
+  combined?: any[];
   url:string;
   is_programed:boolean;
 };
@@ -65,6 +67,8 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
   const [isValide, setIsValide] = useState<boolean>();
   const [isProgramed, setIsProgramed] = useState<boolean>( );
   const { user } = useAuth();
+  const loadedCombined = useRef<Set<number>>(new Set());
+
 
   useEffect(() => {
     setLoading(true);
@@ -75,34 +79,101 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
       IsStudentIsMember(studentId).then(setIsMember);
   }, [studentId, ]);
 
-  const validateContract = async (subscription:any) => {
-    try {
-      const res = await api.patch(
-        `/api/subs/${subscription.id}/validate`,
-        { updated_by: user?.email }
-      );
-      if (res.status === 200) {
-        alert('Le contrat a été validé')
-        setIsValide(true);
+  useEffect(() => {
+    subs.forEach((sub:any) => {
+      if (sub.combined_id && !loadedCombined.current.has(sub.combined_id)) {
+        loadedCombined.current.add(sub.combined_id);
+  
+        api
+          .get(`/api/subs/combined/${sub.combined_id}`)
+          .then(res => {
+            setSubs(prev =>
+              prev.map((s:any) =>
+                s.combined_id === sub.combined_id
+                  ? { ...s, combined: res.data }      
+                  : s
+              )
+            );
+          })
+          .catch(console.error);
       }
+    });
+  }, [subs]);
+
+  const getIdsToUpdate = async (sub: Subscription)  => {
+    return await  api
+    .get(`/api/subs/combined/${sub.combined_id}`)
+    .then(res => {
+      return res.data.map((s:any) =>  s.id)
+    })
+  }
+
+
+  const validateContract = async (subscription:any) => {
+    const ids = subscription.combined_id !== null ? await  getIdsToUpdate(subscription): [subscription.id];
+
+  console.log(ids)
+
+    try {
+      await Promise.all(
+        ids.map((id:any) =>
+          api.patch(`/api/subs/${id}/validate`, { updated_by: user?.email })
+        )
+      );
+      alert('Le contrat a été validé')
+      setIsValide(true);
+  
+          setSubs(prev =>
+            prev.map(s =>
+              ids.includes(s.id) ? { ...s, is_valide: true } : s
+            )
+          );
+  
+      // const res = await api.patch(  `/api/subs/${subscription.id}/validate`, { updated_by: user?.email } );
+      // if (res.status === 200) {
+          //  setSubs(prev =>
+          //       prev.map(s =>
+          //         s.id === subscription.id ? { ...s, is_valide: true } : s
+          //       )
+          //    );
+      // }
     } catch (err) {
       console.error("Erreur de validation :", err);
     }
   }
 
-  const handleCancel = async (subscriptionId: number) => {
+  const handleCancel = async (subscription:any, subscriptionId: number) => {
     if (!window.confirm("Confirmer la rupture de l'abonnement ?")) return;
-    await api.patch(`/api/subs/${subscriptionId}/cancel`, {
-      canceled_by: user?.email,
-    });
+    const ids = subscription.combined_id !== null ? await  getIdsToUpdate(subscription): [subscription.id];
 
-    setSubs((prev) =>
-        prev.map((s) =>
-          s.id === subscriptionId
-            ? { ...s, is_canceled: true }
-            : s
+    try {
+      await Promise.all(
+        ids.map((id:any) =>
+          api.patch(`/api/subs/${id}/cancel`, { canceled_by: user?.email })
         )
       );
+  
+      setSubs(prev =>
+        prev.map(s =>
+          ids.includes(s.id) ? { ...s, is_canceled: true } : s
+        )
+      );
+    } catch (err) {
+      console.error('Erreur d’annulation :', err);
+    }
+
+
+    // await api.patch(`/api/subs/${subscriptionId}/cancel`, {
+    //   canceled_by: user?.email,
+    // });
+
+    // setSubs((prev) =>
+    //     prev.map((s) =>
+    //       s.id === subscriptionId
+    //         ? { ...s, is_canceled: true }
+    //         : s
+    //     )
+    //   );
   };
 
   const programeContract = async (subscription:any) => {
@@ -114,6 +185,11 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
       if (res.status === 200) {
         alert('Le contrat a été programé')
         setIsProgramed(true);
+        setSubs(prev =>
+            prev.map(s =>
+              s.id === subscription.id ? { ...s, is_programed: true } : s
+            )
+          );
       }
     } catch (err) {
       console.error("Erreur de validation :", err);
@@ -179,6 +255,14 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     }
   }
 
+  const multipleBadge = (
+    <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-purple-100 text-purple-700">
+      <ProportionsIcon size={16} /> Multiple
+    </span>
+  );
+
+
+
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm border">
       <div className="flex items-center justify-between mb-5">
@@ -205,7 +289,13 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
 
       <div className="space-y-6">
         {subs.length === 0 && <div className="text-gray-400 italic">Aucun abonnement trouvé.</div>}
-        {subs.map((sub, i) => {
+
+        {subs
+          .filter(
+            (sub:any, idx, arr) =>
+              !sub.combined_id ||
+              arr.findIndex((s:any) => s.combined_id && s.combined_id === sub.combined_id) === idx
+          ).map((sub, i) => {
             const isActive = sub.is_valide ;
             const isProgramed = sub.is_programed ;
 
@@ -215,6 +305,10 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
             const niveau = getNiveauScolaire(student.class)
             const price = getPrice(sub.subscription_type, sub?.session_per_week, niveau, { combined: sub?.is_combined ? true : false, isMember: isMember })
             const percent = Math.min(100, Math.round((used / total) * 100));
+            const isCombined = sub.combined_id !== null;
+            const label = isCombined !== null
+            ? sub.combined?.map((c: any) => c.subscription_type).join(' / ') || 'Multiple'
+            : sub.subscription_type;
 
           return (
             <div key={sub.id}   className={
@@ -224,7 +318,16 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                   : "border-gray-200")
               }>
               <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-lg">{sub.subscription_type}</span>
+
+                {
+                  sub.combined_id ? (
+                    <span className="font-semibold text-lg">{label}</span>
+                  ) :(
+                    <span className="font-semibold text-lg">{sub.subscription_type}</span>
+
+                  )
+                }
+
                 {isCanceled ? (
                     <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-red-100 text-red-700 font-semibold">
                         <XCircle size={16} /> Annulé
@@ -232,10 +335,12 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                     ) : (
                     badgeContent(isActive)
                 )}
-                {!isCanceled && (
+                 {sub.combined_id && multipleBadge}
+
+                {!isCanceled && isActive && (
                 <button
                     className="border border-red-300 text-red-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-red-50 transition text-sm"
-                    onClick={() => handleCancel(sub.id)}
+                    onClick={() => handleCancel(sub, sub.id)}
                 >
                     <XCircle size={16} /> Rompre
                 </button>
@@ -265,7 +370,7 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 }
 
                 {
-                  !isProgramed &&
+                  !isProgramed && isActive && !isCanceled && !isCombined &&
                     <button
                       className="border border-blue-300 text-blue-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
                       onClick={e => programSessions(sub)}
