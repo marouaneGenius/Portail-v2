@@ -46,6 +46,12 @@ class SessionController extends AbstractController
             throw new BadRequestHttpException('Corps invalide, JSON attendu.');
         }
 
+        // Rediriger vers la création de séance d'essai si c'est le type demandé
+        if (($data['session_type'] ?? null) === 'trial_session') {
+            return $this->createTrialSession($request);
+        }
+
+        // Logique pour les séances normales...
         // 1) dates obligatoires
         if (empty($data['payment_date']) || empty($data['date_slot'])) {
             throw new BadRequestHttpException('payment_date et date_slot sont requis.');
@@ -115,20 +121,196 @@ class SessionController extends AbstractController
         $this->em->persist($session);
         $this->em->flush();
 
-        if($data['session_type'] === 'trial_session') {
-            return $this->createPaymentLink($session, $request);
-
-        } else {
-        // 5) réponse
+        // 5) réponse pour séance normale
         return new JsonResponse([
             'id'            => $session->getId(),
             'payment_date'  => $session->getPaymentDate()->format('Y-m-d'),
             'date_slot'     => $session->getDateSlot()->format('Y-m-d'),
             'tutor_id'      => $tutor->getId(),
-            'center_id'         => $center->getId(),
+            'center_id'     => $center->getId(),
             'student_ids'   => array_map(fn($s)=> $s->getId(), $students),
             'subscription_ids' => array_map(fn($s)=> $s->getId(), $subs),
         ], JsonResponse::HTTP_CREATED);
+    }
+
+    #[Route('/trial-session', name: 'create_trial_session', methods: ['POST'])]
+    public function createTrialSession(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+        }
+
+        // 1) Validation des champs requis pour séance d'essai
+        $requiredFields = ['student_ids', 'scheduled_at', 'school_subjects'];
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                throw new BadRequestHttpException("Le champ '$field' est requis pour une séance d'essai.");
+            }
+        }
+
+        // 2) Récupération des étudiants
+        $students = [];
+        foreach ((array)$data['student_ids'] as $stuId) {
+            if ($stu = $this->studentRepo->find($stuId)) {
+                $students[] = $stu;
+            }
+        }
+        if (empty($students)) {
+            throw new BadRequestHttpException('Au moins un étudiant valide est requis.');
+        }
+
+        // 3) Récupération du centre depuis le premier étudiant
+        $mainStudent = $students[0];
+        $center = $mainStudent->getIdCenter();
+        if (!$center) {
+            throw new BadRequestHttpException('L\'étudiant principal n\'a pas de centre assigné.');
+        }
+
+        // 4) Création de la session d'essai
+        $session = new Session();
+        $session->setSessionType('trial_session');
+        $session->setScheduledAt(new \DateTimeImmutable($data['scheduled_at']));
+        $session->setSchoolSubjects($data['school_subjects']);
+        $session->setScheduledBy($data['scheduled_by'] ?? 'system');
+        $session->setCenter($center);
+        
+        // Dates par défaut
+        $session->setPaymentDate(new \DateTime());
+        $session->setDateSlot(new \DateTime($data['scheduled_at']));
+        
+        // États par défaut
+        $session->setIsCanceled(false);
+        $session->setIsPaid(false);
+        $session->setIsAbsent(false);
+        $session->setCreatedAt(new \DateTimeImmutable());
+        $session->setCreatedBy($data['scheduled_by'] ?? 'system');
+        $session->setUpdatedBy($data['scheduled_by'] ?? 'system');
+
+        // Ajouter tous les étudiants
+        foreach ($students as $student) {
+            $session->addIdStudent($student);
+        }
+
+        // 5) Persister la session
+        $this->em->persist($session);
+        $this->em->flush();
+
+        // 6) Créer le lien de paiement Stripe et envoyer SMS
+        return $this->createTrialSessionPayment($session);
+    }
+
+    private function createTrialSessionPayment(Session $session): JsonResponse
+    {
+        $students = $session->getIdStudent();
+        $mainStudent = $students->first();
+
+        if (!$mainStudent) {
+            return new JsonResponse(['error' => 'Aucun étudiant associé à la session'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier qu'il y a des parents
+        $parents = $mainStudent->getIdParent();
+        $parent = $parents->first();
+        if (!$parent) {
+            return new JsonResponse(['error' => 'Aucun parent trouvé pour cet étudiant'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            // 1) Calcul du prix basé sur le nombre d'étudiants
+            $studentCount = $students->count();
+            $totalAmount = $studentCount * 3000; // 30€ en centimes par étudiant
+
+            // 2) Création du prix Stripe
+            $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
+            $price = $stripe->prices->create([
+                'unit_amount' => $totalAmount,
+                'currency' => 'eur',
+                'product_data' => [
+                    'name' => $studentCount > 1 
+                        ? sprintf('Séance d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
+                        : 'Séance d\'essai – 1 étudiant',
+                ],
+            ]);
+
+            // 3) Création du lien de paiement
+            $paymentLink = $stripe->paymentLinks->create([
+                'line_items' => [
+                    [
+                        'price' => $price->id,
+                        'quantity' => 1,
+                    ],
+                ],
+                'metadata' => [
+                    'session_id' => $session->getId(),
+                    'session_type' => 'trial_session',
+                    'student_count' => $studentCount,
+                    'student_ids' => implode(',', array_map(fn($s) => $s->getId(), $students->toArray())),
+                ],
+            ]);
+
+            // 4) Mise à jour de la session avec le lien Stripe
+            $session->setStripeNumber($paymentLink->id);
+            $this->em->flush();
+
+            // 5) Préparation des données pour le SMS
+            $phone = $parent->getPhone();
+            $centre = $mainStudent->getIdCenter()->getName();
+            $ville = $mainStudent->getIdCenter()->getCity();
+            $adresse = $mainStudent->getIdCenter()->getAddress() ?? '';
+            $dateCours = $session->getScheduledAt();
+            $heureDebut = $session->getScheduledAt()->format('H:i');
+            
+            // Construire les prénoms des étudiants
+            $studentNames = array_map(fn($s) => $s->getFirstname(), $students->toArray());
+            $prenom = count($studentNames) > 1 
+                ? implode(', ', array_slice($studentNames, 0, -1)) . ' et ' . end($studentNames)
+                : $studentNames[0];
+
+            // 6) Envoi du SMS via Zapier
+            $this->smsSender->sendSessionPaymentLink(
+                $phone,
+                $centre,
+                $dateCours,
+                $heureDebut,
+                $ville,
+                $adresse,
+                $prenom,
+                $paymentLink->url
+            );
+
+            // 7) Réponse avec toutes les informations
+            return new JsonResponse([
+                'success' => true,
+                'session_id' => $session->getId(),
+                'payment_link' => $paymentLink->url,
+                'student_count' => $studentCount,
+                'total_amount' => $totalAmount / 100, // En euros
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $students->toArray()),
+                'scheduled_at' => $session->getScheduledAt()->format(\DateTime::ATOM),
+                'center' => [
+                    'id' => $mainStudent->getIdCenter()->getId(),
+                    'name' => $centre,
+                    'city' => $ville
+                ],
+                'sms_sent' => true,
+                'parent_phone' => $phone,
+                'message' => sprintf('Séance d\'essai créée pour %d étudiant%s - Lien de paiement envoyé par SMS (%d€)', 
+                    $studentCount, $studentCount > 1 ? 's' : '', $totalAmount / 100)
+            ], JsonResponse::HTTP_CREATED);
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, supprimer la session créée
+            $this->em->remove($session);
+            $this->em->flush();
+            
+            return new JsonResponse([
+                'error' => 'Erreur lors de la création de la séance d\'essai: ' . $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -448,11 +630,18 @@ class SessionController extends AbstractController
     
         try {
             $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
+            
+            // Calculer le prix basé sur le nombre d'étudiants (30€ par étudiant)
+            $studentCount = $session->getIdStudent()->count();
+            $totalAmount = $studentCount * 3000; // 30€ en centimes par étudiant
+            
             $price = $stripe->prices->create([
-                'unit_amount'   => 3000,
+                'unit_amount'   => $totalAmount,
                 'currency'      => 'eur',
                 'product_data'  => [
-                    'name'        => 'Session de cours – ' . $session->getSessionType(),
+                    'name'        => $studentCount > 1 
+                        ? sprintf('Session d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
+                        : 'Session d\'essai – 1 étudiant',
                 ],
             ]);
     
@@ -476,32 +665,40 @@ class SessionController extends AbstractController
             $this->em->flush();
     
             // 6. Envoyer le SMS
-            $student = $session->getIdStudent()->first();
+            $students = $session->getIdStudent();
+            $mainStudent = $students->first();
 
-            $parents = $student->getIdParent();
+            if (!$mainStudent) {
+                throw new \LogicException('Aucun étudiant associé à la session');
+            }
 
-            // On récupère le premier parent (ou null s’il n’y en a pas)
+            $parents = $mainStudent->getIdParent();
             /** @var \App\Entity\StudentParent|null $parent */
             $parent = $parents->first();
 
             if (!$parent) {
-                // pas de parent enregistré : on gère l’erreur comme bon vous semble
                 throw new \LogicException('Aucun parent trouvé pour cet étudiant');
             }
 
-            // on peut maintenant appeler getPhone() sur l’entité StudentParent
             $phone = $parent->getPhone();
-
-            $centre      = $student->getIdCenter()->getCity();
-            $dateCours   = $session->getDateSlot();
-            // supposons que vous avez enregistré l'heure de début dans ScheduledAt
-            $heureDebut  = $session->getScheduledAt() instanceof \DateTimeImmutable
+            $centre = $mainStudent->getIdCenter()->getCity();
+            $dateCours = $session->getDateSlot();
+            $heureDebut = $session->getScheduledAt() instanceof \DateTimeImmutable
                 ? $session->getScheduledAt()->format('H:i')
                 : $session->getDateSlot()->format('H:i');
-            $ville       = $student->getIdCenter()->getCity();
-            $adresse     = $student->getIdCenter()->getAddress() ?? '';
-            $prenom      = $student->getFirstname();
-            $link        = $paymentLink->url;
+            $ville = $mainStudent->getIdCenter()->getCity();
+            $adresse = $mainStudent->getIdCenter()->getAddress() ?? '';
+            
+            // Construire le nom des étudiants
+            $studentNames = [];
+            foreach ($students as $student) {
+                $studentNames[] = $student->getFirstname();
+            }
+            $prenom = count($studentNames) > 1 
+                ? implode(', ', array_slice($studentNames, 0, -1)) . ' et ' . end($studentNames)
+                : $studentNames[0];
+            
+            $link = $paymentLink->url;
 
             $this->smsSender->sendSessionPaymentLink(
                 $phone,
@@ -517,9 +714,17 @@ class SessionController extends AbstractController
             return new JsonResponse([
                 'payment_link' => $paymentLink->url,
                 'session_id' => $session->getId(),
-                'expires_at' => date('c', time() + 7 * 24 * 60 * 60), // ISO 8601
+                'student_count' => $studentCount,
+                'total_amount' => $totalAmount / 100, // Montant en euros
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $students->toArray()),
+                'expires_at' => date('c', time() + 7 * 24 * 60 * 60),
                 'is_paid' => false,
-                'message' => 'Lien de paiement envoyé par SMS'
+                'message' => sprintf('Lien de paiement envoyé par SMS pour %d étudiant%s (%d€)', 
+                    $studentCount, $studentCount > 1 ? 's' : '', $totalAmount / 100)
             ]);
     
         } catch (\Exception $e) {
@@ -858,50 +1063,50 @@ class SessionController extends AbstractController
     // }
     
 
-    // #[Route('/test-sms', name: 'test_sms', methods: ['POST'])]
-    // public function __invoke(Request $request): JsonResponse
-    // {
-    //     $data = json_decode($request->getContent(), true);
-    //     if (!\is_array($data)) {
-    //         throw new BadRequestHttpException('Corps invalide, JSON attendu.');
-    //     }
+    #[Route('/test-sms', name: 'test_sms', methods: ['POST'])]
+    public function __invoke(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+        }
 
-    //     // Vérification des champs obligatoires
-    //     foreach (['to','centre','dateCours','heureDebut','ville','adresse','prenom','link'] as $field) {
-    //         if (empty($data[$field])) {
-    //             throw new BadRequestHttpException("Le champ « $field » est requis.");
-    //         }
-    //     }
+        // Vérification des champs obligatoires
+        foreach (['to','centre','dateCours','heureDebut','ville','adresse','prenom','link'] as $field) {
+            if (empty($data[$field])) {
+                throw new BadRequestHttpException("Le champ « $field » est requis.");
+            }
+        }
 
-    //     try {
-    //         $ok = $this->smsSender->sendSessionPaymentLink(
-    //             $data['to'],
-    //             $data['centre'],
-    //             new \DateTimeImmutable($data['dateCours']),
-    //             $data['heureDebut'],
-    //             $data['ville'],
-    //             $data['adresse'],
-    //             $data['prenom'],
-    //             $data['link']
-    //         );
+        try {
+            $ok = $this->smsSender->sendSessionPaymentLink(
+                $data['to'],
+                $data['centre'],
+                new \DateTimeImmutable($data['dateCours']),
+                $data['heureDebut'],
+                $data['ville'],
+                $data['adresse'],
+                $data['prenom'],
+                $data['link']
+            );
 
-    //         if (!$ok) {
-    //             return new JsonResponse(
-    //                 ['status'=>'Erreur lors de l’envoi du SMS'],
-    //                 JsonResponse::HTTP_INTERNAL_SERVER_ERROR
-    //             );
-    //         }
+            if (!$ok) {
+                return new JsonResponse(
+                    ['status'=>'Erreur lors de l’envoi du SMS'],
+                    JsonResponse::HTTP_INTERNAL_SERVER_ERROR
+                );
+            }
 
-    //         return new JsonResponse(
-    //             ['status'=>'SMS envoyé en test', 'to'=>$data['to'], 'payload'=>$data],
-    //             JsonResponse::HTTP_OK
-    //         );
-    //     } catch (\Exception $e) {
-    //         return new JsonResponse(
-    //             ['error'=>$e->getMessage()],
-    //             JsonResponse::HTTP_BAD_REQUEST
-    //         );
-    //     }
-    // }
+            return new JsonResponse(
+                ['status'=>'SMS envoyé en test', 'to'=>$data['to'], 'payload'=>$data],
+                JsonResponse::HTTP_OK
+            );
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                ['error'=>$e->getMessage()],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+    }
 
 }

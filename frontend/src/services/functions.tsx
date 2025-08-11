@@ -258,13 +258,14 @@ export const getFrenchDayLabel = (dateInput: string | Date): string => {
   const date = new Date(dateInput);
   return date.toLocaleDateString('fr-FR', { weekday: 'long' });
 };
+export const formatTime = (timeString: string) => {
+  const isoMatch = timeString.match(/T(\d{2}:\d{2})/);
+  if (isoMatch) return isoMatch[1];
+  const simpleMatch = timeString.match(/^(\d{2}:\d{2})/);
+  if (simpleMatch) return simpleMatch[1];
 
-export const formatTime = (d: Date) => {
-  const h = d.getHours().toString().padStart(2, '0');
-  const m = d.getMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
+  return '';
 };
-
 export const normalizeHour = (str: string) => {
   const match = str.match(/^(\d{1,2})h(\d{0,2})$/);
   if (!match) return str; // déjà au bon format

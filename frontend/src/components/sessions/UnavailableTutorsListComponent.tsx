@@ -1,5 +1,6 @@
 import { ClockIcon, XCircleIcon } from "lucide-react";
 import { getLevelForSubject, getLevelOfClass } from "../subscriptions/SubscriptionFunctions";
+import { formatTime } from "@/services/functions";
 
 interface Tutor {
   id: number;
@@ -15,25 +16,6 @@ interface Tutor {
 }
 
 export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
-  const formatTime = (timeString: string) => {
-    // Si format ISO: "2025-10-14T12:30:00.000Z"
-    const isoMatch = timeString.match(/T(\d{2}:\d{2})/);
-    if (isoMatch) return isoMatch[1];
-  
-    // Si format simple: "12:30:00" ou "12:30"
-    const simpleMatch = timeString.match(/^(\d{2}:\d{2})/);
-
-
-    
-
-    if (simpleMatch) return simpleMatch[1];
-  
-    return '';
-  };
-
-
-
-
   return (
     <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
       <div className="flex items-start gap-2 mb-3">

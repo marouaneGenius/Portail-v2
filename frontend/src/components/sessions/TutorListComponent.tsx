@@ -2,6 +2,7 @@ import api from '@/api/aixos';
 import React, { useEffect, useState } from 'react';
 import { UnavailableTutorsListComponent } from './UnavailableTutorsListComponent';
 import { getLevelForSubject, hasLevelForSubject } from '../subscriptions/SubscriptionFunctions';
+import { formatTime } from '@/services/functions';
 
 interface Tutor {
   id: number;
@@ -216,10 +217,4 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
 };
 
 // Fonction utilitaire pour formater l'heure
-const formatTime = (timeString: string) => {
-  const date = new Date(timeString);
-  return date.toLocaleTimeString('fr-FR', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-};
+

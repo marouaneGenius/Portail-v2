@@ -260,7 +260,13 @@ const ItemDetails: React.FC = () => {
             if (key === 'parents')
               return (
                 <Card key={key} className="border-fading-grey">
-                  <CustomParentComponent currentkey={key} value={value} onRedirect={redirection} action={open} />
+                  <CustomParentComponent 
+                    currentkey={key} 
+                    value={value} 
+                    onRedirect={redirection} 
+                    action={open} 
+                    studentId={resource === 'student' ? parseInt(id!) : undefined}
+                  />
                 </Card>
               );
             if (key === 'students')

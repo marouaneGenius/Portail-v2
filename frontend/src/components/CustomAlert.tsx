@@ -3,6 +3,7 @@ import { actions } from '../mocks/mocks';
 import { CustomButton } from './CustomButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Building, MapPin, Phone, Users, User, Mail, Calendar } from 'lucide-react';
+import api from '@/api/aixos';
 
 interface CustomAlertProps {
   title?: string;
@@ -16,6 +17,7 @@ interface CustomComponentProps {
   onRedirect?: (item: any) => void;
   action?: (item: any) => void;
   id?: string;
+  studentId?: number; // Ajouter l'ID de l'étudiant pour récupérer les frères/sœurs
 }
 
 export interface BrothersComponentProps {
@@ -56,7 +58,10 @@ export function CustomParentComponent({
   currentkey,
   onRedirect,
   action,
+  studentId,
 }: CustomComponentProps): React.ReactNode {
+  const [siblings, setSiblings] = React.useState<any[]>([]);
+  const [loadingSiblings, setLoadingSiblings] = React.useState(false);
   console.log(value)
   if (currentkey !== 'parents' || !Array.isArray(value)) return null;
 
@@ -71,9 +76,28 @@ export function CustomParentComponent({
     );
   }
 
+  // Récupérer les frères et sœurs si on a l'ID de l'étudiant
+  React.useEffect(() => {
+    const fetchSiblings = async () => {
+      if (!studentId) return;
+      
+      setLoadingSiblings(true);
+      try {
+        const response = await api.get(`/api/student/${studentId}/siblings`);
+        setSiblings(response.data);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des frères/sœurs:', error);
+        setSiblings([]);
+      } finally {
+        setLoadingSiblings(false);
+      }
+    };
+
+    fetchSiblings();
+  }, [studentId]);
+
   // On suppose ici que le premier parent est le parent responsable
   const parent = value[0];
-  const siblings = value.slice(1).map((s) => `${s.firstname} ${s.lastname}`);
 
   return (
     <Card className="border-fading-grey">
@@ -126,12 +150,39 @@ export function CustomParentComponent({
           <h4 className="font-medium text-mister-anthracite mb-3 flex items-center gap-2">
             <Users className="w-4 h-4" />
             Frères et sœurs
+            {loadingSiblings && (
+              <span className="text-xs text-mister-anthracite/60 ml-1">(chargement...)</span>
+            )}
+            {siblings.length > 0 && !loadingSiblings && (
+              <span className="text-xs text-mister-anthracite/60 ml-1">({siblings.length})</span>
+            )}
           </h4>
-          {siblings.length > 0 ? (
+          
+          {loadingSiblings ? (
+            <div className="text-sm text-mister-anthracite/60 italic">
+              Chargement des frères et sœurs...
+            </div>
+          ) : siblings.length > 0 ? (
             <div className="space-y-2">
-              {siblings.map((sibling, index) => (
-                <div key={index} className="bg-fading-grey/30 p-3 rounded-lg">
-                  <span className="text-mister-anthracite font-medium">{sibling}</span>
+              {siblings.map((sibling: any) => (
+                <div key={sibling.id} className="bg-fading-grey/30 p-3 rounded-lg flex items-center justify-between">
+                  <div>
+                    <div className="text-mister-anthracite font-medium">
+                      {sibling.firstname} {sibling.lastname}
+                    </div>
+                    {sibling.class && (
+                      <div className="text-xs text-mister-anthracite/60">
+                        Classe: {sibling.class}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRedirect?.(`student/${sibling.id}`)}
+                    className="text-xs text-hello-yellow hover:underline"
+                  >
+                    Voir
+                  </button>
                 </div>
               ))}
             </div>

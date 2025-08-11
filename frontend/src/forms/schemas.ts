@@ -113,9 +113,8 @@ export const AnnuelFields: FormField[] = [
 ];
 
 export const TrialSession: FormField[] = [
-  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  // { name: 'payment_date', label: 'Date de paiement', type: 'date'},
-  { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'date', required: true},
+  { name: 'school_subjects', label: 'Matières', type: 'select',  multiple: true, required: true },
+  { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'datetime-local', required: true},
 ];
 
 export const StageFields: FormField[] = [
