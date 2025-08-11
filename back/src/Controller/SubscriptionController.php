@@ -21,6 +21,8 @@ class SubscriptionController extends AbstractController
     private EntityManagerInterface $em;
     private UserPasswordHasherInterface $passwordHasher;
     private CenterRepository $centerRepository;
+    private SubscriptionRepository $subscriptionRepository;
+    private StudentRepository $studentRepository;
 
     public function __construct(
         EntityManagerInterface $em,
@@ -319,7 +321,6 @@ class SubscriptionController extends AbstractController
             'updated_by'             => $subscription->getUpdatedBy(),
             'is_canceled'             => $subscription->isIsCanceled(),
             'canceled_by'             => $subscription->getCanceledBy(),
-            // 'url' => $subscription->getSubscriptionURLs()->first()?->getUrl()
             'url' => $subscription->getSubscriptionURLs()->first() && $subscription->getSubscriptionURLs()->first() !== false ? $subscription->getSubscriptionURLs()->first()->getUrl() : null
         ], $subs);
     

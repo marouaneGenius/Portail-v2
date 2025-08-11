@@ -350,9 +350,13 @@ class SessionController extends AbstractController
         $start = $date->setTime(0, 0, 0);
         $users = $this->userRepo->findTutorsAvailableInCenter($center);
 
+        $periodParam = $request->query->get('period');
 
-        // dd( $users);
+        if ($periodParam === 'week') {
+        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndWeek($center, $start, $users);
+        } else {
         $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start, $users);
+        }
 
         return new JsonResponse($data);
     }
@@ -556,7 +560,6 @@ class SessionController extends AbstractController
         } else {
             $endPeriod = new \DateTimeImmutable($year . '-08-15 23:59:59');
         }
-
         $startPeriod = $oldScheduledAt;
 
         $sessions = $this->sessionRepo->findByStudentAndCenterAndPeriod(
@@ -566,8 +569,21 @@ class SessionController extends AbstractController
             $endPeriod
         );
 
+        // Filtre : même jour de la semaine et même heure/minute
+        $targetDow = (int)$oldScheduledAt->format('w'); // 0=dimanche, 1=lundi...
+        $targetHour = (int)$oldScheduledAt->format('H');
+        $targetMinute = (int)$oldScheduledAt->format('i');
+
         $updated = 0;
         foreach ($sessions as $s) {
+            $sAt = $s->getScheduledAt();
+            if (
+                (int)$sAt->format('w') !== $targetDow ||
+                (int)$sAt->format('H') !== $targetHour ||
+                (int)$sAt->format('i') !== $targetMinute
+            ) {
+                continue; // Ignore les séances qui ne sont pas sur le même créneau
+            }
             $s->setSchoolSubjects($data['school_subjects']);
             $this->em->persist($s);
             $updated++;
@@ -882,7 +898,7 @@ class SessionController extends AbstractController
                 return new JsonResponse(['error' => 'Aucun étudiant spécifié ou trouvé'], JsonResponse::HTTP_BAD_REQUEST);
             }
         }
-    
+
         // --------- MODE "TOUTES LES SÉANCES À VENIR" ----------
         if ($updateAll) {
             $oldScheduledAt = $session->getScheduledAt();
@@ -893,9 +909,9 @@ class SessionController extends AbstractController
             } else {
                 $endPeriod = new \DateTimeImmutable($year . '-08-15 23:59:59');
             }
-            // ⚠️ Prend toutes les séances à partir d'aujourd'hui (pas la date de la session courante)
-            $startPeriod = new \DateTimeImmutable('today');
-    
+            $startPeriod = $oldScheduledAt;
+
+            // Récupère toutes les séances futures de l'élève dans ce centre et cette période
             $sessions = $this->sessionRepo->findByStudentAndCenterAndPeriod(
                 $studentId,
                 $session->getCenter(),
@@ -903,29 +919,37 @@ class SessionController extends AbstractController
                 $endPeriod
             );
 
-            // dd($sessions);
-    
+            // Filtre : même jour de la semaine et même heure/minute
+            $targetDow = (int)$oldScheduledAt->format('w'); // 0=dimanche, 1=lundi...
+            $targetHour = (int)$oldScheduledAt->format('H');
+            $targetMinute = (int)$oldScheduledAt->format('i');
+
             $updated = 0;
             foreach ($sessions as $s) {
+                $sAt = $s->getScheduledAt();
+                if (
+                    (int)$sAt->format('w') !== $targetDow ||
+                    (int)$sAt->format('H') !== $targetHour ||
+                    (int)$sAt->format('i') !== $targetMinute
+                ) {
+                    continue; // Ignore les séances qui ne sont pas sur le même créneau
+                }
+
                 if (array_key_exists('is_canceled', $data)) {
                     $s->setIsCanceled($data['is_canceled']);
                 }
                 if (array_key_exists('is_absent', $data)) {
                     $s->setIsAbsent($data['is_absent']);
                 }
-
                 if (array_key_exists('updated_by', $data)) {
                     $s->setUpdatedBy($data['updated_by']);
                 }
-        
                 if (array_key_exists('absent_by', $data)) {
                     $s->setAbsentBy($data['absent_by']);
                 }
-        
                 if (array_key_exists('canceled_by', $data)) {
                     $s->setCanceledBy($data['canceled_by']);
                 }
-            
                 // Gestion des étudiants sur chaque séance
                 if (array_key_exists('student_ids', $data)) {
                     foreach ($s->getIdStudent() as $stu) {

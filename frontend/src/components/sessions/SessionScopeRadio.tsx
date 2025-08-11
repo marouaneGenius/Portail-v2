@@ -28,7 +28,7 @@ const SessionScopeRadio: React.FC<SessionScopeRadioProps> = ({ value, onChange, 
         onChange={() => onChange(true)}
         className="form-radio"
       />
-      <span className="ml-2">Toutes les séances de cet étudiant</span>
+      <span className="ml-2">Pour toutes les prochaines séances de cet étudiant à ce créneau</span>
     </label>
   </div>
 );

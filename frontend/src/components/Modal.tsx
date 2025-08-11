@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -17,13 +18,14 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
+  // Le contenu du modal
+  const modalContent = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-3xl"  
+        className="bg-white rounded-lg shadow-lg w-full max-w-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
@@ -38,9 +40,7 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="p-4">  {/* ← Ajuste ici le padding */}
-          {children}
-        </div>
+        <div className="p-4">{children}</div>
 
         {footer && (
           <div className="px-4 py-2 border-t flex justify-end space-x-2">
@@ -50,6 +50,9 @@ const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  // Utilise un portal pour rendre le modal dans <body>
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;
