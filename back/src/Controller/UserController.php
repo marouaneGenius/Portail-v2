@@ -337,6 +337,8 @@ class UserController extends AbstractController
             }
         }
 
+        // dump($user, $data['classe']);
+
         if (isset($data['is_active'])) {
             $user->setIsActive((bool)$data['is_active']);
         }
@@ -356,7 +358,7 @@ class UserController extends AbstractController
             'firstname' => $user->getFirstname(),
             'lastname'  => $user->getLastname(),
             'roles'  => $user->getRoles(),
-            // etc.
+            'class'  => $user->getClass(),
         ]);
     }
 

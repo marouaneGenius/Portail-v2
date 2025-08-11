@@ -3,13 +3,14 @@ import axios from "axios";
 import { useAuth } from "@/Hooks/auth";
 import { RenderField, RenderTrialField } from "../forms/customInput";
 import { TrialSession } from "@/forms/schemas";
-import { SchoolSubjects } from "@/mocks/mocks";
+import { SchoolSubjects, ClassesOptionsLevel } from "@/mocks/mocks";
 import api from "@/api/aixos";
 import { useNavigate } from "react-router-dom";
 import { StudentInfoCard } from "./StudentInfoCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { hasLevelForSubject, classLevel } from "../subscriptions/SubscriptionFunctions";
 
 interface Sibling {
     id: number;
@@ -27,6 +28,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     const [selectedSiblings, setSelectedSiblings] = useState<number[]>([]);
     const [totalPrice, setTotalPrice] = useState(30);
     const [disablesdButtonUntilFindUser, setDisablesdButtonUntilFindUser] = useState(true);
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const navigate = useNavigate();
 
     const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -48,12 +50,37 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
 
 
     useEffect(() => {
-        if (values.tutor_id) {
-            setDisablesdButtonUntilFindUser(false);
-        } else {
-            setDisablesdButtonUntilFindUser(true);
-        }
-    }, [values])
+        const checkTutorValidation = async () => {
+            if (values.tutor_id) {
+                setDisablesdButtonUntilFindUser(false);
+                // Vérification en temps réel seulement si des frères/sœurs sont sélectionnés
+                if (values.school_subjects?.length && selectedSiblings.length > 0) {
+
+
+                    console.log(values)
+
+                    const validation = await validateTutorForAllStudents(values.tutor_id, values.school_subjects);
+                    setValidationErrors(validation.errors);
+                } else {
+                    // Pas de frères/sœurs = pas de validation nécessaire
+                    setValidationErrors([]);
+                }
+            } else {
+                setDisablesdButtonUntilFindUser(true);
+                setValidationErrors([]);
+            }
+
+            if(values !== undefined && values.school_subjects !== undefined) {
+                if(values.school_subjects.length ===0 || !values.scheduled_at) {
+                    setDisablesdButtonUntilFindUser(true);
+                } else {
+                    setDisablesdButtonUntilFindUser(false);
+                }
+            }
+        };
+
+        checkTutorValidation();
+    }, [values.tutor_id, values.school_subjects, selectedSiblings, student])
 
     const removeValueFromField = (field: any, value: any) => {
         setValues((prev: any) => ({
@@ -64,12 +91,94 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
         }));
     };
 
+    // Fonction pour valider si le tuteur peut enseigner à tous les étudiants sélectionnés
+    const validateTutorForAllStudents = async (tutorId: number, schoolSubjects: string[]) => {
+        // Ne valider que s'il y a des frères/sœurs sélectionnés
+        if (!tutorId || !schoolSubjects?.length || selectedSiblings.length === 0) {
+            return { isValid: true, errors: [] };
+        }
+
+        try {
+            // Récupérer les informations du tuteur
+            const tutorResponse = await api.get(`/api/user/${tutorId}`);
+            const tutor = tutorResponse.data;
+
+            if (!tutor.class || tutor.class.length === 0) {
+                return { isValid: false, errors: ["Le tuteur n'a pas de niveaux définis."] };
+            }
+
+            const errors: string[] = [];
+            const allStudents = [
+                { name: student.firstname + ' ' + student.lastname, class: student.class },
+                ...selectedSiblings.map(siblingId => {
+                    const sibling = siblings.find(s => s.id === siblingId);
+                    return sibling ? { name: sibling.firstname + ' ' + sibling.lastname, class: sibling.class } : null;
+                }).filter(Boolean)
+            ];
+
+            // Analyser chaque matière pour voir si elle peut être enseignée à tous les étudiants
+            const subjectAnalysis: { [subject: string]: { canTeach: boolean, problems: string[] } } = {};
+            
+            schoolSubjects.forEach(subject => {
+                const tutorSubjectLevel = tutor.class.find((tc: any) => tc.subject === subject);
+                subjectAnalysis[subject] = { canTeach: true, problems: [] };
+                
+                if (!tutorSubjectLevel) {
+                    subjectAnalysis[subject].canTeach = false;
+                    subjectAnalysis[subject].problems.push("Matière non enseignée par le tuteur");
+                } else {
+                    allStudents.forEach((student:any) => {
+                        const studentLevel = classLevel(student.class);
+                        if (Number(tutorSubjectLevel.level) < Number(studentLevel)) {
+                            const tutorMaxClass = ClassesOptionsLevel.find(c => c.level === tutorSubjectLevel.level)?.value || 'niveau inconnu';
+                            subjectAnalysis[subject].canTeach = false;
+                            subjectAnalysis[subject].problems.push(`${student.name} (${student.class}) - tuteur enseigne ${subject} jusqu'en ${tutorMaxClass} seulement`);
+                        }
+                    });
+                }
+            });
+
+            // Vérifier s'il y a des problèmes
+            const problematicSubjects = Object.keys(subjectAnalysis).filter(subject => !subjectAnalysis[subject].canTeach);
+            
+            if (problematicSubjects.length > 0) {
+                problematicSubjects.forEach(subject => {
+                    errors.push(`❌ **${subject.toUpperCase()}** : ${subjectAnalysis[subject].problems.join(', ')}`);
+                });
+
+                // Suggérer des solutions
+                const workingSubjects = Object.keys(subjectAnalysis).filter(subject => subjectAnalysis[subject].canTeach);
+                if (workingSubjects.length > 0) {
+                    errors.push(`✅ **Matières possibles** : ${workingSubjects.join(', ')}`);
+                    errors.push(`💡 **Suggestion** : Créez une session avec seulement ces matières, ou créez des sessions séparées par niveau.`);
+                }
+            }
+
+            return { isValid: errors.length === 0, errors };
+        } catch (error) {
+            console.error('Erreur lors de la validation du tuteur:', error);
+            return { isValid: false, errors: ["Erreur lors de la vérification des niveaux du tuteur."] };
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
         if (!student?.id) {
             alert("Erreur: Informations de l'étudiant manquantes");
             return;
+        }
+
+        // Validation des niveaux du tuteur avant soumission (seulement si des frères/sœurs sont sélectionnés)
+        if (values.tutor_id && values.school_subjects?.length && selectedSiblings.length > 0) {
+
+
+            const validation = await validateTutorForAllStudents(values.tutor_id, values.school_subjects);
+            if (!validation.isValid) {
+                setValidationErrors(validation.errors);
+                alert("Erreur: " + validation.errors.join('\n'));
+                return;
+            }
         }
         
         const allStudentIds = [student.id, ...selectedSiblings];
@@ -88,7 +197,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             api.post('/api/sessions/trial-session', newValues).then((res) => {
                 if(res) {
                     alert(`Session d'essai créée avec succès pour ${allStudentIds.length} étudiant(s) - Total: ${totalPrice}€`)
-                    // navigate(`/studentDetails/${student.id}`);
+                    navigate(`/studentDetails/${student.id}`);
                 }
             })
         } catch(e:any) {
@@ -204,6 +313,38 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Section d'affichage des erreurs de validation */}
+                {validationErrors.length > 0 && (
+                    <Card className="border-red-200 bg-red-50">
+                        <CardHeader>
+                            <CardTitle className="text-red-800 flex items-center">
+                                ⚠️ Problèmes de compatibilité détectés
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {validationErrors.map((error, index) => (
+                                    <div key={index} className="flex items-start space-x-2">
+                                        <span className="text-red-600 font-bold mt-1">•</span>
+                                        <p className="text-red-700 text-sm">{error}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-3 p-3 bg-red-100 rounded-lg">
+                                <p className="text-red-800 text-sm font-medium">
+                                    💡 <strong>Solutions possibles :</strong>
+                                </p>
+                                <ul className="text-red-700 text-sm mt-1 space-y-1">
+                                    <li>• Choisir un autre tuteur</li>
+                                    <li>• Modifier les matières sélectionnées</li>
+                                    <li>• Désélectionner certains frères/sœurs</li>
+                                    <li>• Créer des sessions séparées par niveau</li>
+                                </ul>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
                 {fields.map((field:any) => (
@@ -221,12 +362,15 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                 ))}
                 <button
                     type="submit"
-                    disabled={disablesdButtonUntilFindUser}
-                    className={disablesdButtonUntilFindUser ? 
+                    disabled={disablesdButtonUntilFindUser || validationErrors.length > 0}
+                    className={disablesdButtonUntilFindUser || validationErrors.length > 0 ? 
                             "w-full bg-gray-300 text-white py-3 rounded-md hover:bg-blue-300 transition cursor-not-allowed" :
                             "w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"}
                 >
-                    Créer la session d'essai ({selectedSiblings.length + 1} étudiant{selectedSiblings.length + 1 > 1 ? 's' : ''} - {totalPrice}€)
+                    {validationErrors.length > 0 
+                        ? "⚠️ Problèmes de compatibilité à résoudre"
+                        : `Créer la session d'essai (${selectedSiblings.length + 1} étudiant${selectedSiblings.length + 1 > 1 ? 's' : ''} - ${totalPrice}€)`
+                    }
                 </button>
             </form>
         </div>

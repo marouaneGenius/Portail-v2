@@ -50,6 +50,9 @@ export default function EditionForm() {
       if (values[field.name] !== undefined) {
         payload[field.name] = values[field.name];
       }
+     if (values.class !== undefined) {
+          payload.class = values.class;
+      }
     });
 
 

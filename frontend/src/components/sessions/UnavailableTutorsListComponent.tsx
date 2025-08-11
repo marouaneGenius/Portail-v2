@@ -38,7 +38,6 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
 
             <div className="flex flex-wrap gap-1 mt-2">
               {tutor.school_subjects.map((subject:any) => (
-                  <>
                     <span 
                       key={subject} 
                       className="px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-800"
@@ -47,7 +46,6 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
                       {getLevelForSubject(tutor, subject)}
 
                     </span>
-                  </>
               ))}
             </div>
 

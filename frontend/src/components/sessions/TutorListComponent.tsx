@@ -187,8 +187,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
                 <h4 className="font-medium">{tutor.firstname} {tutor.lastname}</h4>
                 <p className="text-sm text-gray-600 mt-1">
                   {
-                    tutor.school_subjects.map((s) => (
-                      <span className='bg-blue-200 m-1 rounded p-1 text-xs m-1'>{s} -  
+                    tutor.school_subjects.map((s, index) => (
+                      <span key={index} className='bg-blue-200 m-1 rounded p-1 text-xs m-1'>{s} -  
                       {getLevelForSubject (tutor, s)}
                       </span>
                     ))
