@@ -2,13 +2,14 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { extractExactHour, formatDateTime } from '@/services/functions';
 import Modal from '../Modal';
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, MoreVertical } from 'lucide-react';
+import { MoreVertical, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { renderMultiSelect, RenderTrialField } from '../forms/customInput';
 import api from '@/api/aixos';
@@ -143,6 +144,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     }));
   };
 
+  // UI améliorée inspirée du StudentBadge
   return (
     <>
       <div
@@ -150,76 +152,75 @@ export const StudentCard: React.FC<StudentCardProps> = ({
         style={style}
         {...listeners}
         {...attributes}
-        className={`rounded shadow p-1 w-full 
-        ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab'}  
-        ${isAbsent ? 'bg-red-100 ' : 'bg-gray-300 '} 
-        ${isCanceled ? 'bg-gray-200 ' : ''}`}
+        className={`rounded-xl shadow p-2 w-full transition
+          ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab'}
+          ${isAbsent && !isCanceled ? 'bg-red-50 border border-red-200' : 'bg-white border border-fading-grey'}
+          ${isCanceled ? 'bg-gray-100 border border-gray-300 opacity-60' : ''}
+          ${!isAbsent && !isCanceled ? 'bg-fading-grey/60' : ''}
+        `}
       >
-        <div className="flex justify-between items-center ">
-          <div className="font-medium ">
-            {currentStudent.firstname} {currentStudent.lastname}
-          </div>
-
-          <div>
-          {isAbsent && !isCanceled && 'Absent'}
-          {isCanceled && 'Seance Annuler'}
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className={`font-semibold text-mister-anthracite ${isCanceled ? 'line-through text-gray-400' : ''}`}>
+                <GraduationCap className="h-4 w-4 text-mister-anthracite inline-block" /> {currentStudent.firstname} {currentStudent.lastname}
+                {currentStudent.class && (
+                  <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700 border-orange-200">
+                    {currentStudent.class}
+                  </Badge>
+                )}
+              </span>
+              {isAbsent && !isCanceled && (
+                <Badge variant="destructive" className="text-xs px-2 py-0.5">Absent</Badge>
+              )}
+              {isCanceled && (
+                <Badge variant="destructive" className="text-xs px-2 py-0.5">Séance annulée</Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {values.school_subjects.map((matiere: any, index: number) => (
+                <Badge
+                  key={index}
+                  variant="outline"
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-2 py-0.5"
+                >
+                  {matiere}
+                </Badge>
+              ))}
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <MoreVertical className="h-5 w-5 text-gray-600" />
+              <button className="p-1 hover:bg-fading-grey rounded transition">
+                <MoreVertical className="h-5 w-5 text-mister-anthracite" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="">
-              <DropdownMenuItem onSelect={() =>navigate(`/student/${currentStudent.id}`)}>
+            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border border-fading-grey bg-white">
+              <DropdownMenuItem onClick={() => navigate(`/student/${currentStudent.id}`)}>
                 Afficher les informations
               </DropdownMenuItem>
-
-              <DropdownMenuItem onSelect={()=>setShowEditModal('tutor')}>
+              <DropdownMenuItem onClick={() => setShowEditModal('tutor')}>
                 Modifier la séance
               </DropdownMenuItem>
-
-              <DropdownMenuItem onSelect={()=>    setShowEditModal('subjects')}>
+              <DropdownMenuItem onClick={() => setShowEditModal('subjects')}>
                 Modifier les Matières
               </DropdownMenuItem>
-
-              <DropdownMenuItem onSelect={()=>setShowEditModal('absent')}>
-                Marquer comme 
-                {isAbsent ? ' Present ' : ' absent '}
+              <DropdownMenuItem onClick={() => setShowEditModal('absent')}>
+                Marquer comme {isAbsent ? 'Présent' : 'Absent'}
               </DropdownMenuItem>
-
-              <DropdownMenuItem onSelect={()=> setShowEditModal('cancel')} className={`${isCanceled ? 'bg-red-100 ' : ''}`}>
-                {isCanceled ? 'Reprogrammer ' : 'Annuler '}
+              <DropdownMenuItem
+                onClick={() => setShowEditModal('cancel')}
+                className={isCanceled ? 'bg-red-100 text-red-700' : ''}
+              >
+                {isCanceled ? 'Reprogrammer' : 'Annuler'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        {currentSession && (
-          <div className="mt-2 text-sm">
-            {/* <div className="font-medium">Session #{currentSession.id}</div> */}
-            <div>
-              {new Date(currentSession.scheduled_at).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </div>
-            <div>Heure: {extractExactHour(currentSession.scheduled_at)}</div>
-          </div>
-        )}
-        <div className='mt-2'>
-          {
-            values.school_subjects.map((matiere:any, index:any) => (
-              <span key={index} className='rounded bg-blue-400 text-white text-sm m-1 p-1'>{matiere}</span>
-            )) 
-          }
-        </div>
       </div>
 
       {showEditModal === 'cancel' && (
-        <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
+        <Modal isOpen onClose={() => setShowEditModal(null)} title="Annuler ou reprogrammer la séance" >
           <div className='p-3'>
             <div className='p-3'> 
               <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
@@ -230,7 +231,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       )}
 
       {showEditModal === 'absent' && (
-        <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier les matières" >
+        <Modal isOpen onClose={() => setShowEditModal(null)} title="Gérer l'absence" >
           <div className='p-3'>
             <div className='p-3'> 
               <SessionScopeRadio value={applyAll} onChange={setApplyAll} />

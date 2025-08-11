@@ -50,21 +50,21 @@ const HeaderComponent: React.FC<ContractHeaderProps> = ({ student, subscription,
         minHeight: '100vh',
         backgroundImage: "url('/public/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
         backgroundRepeat: 'no-repeat',
-        backgroundSize: '45%',
+        backgroundSize: '80%',
         backgroundPosition: '50% 50%',
       }}>
 
         {/* Titre principal */}
         <div>
           <h1 style={{ fontSize: 80 }} className="mt-5 poppins-title-bold welcomTitleFont font-extrabold text-mister-anthracite leading-tight">
-            Accompagnons {studentName}
+            Accompagnons {studentName} sur
             <span className="poppins-title-bold text-hello-yellow"> {weeklyHours} </span>
             <span className="poppins-title-bold">de cours</span> par <span className="bold-title poppins-title-bold">semaine</span>
           </h1>
         </div>
         <p style={{ fontSize: 30 }}className="text-xl text-mister-anthracite/60 mt-6 poppins">{subscriptionType} 2025-2026</p>
         <p className="h4 mb-5 text-lg poppins">
-          Devis #{devisNumber} éditée le {devisDate}
+          Devis #{devisNumber} éditée  le {devisDate}
         </p>
         {/* Logos en bas */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -78,7 +78,7 @@ const HeaderComponent: React.FC<ContractHeaderProps> = ({ student, subscription,
         minHeight: '100vh',
         backgroundImage: "url('/public/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
         backgroundRepeat: 'no-repeat',
-        backgroundSize: '45%',
+        backgroundSize: '80%',
         backgroundPosition: '50% 50%',
       }}>
         {/* Logo en haut à gauche */}

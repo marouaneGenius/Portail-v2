@@ -180,6 +180,77 @@ class SessionRepository extends ServiceEntityRepository
     }
 
 
+    public function getTutorsAndSessionsWithStudentsByCenterAndWeek(Center $center, \DateTimeImmutable $date, $users): array
+    {
+        // Calcule le début (lundi) et la fin (dimanche) de la semaine
+        $startOfWeek = $date->modify(('Monday' === $date->format('l')) ? 'this monday' : 'last monday')->setTime(0, 0, 0);
+        $endOfWeek = $startOfWeek->modify('+6 days')->setTime(23, 59, 59);
+
+        $tutors = [];
+        foreach ($users as $user) {
+            if (!in_array('ROLE_TUTOR', $user->getRoles())) continue;
+
+            $sessionsSemaine = $user->getSessions()->filter(function($session) use ($center, $startOfWeek, $endOfWeek) {
+                $scheduledAt = $session->getScheduledAt();
+                return $session->getCenter()?->getId() === $center->getId()
+                    && $scheduledAt !== null
+                    && $scheduledAt >= $startOfWeek
+                    && $scheduledAt <= $endOfWeek;
+            });
+
+            $sessionsArr = [];
+            foreach ($sessionsSemaine as $session) {
+                $studentsArr = [];
+                foreach ($session->getIdStudent() as $student) {
+                    $studentsArr[] = [
+                        'id' => $student->getId(),
+                        'firstname' => $student->getFirstname(),
+                        'lastname'  => $student->getLastname(),
+                        'email'     => $student->getEmail(),
+                        'session_id' => $session->getId(),
+                        'class' => $student->getClass(),
+                        'centers' => $student->getIdCenter()
+                            ? [
+                                'id'      => $student->getIdCenter()->getId(),
+                                'name'    => $student->getIdCenter()->getName(),
+                                'address' => $student->getIdCenter()->getAddress(),
+                                'city'    => $student->getIdCenter()->getCity(),
+                            ]
+                            : null,
+                    ];
+                }
+                $sessionsArr[] = [
+                    'id'            => $session->getId(),
+                    'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
+                    'resume'        => $session->getResume(),
+                    'is_canceled'   => $session->isIsCanceled(),
+                    'is_absent'     => $session->isIsAbsent(),
+                    'students'      => $studentsArr,
+                    'school_subjects' => $session->getSchoolSubjects(),
+                ];
+            }
+
+            if (empty($sessionsArr)) continue;
+
+            $tutors[] = [
+                'id'        => $user->getId(),
+                'firstname' => $user->getFirstname(),
+                'lastname'  => $user->getLastname(),
+                'email'     => $user->getEmail(),
+                'events' => array_map(fn(TutorSchedule $tutorSchedule) => [
+                    'id'   => $tutorSchedule->getId(),
+                    'day' => $tutorSchedule->getDay(),
+                    'start_hour' => $tutorSchedule->getStartHour(),
+                    'end_hour' => $tutorSchedule->getEndHour(),
+                ], $user->getTutorSchedules()->toArray()),
+                // autres infos tuteur...
+                'sessions'  => $sessionsArr,
+            ];
+        }
+        return $tutors;
+    }
+
+
     public function findByStudentAndCenterAndPeriod(
         int $studentId,
         Center $center,

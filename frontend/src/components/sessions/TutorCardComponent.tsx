@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StudentCard } from './StudentCardComponent';
 import { useDroppable } from '@dnd-kit/core';
+import { User} from "lucide-react";
 
 type Tutor = { 
   id: number; 
@@ -63,7 +64,7 @@ export const TutorCard: React.FC<TutorCardProps> = ({
     >
       <div className="mb-3">
         <div className="font-medium text-gray-900">
-          {tutor.firstname} {tutor.lastname} id : {tutor.id}
+          <User className="inline-block text-crazy-magenta mr-1" /> {tutor.firstname} {tutor.lastname}
         </div>
         
         <div className="flex flex-wrap gap-1 mt-2">
@@ -79,13 +80,8 @@ export const TutorCard: React.FC<TutorCardProps> = ({
       </div>
 
       <div className="mt-2">
-        <h4 className="font-semibold text-sm mb-2">
-          Étudiants à {hourSlot}
-        </h4>
         <div className="space-y-2 min-h-[60px]"> 
 
-
-          
           {students.length > 0 ? (
             students.map((student:any) => {
               const currentSession = session.sessions.find((s:any) => s.id === student.session_id)
