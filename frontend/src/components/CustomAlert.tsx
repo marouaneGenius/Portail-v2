@@ -4,6 +4,7 @@ import { CustomButton } from './CustomButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Building, MapPin, Phone, Users, User, Mail, Calendar } from 'lucide-react';
 import api from '@/api/aixos';
+import { formatTime } from '@/services/functions';
 
 interface CustomAlertProps {
   title?: string;
@@ -62,7 +63,6 @@ export function CustomParentComponent({
 }: CustomComponentProps): React.ReactNode {
   const [siblings, setSiblings] = React.useState<any[]>([]);
   const [loadingSiblings, setLoadingSiblings] = React.useState(false);
-  console.log(value)
   if (currentkey !== 'parents' || !Array.isArray(value)) return null;
 
   // Si aucun parent
@@ -347,10 +347,8 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
     // ex: lundi 15 janvier
     return date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   };
-  const formatTime = (dateStr:any) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  };
+
+
 
   let sessions: any = Array.isArray(value) ? value : [];
 
@@ -362,8 +360,8 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
   
   // Trouve la prochaine séance (future)
   const now = new Date();
-  const nextSession = sessions.find((s:any) => new Date(s.scheduled_at) >= now);
-  
+  const nextSession = sessions.find((s:any) => new Date(s.scheduled_at) >= now && s.session_type !== 'trial_session');
+
   // Trouve la dernière séance passée
   const lastSession: any = [...sessions]
     .filter(s => new Date(s.scheduled_at) < now)

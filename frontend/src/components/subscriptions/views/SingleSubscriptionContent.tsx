@@ -4,6 +4,8 @@ import ModificationAnnulationNotice from './ModificationAnnulationComponent';
 import NonPaiementMensualitesNotice from './NonPaiementMensualitesModifieesComponent';
 import EngagementPaiementNotice from './EngagementDePaiementComponent';
 import HeaderComponent from './HeaderComponent';
+import FirstPageComponent from './FirstPageComponent';
+import WelcomePageComponent from './WelcomePageComponent';
 import TarificationCalculator from './TarificationCalculator';
 import FraisInscriptionComponent from './FraisInscriptionComponent';
 import { ComportementComponent } from './ComportementComponent';
@@ -60,10 +62,19 @@ const SingleSubscriptionContent: React.FC<FullContractProps>  = ({ Student, Subs
     return (
         <div className="space-y-8 ">
             <div className="p-0 text-sm ">
+                {/* PAGE 1 - Première page avec titre principal */}
                 {
                     Student &&
-                    <HeaderComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
+                    <FirstPageComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
                 }
+                
+                {/* PAGE 2 - Page de bienvenue avec infos détaillées */}
+                {
+                    Student &&
+                    <WelcomePageComponent student={student} subscriptionType={SubscriptionType} subscription={Subscription} />
+                }
+                
+                {/* PAGE 3 - Tableau des prix */}
                 {
                     Student && Subscription &&
                     <TarificationCalculator data={Subscription} price={price} />
