@@ -40,7 +40,7 @@ const HeaderComponent: React.FC<ContractHeaderProps> = ({ student, subscription,
   const centerName = center.name || '';
   const centerCity = center.city || '';
   const centerAddress = center.address || '';
-  const centerPostal = center.zipcode || '';
+  const centerPostal = center.zip_code || center.zipcode || '';
   const centerSiret = center.siret || '90501854500012';
 
   return (

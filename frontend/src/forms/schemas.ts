@@ -36,7 +36,8 @@ export const userFields: FormField[] = [
 export const centerFields: FormField[] = [
   { name: 'name', label: 'Nom du centre', type: 'text', required: true },
   { name: 'address', label: 'Adresse', type: 'text', required: true },
-  { name: 'city', label: 'Ville', type: 'text', required: true ,className: 'col-span-2'},
+  { name: 'city', label: 'Ville', type: 'text', required: true },
+  { name: 'zip_code', label: 'Code Postal', type: 'text', required: true },
   { name: 'email', label: 'E-mail', type: 'email', required: true ,className: 'col-span-2'},
   { name: 'phone', label: 'Téléphone', type: 'text', required: true ,className: 'col-span-2'},
 

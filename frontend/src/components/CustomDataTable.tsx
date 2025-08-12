@@ -1,6 +1,7 @@
 import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/aixos';
+import { Center } from '@/types/entities';
 import {
   Plus, Search, Eye, Pencil, Trash2,
   ShieldCheck, UserRound, GraduationCap, Mail, Phone, Mars, Venus
@@ -22,12 +23,6 @@ interface DataTableProps {
   title?: string;
   addLabel?: string; // <- Texte personnalisable pour le bouton "Ajouter"
 }
-
-interface Center {
-  id: number;
-  name: string;
-}
-
 
 export default function CustomDataTable({
   endpoint,

@@ -460,7 +460,7 @@ export const CustomCenterComponent: React.FC<CustomComponentProps> = ({
             </div> */}
             <div className="flex items-start gap-2 text-sm">
               <MapPin className="w-4 h-4 text-mister-anthracite/60 mt-0.5" />
-              <span className="text-mister-anthracite/70">{ctr.address}, {ctr.city}</span>
+              <span className="text-mister-anthracite/70">{ctr.address}, {ctr.zip_code} {ctr.city}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Phone className="w-4 h-4 text-mister-anthracite/60" />
