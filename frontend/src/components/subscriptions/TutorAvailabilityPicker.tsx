@@ -68,6 +68,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
               setErrorMessage(`❌ Aucun tuteur disponible n’enseigne ${school_subjects.join().toUpperCase() } pour  ${studentRes.data.class}`);
             } else {
               setErrorMessage('');
+              setIsAvailable(false)
             }
 
             if (day && selectedHour && filterBySchoolSubject) {
@@ -124,7 +125,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
     const tutor:any = await getUser(id);
     const match = tutor.tutor_schedules.find((s: any) => s.day === day);
     setHours(match?.hours || []);
-
+    console.log('test')
     setIsAvailable(false)
     setSelectedHour(null);
     setSelectedTutor(null);
@@ -136,7 +137,6 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       school_subjects: [] 
     }));
   };
-
 
   useEffect(() => {
     if (selectedTutor && day && selectedHour) {
@@ -197,7 +197,8 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       }
 
       {
-       !isAvailable&& availableTutors.length !== 0 &&
+       !isAvailable&& 
+       availableTutors.length !== 0 &&
         <UnavailableTutorsListComponent tutors={availableTutors} student={student}/>
       }
       

@@ -15,7 +15,7 @@ import ParentFormOrModal from './ParentFormOrModal';
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array';
+  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array' | 'datetime-local';
   options?: { value: any; label: string }[]; // pour les select
   required?: boolean;
   className?: String;

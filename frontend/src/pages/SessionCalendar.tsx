@@ -122,7 +122,7 @@ export default function SessionCalendar() {
     if (!movedStudent) return;
 
 
-    const scheduledAt = formatScheduledAt(sessionToMove.scheduled_at, targetHour);
+    const scheduledAt = formatScheduledAt(sessionToMove.scheduled_at, targetHour, selectedDate);
     setDragContext({
       sessionId: sessionToMove.id,
       fromTutorId,
@@ -141,7 +141,7 @@ export default function SessionCalendar() {
             ...tutor,
             sessions: (tutor.sessions ?? []).map((sess: any) =>
               sess.id === sessionToMove.id
-                ? { ...sess, scheduled_at: formatScheduledAt(sess.scheduled_at, targetHour) }
+                ? { ...sess, scheduled_at: formatScheduledAt(sess.scheduled_at, targetHour, selectedDate) }
                 : sess
             ),
           };
@@ -164,7 +164,7 @@ export default function SessionCalendar() {
           const updatedSessions = [...(tutor.sessions ?? [])];
           sessionToMove.students = [movedStudent];
           sessionToMove.scheduled_at =
-            formatScheduledAt(sessionToMove.scheduled_at, targetHour);
+            formatScheduledAt(sessionToMove.scheduled_at, targetHour, selectedDate);
           updatedSessions.push(sessionToMove);
 
           return {

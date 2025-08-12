@@ -39,13 +39,23 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   useEffect(() => {
     api.get(`/api/user/tutors`).then((response) => {
       const filteresTutorsPeStudentCenter = response.data.filter((tutor:any) => {
-        if(tutor.centers && tutor.centers.length !== 0 &&  tutor.events.length !== 0) {
-         return tutor.events.find((event:any) => { 
+        // Vérification 1: Le tuteur a des centres, des événements, et le centre correspond
+        const hasCenterMatch = tutor.centers && tutor.centers.length !== 0 && tutor.events.length !== 0 && 
+          tutor.events.find((event:any) => { 
             if(event.centers ) {
               return event.centers.name === student.centers.name 
             }
-           })
+          });
+        
+        if (!hasCenterMatch) return false;
+        
+        // Vérification 2: Le tuteur peut enseigner les matières demandées au niveau de l'étudiant
+        if (values.school_subjects && values.school_subjects.length > 0) {
+          const hasSubjectAndLevel = hasLevelForSubject(tutor, student.class, values.school_subjects);
+          if (!hasSubjectAndLevel) return false;
         }
+        
+        return true;
       })
       setTutors(filteresTutorsPeStudentCenter);
     })
@@ -77,24 +87,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   };
 
   const filterTutorBySchoolSubject = (tutorsList: Tutor[]) => {
-    const wanted = Array.isArray(values.school_subjects)
-      ? values.school_subjects
-      : [];
-  
-    // Si rien n’est précisé, on ne filtre pas
-    if (wanted.length === 0) {
-      return tutorsList;
-    }
-
-    return tutorsList.filter(tutor => {
-      // const have = Array.isArray(tutor.school_subjects)
-      //   ? tutor.school_subjects
-      //   : [];
-
-      const hasLevel = hasLevelForSubject(tutor, student.class, values.school_subjects)
-  //wanted.some(subj => have.includes(subj)) && 
-      return hasLevel;
-    });
+    // Le filtrage par matières et niveaux est déjà fait dans le premier useEffect
+    // Cette fonction peut maintenant juste retourner la liste complète
+    return tutorsList;
   };
 
   const filterAvailableTutors = (tutorsList: Tutor[]): Tutor[] => {

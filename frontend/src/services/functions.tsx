@@ -310,11 +310,22 @@ export const extractExactHour = (dateInput: Date | string | null | undefined): s
   return `${hours}h${minutes}`;
 };
 
-export function formatScheduledAt(isoDateTime: string, slot: string): string {
-  // Extraire la partie date seule (avant 'T' ou avant l'espace)
-  const datePart = isoDateTime.includes('T')
-    ? isoDateTime.split('T')[0]
-    : isoDateTime.split(' ')[0];
+export function formatScheduledAt(isoDateTime: string, slot: string, selectedDate?: Date): string {
+  // Si une date est fournie, l'utiliser, sinon extraire la date de la session originale
+  let datePart: string;
+  
+  if (selectedDate) {
+    // Utiliser la date sélectionnée dans le calendrier
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    datePart = `${year}-${month}-${day}`;
+  } else {
+    // Comportement original : extraire la partie date de la session
+    datePart = isoDateTime.includes('T')
+      ? isoDateTime.split('T')[0]
+      : isoDateTime.split(' ')[0];
+  }
 
   // Récupérer heures et minutes depuis "13h30"
   const [h, m = '0'] = slot.split('h').map(Number);
