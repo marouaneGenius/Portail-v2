@@ -258,7 +258,7 @@ export const getFrenchDayLabel = (dateInput: string | Date): string => {
   const date = new Date(dateInput);
   return date.toLocaleDateString('fr-FR', { weekday: 'long' });
 };
-export const formatTime = (timeString: string) => {
+export const formatTime = (timeString: any) => {
   const isoMatch = timeString.match(/T(\d{2}:\d{2})/);
   if (isoMatch) return isoMatch[1];
   const simpleMatch = timeString.match(/^(\d{2}:\d{2})/);
@@ -266,6 +266,36 @@ export const formatTime = (timeString: string) => {
 
   return '';
 };
+
+
+
+type TimeInput = string | Date | number | null | undefined;
+
+export const scheduleformatTime = (input: TimeInput): string => {
+  if (input == null) return '';
+
+  // If it's a Date, format as local HH:mm
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return '';
+    const hh = String(input.getHours()).padStart(2, '0');
+    const mm = String(input.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
+  // Normalize everything else to string
+  const str = String(input);
+
+  // ISO-like: "2025-08-12T09:30:00.000Z" -> "09:30"
+  const isoMatch = str.match(/T(\d{2}:\d{2})/);
+  if (isoMatch) return isoMatch[1];
+
+  // "09:30" or "09:30:00" -> "09:30"
+  const hhmmss = str.match(/^(\d{2}:\d{2})(?::\d{2})?/);
+  if (hhmmss) return hhmmss[1];
+
+  return '';
+};
+
 export const normalizeHour = (str: string) => {
   const match = str.match(/^(\d{1,2})h(\d{0,2})$/);
   if (!match) return str; // déjà au bon format

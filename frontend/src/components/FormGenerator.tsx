@@ -45,11 +45,14 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [emptyFields, useEmptyFields] = useState<Boolean>(Object.keys(initialValues).length === 0);
   const [loading, setLoading] = useState(true);
   const [parentData, setParentData] = useState<any[]>([]);
+  const [action, setAction] = useState<any>();
+
   const [parentValues, setParentValues] = useState<Record<string, any>>(defaultValues);
   const { id } = useParams<{ id: any }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects', 'class'];
   const { isOpen, open, close } = useModal();
+  const isEmpty = (obj:any) => Object.keys(obj).length === 0;
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
@@ -224,7 +227,13 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(values);
+
+    if(action === 'update') {
+      console.log("zelkfn")
+    } else {
+      onSubmit(values)
+    }
+    console.log(isEmpty(values), values, action )
   };
 
   const getParent = (parent: any) => {
@@ -410,6 +419,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           {endpoint === 'tutorschedule' && (
             <ScheduleArrayField
               dayOptions={Days}
+              action={setAction}
               initialSchedules={values.schedules}
               onChange={(schedules) => setValues({ ...values, schedules })}
               id={id}
@@ -419,7 +429,11 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           <div className="mt-6 flex items-center justify-center">
             <button
               type="submit"
-              className="w-full bg-[#FFB800] text-[#333333] font-semibold px-6 py-3 rounded hover:bg-[#F2F2F2] border border-[#FFB800] transition"
+              disabled={isEmpty(values)}
+              // className="w-full bg-[#FFB800] text-[#333333] font-semibold px-6 py-3 rounded hover:bg-[#F2F2F2] border border-[#FFB800] transition"
+              className={isEmpty(values)
+                ? "w-full bg-gray-200 text-[#333333] font-semibold px-6 py-3 rounded hover:bg-gray-200 border border-gray-200 transition cursor-not-allowed" 
+                : "w-full bg-[#FFB800] text-[#333333] font-semibold px-6 py-3 rounded hover:bg-[#F2F2F2] border border-[#FFB800] transition"}
             >
               Enregistrer
             </button>
