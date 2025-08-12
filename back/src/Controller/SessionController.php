@@ -823,11 +823,24 @@ class SessionController extends AbstractController
         }
         $startPeriod = $oldScheduledAt;
     
-        $sessions = $this->sessionRepo->findByStudentAndCenterAndPeriod(
+        // Récupère SEULEMENT les séances du même créneau (même jour et même heure)
+        $originalDow = (int)$oldScheduledAt->format('w'); // 0=dimanche, 1=lundi...
+        $originalHour = (int)$oldScheduledAt->format('H');
+        $originalMinute = (int)$oldScheduledAt->format('i');
+        
+        // Conversion pour MySQL DAYOFWEEK (1=dimanche, 2=lundi...)  
+        // PHP: 0=dimanche, 1=lundi... 6=samedi
+        // MySQL: 1=dimanche, 2=lundi... 7=samedi
+        $mysqlDayOfWeek = $originalDow + 1;
+        
+        $sessions = $this->sessionRepo->findByStudentAndCenterAndPeriodAndTimeSlot(
             $studentId,
             $session->getCenter(),
             $startPeriod,
-            $endPeriod
+            $endPeriod,
+            $mysqlDayOfWeek,
+            $originalHour,
+            $originalMinute
         );
     
         $updated = 0;
@@ -837,16 +850,14 @@ class SessionController extends AbstractController
         $targetMinute = (int)$newDatetime->format('i');
     
         foreach ($sessions as $s) {
-            // On ne touche qu’aux séances à venir
+            // On ne touche qu'aux séances à venir
             if ($s->getScheduledAt() < new \DateTimeImmutable('today')) continue;
     
             // Calcul dynamique du jour et heure
             $currentDate = $s->getScheduledAt();
             $currentDow = (int)$currentDate->format('w');
             $delta = ($targetDow - $currentDow + 7) % 7;
-            // Pour éviter de garder le même créneau si même jour
-            if ($delta === 0) $delta = 7;
-    
+            
             $newSessionDate = $currentDate->modify("+$delta days")->setTime($targetHour, $targetMinute);
             $s->setScheduledAt($newSessionDate);
     
@@ -855,7 +866,7 @@ class SessionController extends AbstractController
             }
 
             if (array_key_exists('updated_by', $data)) {
-                $session->setUpdatedBy($data['updated_by']);
+                $s->setUpdatedBy($data['updated_by']);
             }
     
             $this->em->persist($s);

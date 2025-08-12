@@ -44,6 +44,9 @@ class Center
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $zip_code = null;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
@@ -236,6 +239,18 @@ class Center
     public function setEmail(string $email): static
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getZipCode(): ?string
+    {
+        return $this->zip_code;
+    }
+
+    public function setZipCode(?string $zip_code): static
+    {
+        $this->zip_code = $zip_code;
 
         return $this;
     }

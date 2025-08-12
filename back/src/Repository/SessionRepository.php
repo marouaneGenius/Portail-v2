@@ -271,4 +271,43 @@ class SessionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findByStudentAndCenterAndPeriodAndTimeSlot(
+        int $studentId,
+        Center $center,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        int $dayOfWeek,
+        int $hour,
+        int $minute
+    ): array {
+        // D'abord récupérer toutes les sessions de la période
+        $allSessions = $this->createQueryBuilder('s')
+            ->join('s.id_student', 'stu')
+            ->andWhere('stu.id = :stuId')
+            ->andWhere('s.center = :center')
+            ->andWhere('s.Scheduled_at BETWEEN :start AND :end')
+            ->setParameters([
+                'stuId'   => $studentId,
+                'center'  => $center,
+                'start'   => $start,
+                'end'     => $end,
+            ])
+            ->getQuery()
+            ->getResult();
+        
+        // Filtrer en PHP par jour de la semaine et heure
+        $filteredSessions = [];
+        foreach ($allSessions as $session) {
+            $scheduledAt = $session->getScheduledAt();
+            if ($scheduledAt && 
+                (int)$scheduledAt->format('w') === ($dayOfWeek === 1 ? 0 : $dayOfWeek - 1) && // Conversion MySQL vers PHP
+                (int)$scheduledAt->format('H') === $hour &&
+                (int)$scheduledAt->format('i') === $minute) {
+                $filteredSessions[] = $session;
+            }
+        }
+        
+        return $filteredSessions;
+    }
 }
