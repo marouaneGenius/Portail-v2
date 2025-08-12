@@ -32,7 +32,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
         />
         <style>{`
           .page-break { page-break-before: always; }
-          #${previewId} { width: 900px; }
+          #${previewId} 
           
           .defaut_invisible {
             display: none;
@@ -54,7 +54,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 95vh;
+            min-height: 110vh;
             background-image: url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png');
             background-repeat: no-repeat;
             background-size: 80%;
@@ -103,7 +103,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
               position: relative;
               -webkit-region-break: before;
               font-family: 'Poppins', sans-serif;
-              min-height: 90vh;
+              min-height: 105vh;
               background-image: url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png');
               background-repeat: no-repeat;
               background-size: 80%;
@@ -172,14 +172,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             .spaceDesignation2{
               margin-top: 100px;
             }
-            .page-number-print {
-              position: absolute;
-              top: 60px;
-              right: 30px;
-              font-size: 18px;
-              color: #000000;
-              font-weight: bold; 
-            }
+
             .remise {
               display: none;
             }

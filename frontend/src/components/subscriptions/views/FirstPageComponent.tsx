@@ -10,14 +10,14 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
   const studentName = student?.firstname || '';
   const devisNumber = subscription?.id || '';
   const devisDate = subscription?.created_at || '';
-  
+
   // Calculer le nombre d'heures basé sur les données disponibles
   const sessionPerWeek = subscription?.session_per_week || 1;
   const weeklyHours = subscription?.weekly_hours || '';
-  
+
   let phrase = '';
   let nbSeances = 1;
-  
+
   if (sessionPerWeek === 2 || weeklyHours === '3h00/semaine') {
     nbSeances = 2;
     phrase = '3h';
@@ -43,25 +43,25 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
   // Formatage de la date en français
   const formatDateFrench = (dateString: string) => {
     if (!dateString) return '';
-    
+
     const date = new Date(dateString);
     const jours = ["Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."];
     const mois = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-    
+
     const jourSemaine = jours[date.getDay()];
     const jour = date.getDate();
     const moisNom = mois[date.getMonth() + 1];
     const annee = date.getFullYear();
     const heure = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
+
     return `${jourSemaine} ${jour} ${moisNom} ${annee} à ${heure}`;
   };
 
   return (
-    <div 
-      className="firstpage" 
-      style={{ 
-        minHeight: '95vh',
+    <div
+      className="firstpage"
+      style={{
+        minHeight: '110vh',
         backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
         backgroundRepeat: 'no-repeat',
         backgroundSize: '80%',
@@ -70,53 +70,46 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
         printColorAdjust: 'exact',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between'
-      }}>
-      {/* Haut de page - invisible */}
-      <div>
-        <img 
-          src="/logo/GENIUS-THUNDERBOLD-LITTLE.png" 
-          className="logo" 
-          style={{ height: 60, display: 'none' }} 
-          alt="Genius logo" 
-        />
-      </div>
-
+        justifyContent: 'space-between',
+      }}
+    >
       {/* Contenu principal */}
       <div>
         <div>
-          <h1 style={{ fontSize: 80 }} className="mt-5">
+          <h1 style={{ fontSize: 80 }}>
             Accompagnons {studentName} avec{' '}
             <strong className="poppins-title-bold">
-              <span className="text-warning">{phrase}</span> de cours
+              <span className="text-warning">{phrase}</span> de cours par
             </strong>{' '}
-            par <strong className="bold-title poppins-title-bold">semaine</strong>
+            <strong className="bold-title poppins-title-bold">semaine</strong>
           </h1>
         </div>
+        <br />
 
-        <p className="h4 mb-5">
-          Devis #{devisNumber} éditée le {formatDateFrench(devisDate)}
-        </p>
-        
-        <p style={{ fontSize: 30 }} className="text-xl mt-6 poppins">
+        <p style={{ fontSize: 30 }} className="text-muted mt-10 mb-5">
           {subscriptionType} 2025-2026
         </p>
+
+        <p className="h4 mb-5 mt-5">
+          Devis #{devisNumber} éditée  le {formatDateFrench(devisDate)}
+        </p>
+
       </div>
 
       {/* Bas de page - logos */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <img 
-            className="img-fluid mb-4" 
-            src="/logo/GENIUS-LOGO.png" 
-            alt="..." 
-            style={{ maxWidth: '10rem' }} 
+          <img
+            className="img-fluid mb-4"
+            src="/logo/GENIUS-LOGO.png"
+            alt="..."
+            style={{ maxWidth: '10rem' }}
           />
-          <img 
-            className="img-fluid mb-4" 
-            src="/logo/GENIUS-BLOC-MARQUE.png" 
-            alt="..." 
-            style={{ maxWidth: '15rem' }} 
+          <img
+            className="img-fluid mb-4"
+            src="/logo/GENIUS-BLOC-MARQUE.png"
+            alt="..."
+            style={{ maxWidth: '15rem' }}
           />
         </div>
       </div>
