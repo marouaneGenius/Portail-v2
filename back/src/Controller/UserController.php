@@ -250,6 +250,49 @@ class UserController extends AbstractController
 
         return $this->json($data);
     }
+    #[Route('/tutors/complete', name: 'api_tutors_complete_list', methods: ['GET'])]
+    public function tutorsCompleteList(): JsonResponse
+    {
+        $users = $this->userRepository->findTutors();
+        
+        // On mappe chaque entité User avec toutes les informations complètes
+        $data = array_map(fn($u) => [
+            'id'              => $u->getId(),
+            'email'           => $u->getEmail(),
+            'phone'           => $u->getPhone(),
+            'firstname'       => $u->getFirstname(),
+            'lastname'        => $u->getLastname(),
+            'is_active'       => $u->isIsActive(),
+            'roles'           => $u->getRoles(),
+            'school_subjects' => $u->getSchoolSubjects() ?? [],
+            'max_session'     => $u->getMaxSession(),
+            'price_per_hour'  => $u->getPricePerHour(),
+            'class'           => $u->getClass(),
+            'centers' => array_map(fn(Center $c) => [
+                'id'      => $c->getId(),
+                'name'    => $c->getName(),
+                'city'    => $c->getCity(),
+                'address' => $c->getAddress(),
+                'phone'   => $c->getPhone(),
+                'email'   => $c->getEmail(),
+            ], $u->getCentres()->toArray()),
+            'tutor_schedules' => array_map(fn(TutorSchedule $tutorSchedule) => [
+                'id'         => $tutorSchedule->getId(),
+                'day'        => $tutorSchedule->getDay(),
+                'start_hour' => $tutorSchedule->getStartHour()->format('H:i'),
+                'end_hour'   => $tutorSchedule->getEndHour()->format('H:i'),
+                'centers'    => array_map(fn(Center $c) => [
+                    'id'    => $c->getId(),
+                    'name'  => $c->getName(),
+                    'city'  => $c->getCity(),
+                    'phone' => $c->getPhone(),
+                    'email' => $c->getEmail(),
+                ], $tutorSchedule->getCenter()->toArray()),
+            ], $u->getTutorSchedules()->toArray()),
+        ], $users);
+
+        return $this->json($data);
+    }
 
     private function snakeToCamel(string $field): string
     {

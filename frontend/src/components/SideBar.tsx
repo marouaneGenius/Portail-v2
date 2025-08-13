@@ -7,7 +7,8 @@ import {
   Calendar,
   User,
   LogOut,
-  CalendarRange
+  CalendarRange,
+  GraduationCap as TutorIcon
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -25,11 +26,12 @@ import { useAuth } from '../Hooks/auth';
 
 const menuItems = [
   { title: 'Utilisateurs', url: '/users', icon: Users },
+  // { title: 'Tuteurs', url: '/tutors', icon: TutorIcon },
   { title: 'Centres', url: '/centers', icon: Building },
   { title: 'Étudiants', url: '/students', icon: GraduationCap },
   { title: 'Parents', url: '/parents', icon: UserCheck },
   { title: 'Planning séances', url: '/session-calendar', icon: Calendar },
-  { title: 'Planning tuteurs',url: '/planing', icon: CalendarRange },
+  { title: 'Planning tuteurs',url: '/tutors', icon: CalendarRange },
   { title: 'Mon profil', url: '/profile', icon: User },
 ];
 
