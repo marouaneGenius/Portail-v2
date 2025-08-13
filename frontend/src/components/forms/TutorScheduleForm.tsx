@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 // MUI X Date Pickers imports
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -10,6 +10,8 @@ import { FormField } from '../FormGenerator';
 import { formatTime, scheduleformatTime } from '../../services/functions';
 import api from '@/api/aixos';
 import { Calendar, MapPin, X } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { set } from 'date-fns';
 
 export interface Schedule {
   day: string;
@@ -30,6 +32,8 @@ export interface ScheduleArrayFieldProps {
   dayOptions: { value: string; label: string }[];
   id?: string;
   action:any;
+  /** Callback pour recevoir les mises à jour depuis FormGenerator */
+  onScheduleUpdated?: (updatedSchedule: any) => void;
 }
 
 export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
@@ -37,9 +41,12 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   onChange,
   dayOptions,
   id,
-  action
+  action,
+  onScheduleUpdated
 }) => {
-  const [draft, setDraft] = useState<Schedule>({ day: '', start_hour: null, end_hour: null, id:id, center: '' });
+
+  const tutor_id = id;
+  const [draft, setDraft] = useState<Schedule>({ day: '', start_hour: null, end_hour: null, id: id, center: '' });
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [showError, setShowError] = useState(false);
   const [centers, setCenters] = useState<any>([]);
@@ -49,6 +56,8 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   const [currentSchedule, setCurrentSchedule] = useState<any>();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<any>(null);
+  const [disabledSchedules, setDisabledSchedules] = useState<number[]>([]);
+  // const { id_tutor } = useParams<any>();
 
 
   const addSlot = () => {
@@ -57,7 +66,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         setShowError(true)
     } else {
       setShowError(false)
-      const newSlot = {
+      const newSlot:any = {
         day,
         center,
         start_hour: start_hour instanceof Date
@@ -66,15 +75,31 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         end_hour:   end_hour   instanceof Date
           ? scheduleformatTime(end_hour)
           : String(end_hour),
-        id,
-        id_user
+        id: id?.toString(),
+        id_user: Number(tutor_id)
       };
 
-      console.log(newSlot, isUpdate )
+      const updatedSchedules:any = scheduls.map((s: any) => {
+
+        if (s.id === Number(newSlot.id)) {
+          console.log('dd')
+          return {
+            ...s,
+            day: newSlot.day,
+            start_hour: newSlot.start_hour,
+            end_hour: newSlot.end_hour,
+            centers: [{ id: newSlot.center, name: centers.find((c:any) => c.value === newSlot.center)?.label }],
+          };
+        } else {
+          console.log('tt')
+        }
+        return s;
+      });
 
       if(isUpdate && newSlot) {
         onChange?.([newSlot]);
         setSchedules([newSlot]);
+        setScheduls(updatedSchedules);
       } else {
         const updated = [...schedules, newSlot];
         setSchedules(updated);
@@ -149,6 +174,10 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         action('create');
       }
       
+      // Vider le state schedules pour éviter les soumissions automatiques
+      setSchedules([]);
+      onChange?.([]);
+      
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       alert('Erreur lors de la suppression du créneau');
@@ -160,10 +189,55 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
     setShowDeleteConfirm(false);
   };
 
+  // Fonction pour vérifier si un créneau a des séances programmées
+  const checkScheduleHasSessions = async (scheduleId: number, scheduls:any): Promise<boolean> => {
+    try {
+      const { data: sessions } = await api.get(`/api/sessions/tutor/${id}`);
+      const schedule:any = scheduls.find((s: any) => s.id === scheduleId);
+
+      if (!schedule) return false;
+
+      const hasSessions = sessions.some((session: any) => {
+        if (!session.scheduled_at) return false;
+        
+        const sessionDate = new Date(session.scheduled_at);
+        const sessionDay = sessionDate.toLocaleDateString('fr-FR', { weekday: 'long' });
+        const sessionTime = sessionDate.toTimeString().slice(0, 5); // HH:MM format
+        
+        // Vérifier si la session correspond au créneau
+        return sessionDay === schedule.day && 
+               sessionTime >= schedule.start_hour && 
+               sessionTime <= schedule.end_hour &&
+               !session.is_canceled; // Ne pas compter les séances annulées
+      });
+      
+      return hasSessions;
+    } catch (error) {
+      console.error('Erreur lors de la vérification des séances:', error);
+      return false;
+    }
+  };
+
+  // Fonction pour vérifier tous les créneaux et mettre à jour les disabled
+  const checkAllSchedulesForSessions = async (scheduls:any) => {
+    const disabled: number[] = [];
+
+    for (let s of scheduls) {
+      const hasSessions = await checkScheduleHasSessions(s.id, scheduls);
+      // console.log(hasSessions, schedule)
+      if (hasSessions) {
+        disabled.push(s.id);
+      }
+    }
+    
+    setDisabledSchedules(disabled);
+  };
 
   useEffect(() => {
     api.get(`/api/tutorschedule/user/${id}`).then((e) => {
-      setScheduls(e.data)
+      setScheduls(e.data);
+      // Vérifier les créneaux qui ont des séances programmées
+      setTimeout(() => checkAllSchedulesForSessions(e.data), 500);
     })
     if(id){
       getUser(id).then((res:any) => {
@@ -215,6 +289,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
       const filteredDays = days.filter((day:any) => !filteredDaysArray.includes(day.value));
       setDays(filteredDays);
     } 
+    
   }, [schedules]);
 
   return (
@@ -353,27 +428,38 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
         scheduls.length !== 0 ?
         <div className="space-y-3 mt-5 bg-gray-100 w-full p-3">
         <p>Tous Mes Créneaux</p>
-        {scheduls.map((slot:any, idx) => (
+        {scheduls.map((slot:any, idx) => {
+          const isDisabled = disabledSchedules.includes(slot.id);
+          return (
           <div
             key={slot.id}
             className={
               "bg-white rounded-lg shadow-sm border px-4 py-3 flex flex-col gap-1 transition relative " +
-              (currentSchedule && currentSchedule.id === slot.id
-                ? "border-blue-400 ring-2 ring-blue-200"
-                : "border-gray-200")
+              (isDisabled 
+                ? "border-red-300 bg-red-50 opacity-60" 
+                : currentSchedule && currentSchedule.id === slot.id
+                  ? "border-blue-400 ring-2 ring-blue-200"
+                  : "border-gray-200 hover:border-gray-300")
             }
           >
             {/* Bouton de suppression */}
 
             <button
               type="button"
+              disabled={isDisabled}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                handleDeleteSchedule(slot);
+                if (!isDisabled) {
+                  handleDeleteSchedule(slot);
+                }
               }}
-              className="absolute top-2 right-2 w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full flex items-center justify-center transition-colors"
-              title="Supprimer ce créneau"
+              className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                isDisabled 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-red-100 hover:bg-red-200 text-red-600 cursor-pointer'
+              }`}
+              title={isDisabled ? "Impossible de supprimer : séances programmées" : "Supprimer ce créneau"}
             >
               <X className="w-3 h-3" />
             </button>
@@ -381,8 +467,12 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
    
             {/* Contenu cliquable pour sélectionner/modifier */}
             <div 
-              onClick={() => fillFormWithSchedule(slot)}
-              className="cursor-pointer"
+              onClick={() => {
+                if (!isDisabled) {
+                  fillFormWithSchedule(slot);
+                }
+              }}
+              className={isDisabled ? "cursor-not-allowed" : "cursor-pointer"}
             >
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="w-4 h-4 text-blue-500" />
@@ -390,6 +480,11 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
                 <span className="text-xs text-gray-500 ml-2">
                   {slot.start_hour} - {slot.end_hour}
                 </span>
+                {isDisabled && (
+                  <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full ml-2">
+                    Séances programmées
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-amber-500" />
@@ -404,7 +499,8 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {/* Debug ou affichage du créneau sélectionné */}
         {currentSchedule && (

@@ -72,23 +72,6 @@ export default function CreationForm() {
           mainValues ? mainValues : values,
         );
 
-        // if(resource === 'parent' || resource === 'student') {
-        //   if( created && parentValues ){
-        //     const { data: parent } = await api.post<Record<string, any>>(
-        //       `/api/parent`,
-        //       parentValues,
-        //     );
-        //     console.log(created, resource)
-        //     //check if we create parent and student &  create colone on many to many table
-        //     if(parent && created) {
-        //       api.post(`/api/student/${created.id}/parents`, {
-        //         parentId: parent.id,
-        //         }).then()
-        //         .catch(console.error);
-        //     }
-        //   }
-        // }
-
         setData(prev => [created, ...prev]);
         return created;
       } catch (err: any) {

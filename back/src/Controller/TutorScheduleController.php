@@ -37,8 +37,8 @@ class TutorScheduleController extends AbstractController
     
         $created = [];
         foreach ($data['schedules'] as $slot) {
-            if (empty($slot['day']) || empty($slot['start_hour']) || empty($slot['end_hour']) || empty($slot['id']) || empty($slot['center'])) {
-                return $this->json(['error' => 'Chaque créneau doit contenir day, start_hour, end_hour, id_user et center_ids (tableau)'], 422);
+            if (empty($slot['day']) || empty($slot['start_hour']) || empty($slot['end_hour']) || empty($slot['id_user']) || empty($slot['center'])) {
+                return $this->json(['error' => 'Chaque créneau doit contenir day, start_hour, end_hour, id_user et center'], 422);
             }
     
             $startHour = \DateTimeImmutable::createFromFormat('H:i', $slot['start_hour']);
@@ -47,7 +47,7 @@ class TutorScheduleController extends AbstractController
                 return $this->json(['error' => 'Format horaire invalide dans un créneau'], 422);
             }
     
-            $user = $this->userRepository->find($slot['id']);
+            $user = $this->userRepository->find($slot['id_user']);
             if (!$user) {
                 return $this->json(['error' => 'Utilisateur non trouvé'], 404);
             }
@@ -74,7 +74,7 @@ class TutorScheduleController extends AbstractController
                 'day'        => $slot['day'],
                 'start_hour' => $startHour->format('H:i'),
                 'end_hour'   => $endHour->format('H:i'),
-                'id'    => $user->getId(),
+                'id_user'    => $user->getId(),
                 'center' => $slot['center'],
             ];
         }

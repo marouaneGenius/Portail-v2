@@ -46,6 +46,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [loading, setLoading] = useState(true);
   const [parentData, setParentData] = useState<any[]>([]);
   const [action, setAction] = useState<any>();
+  const [scheduleUpdateFunction, setScheduleUpdateFunction] = useState<((updatedSchedule: any) => void) | null>(null);
 
   const [parentValues, setParentValues] = useState<Record<string, any>>(defaultValues);
   const { id } = useParams<{ id: any }>();
@@ -225,15 +226,39 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }
   }, [emptyFields, endpoint]);
 
-  const handleSubmit = (e: FormEvent) => {
+
+  useEffect(() => {console.log(values)}, [values]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if(action === 'update') {
-      console.log("zelkfn")
+      const scheduleData = values.schedules[0];
+      const id = scheduleData.id;
+      
+      // Préparer les données pour la mise à jour (sans l'id dans les données)
+      const updateData = {
+        day: scheduleData.day,
+        start_hour: scheduleData.start_hour,
+        end_hour: scheduleData.end_hour,
+        id_user: scheduleData.id_user,
+        center: scheduleData.center
+      };
+      
+      const { data: created } = await api.put<Record<string, any>>( `/api/tutorschedule/${id}`, updateData );
+      // Afficher une alerte de succès
+      alert('Créneau modifié avec succès !');
+
     } else {
+      // Vérifier si on a des données valides pour tutorschedule
+      if (endpoint === 'tutorschedule') {
+        if (!values.schedules || values.schedules.length === 0) {
+          console.log('Pas de soumission - aucun créneau à créer');
+          return;
+        }
+      }
       onSubmit(values)
     }
-    console.log(isEmpty(values), values, action )
   };
 
   const getParent = (parent: any) => {
@@ -422,6 +447,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               action={setAction}
               initialSchedules={values.schedules}
               onChange={(schedules) => setValues({ ...values, schedules })}
+              onScheduleUpdated={setScheduleUpdateFunction}
               id={id}
             />
           )}
