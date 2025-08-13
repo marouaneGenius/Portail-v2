@@ -20,15 +20,10 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, any>>(initialValues);
   const [touched, setTouched] = useState(false);
-  if (index >= fields.length) {
-    setIndex(0);
-    return null;
-  }
   const current = fields[index];
   const isFirst = index === 0;
   const isFinalField = index === fields.length - 1;
   const value = values[current.name];
-  const isRequiredAndEmpty = current.required && (!value || value === '');
   const [showError, setShowError] = useState(false);
   const todayISO = new Date().toISOString().split('T')[0];
 
@@ -47,6 +42,28 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
         : value,
     }));
   };
+
+
+  useEffect(() => {
+    if (index >= fields.length) {
+      setIndex(0);
+    }
+  }, [index, fields.length]);
+
+  const required = Boolean(
+    current &&
+      (current.required 
+        ||  (current.name === 'subscription_end_date' && !values.subscription_start_date)
+        ||  (current.name === 'first_debit_date' && !values.recurrent_debit_date))
+
+  );
+
+  // check si le champ requis est vide
+  const isRequiredAndEmpty = required && (
+    value === undefined ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  );
 
   useEffect(() => {
     if (index && values && Object.keys(values).length > 0) {
@@ -85,7 +102,6 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
       setTouched(false);
     }
   };
-  
 
   const prev = () => setIndex((i) => Math.max(i - 1, 0));
   const removeValueFromField = (field: any, value: any) => {
@@ -99,7 +115,6 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
 
   if (loading) {
     return <p>Chargement…</p>;
-
   }
 
   return (
