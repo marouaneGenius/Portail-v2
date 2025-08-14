@@ -40,10 +40,19 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
       printColorAdjust: 'exact',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-between',
+      // justifyContent: 'space-between',
     }}>
-      {/* <div className="mini-logo-top-left"></div> */}
 
+        <div style={{
+          backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-LITTLE.png')",
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '6%',
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact',
+          minHeight: '10vh'
+        }}>
+        </div>
+        
       <div className="second-page-style">
         <div className="table-responsive">
           <table className="table my-4">
@@ -91,7 +100,7 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
             </tfoot>
           </table>
         </div>
-        
+
         {/* <div className="page-footer" style={{ display: 'none', textAlign: 'center', alignItems: 'center' }}>
           <small>
             GENIUS<br />
