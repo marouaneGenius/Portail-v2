@@ -79,7 +79,7 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
             <strong className="poppins-title-bold">Devis de</strong>
           </p>
           <p className="mb-4">
-            <strong className="text-body poppins-title-bold">GENIUS</strong> - Soutien scolaire
+            <strong className="text-body poppins-title-bold">GENIUS</strong> - Soutien &nbsp;scolaire
             <br />{centerAddress}
             <br />{centerPostal}, {centerCity}
             <br />SIRET : {centerSiret}
@@ -100,7 +100,7 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
           </p>
         </div>
 
-        <div className="spaceDesignation">
+        <div className="spaceDesignation" style={{ letterSpacing: '0.02em' }}>
           <p style={{ fontSize: 18 }}>
             <strong className="poppins-title-bold">Pour l'élève :</strong> {studentName} {student.lastname} en classe de {studentClass}
           </p>
@@ -126,7 +126,7 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
         <small style={{ textAlign: 'center' }}>
           GENIUS<br />
           {centerAddress} {centerPostal}, {centerCity} – Contact : 07.66.18.28.36<br />
-          SAS au capital social de 5000 € - N°SIRET {centerSiret}– N° identification TVA : FR39905018545 R.C.S Pontoise Code APE : 8559B
+          SAS au capital social de 5000 € - N°SIRET {centerSiret}– N° identification&nbsp; TVA : FR39905018545&nbsp; R.C.S Pontoise Code APE : 8559B
         </small>
       </div>
       {/* </div> */}

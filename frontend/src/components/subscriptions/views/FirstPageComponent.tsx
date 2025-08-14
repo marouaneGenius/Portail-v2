@@ -59,7 +59,7 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
 
   return (
     <div
-      className="firstpage"
+      className="firstpage page-break"
       style={{
         minHeight: '110vh',
         backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
@@ -87,11 +87,11 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
         <br />
 
         <p style={{ fontSize: 30 }} className="text-muted mt-10 mb-5">
-          {subscriptionType} 2025-2026
+          {subscriptionType} 2025&nbsp;-&nbsp;2026
         </p>
 
         <p className="h4 mb-5 mt-5">
-          Devis #{devisNumber} éditée  le {formatDateFrench(devisDate)}
+          Devis #{devisNumber} éditée le&nbsp;{formatDateFrench(devisDate)}
         </p>
 
       </div>

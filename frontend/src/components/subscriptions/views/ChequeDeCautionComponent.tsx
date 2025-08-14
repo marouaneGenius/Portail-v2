@@ -17,13 +17,13 @@ const ChequeDeCautionComponent: React.FC<ContractHeaderProps> = ({student, subsc
   const chequeMontant = price ? price * 3 : 'N/C';
 
   return (
-    <div className="space-y-4  m-1 py-2">
+    <div className="space-y-4  m-1 py-2" style={{ letterSpacing: '0.02em' }}>
       <strong className="poppins-title-bold">Chèque de caution&nbsp;:</strong>
       <ul className="list-disc list-inside space-y-2">
         <li>
-          GENIUS accepte un paiement trimestriel échelonné en plusieurs mensualités sous réserve que le
-          Client fournisse 1 un chèque caution  d&apos;un montant de {chequeMontant}€
-          {chequeCount === 1 ? "" : " chacun"}, à déposer au plus tard le {formattedCautionDate} lors de l&apos;arrivée de son enfant.
+          GENIUS accepte&nbsp; un paiement&nbsp; trimestriel&nbsp; échelonné en plusieurs&nbsp; mensualités&nbsp; sous réserve que le
+          Client fournisse&nbsp; un chèque caution&nbsp; d&apos;un montant&nbsp; de {chequeMontant}€
+          {chequeCount === 1 ? "" : " chacun"}, à déposer au plus tard&nbsp; le {formattedCautionDate} &nbsp;lors de l&apos;arrivée de son enfant.
         </li>
         <li>
           Sans ce dépôt à la date indiquée, le paiement s&apos;effectuera trimestriellement via Stripe sans

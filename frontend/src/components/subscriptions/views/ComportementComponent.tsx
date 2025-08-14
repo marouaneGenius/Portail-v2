@@ -6,7 +6,7 @@ import React from "react";
  * Bloc statique « Comportement » sans variable.
  */
 export const ComportementComponent: React.FC = () => (
-  <div className="space-y-4">
+  <div className="space-y-4 m-1 py-2" style={{ letterSpacing: '0.02em' }}>
     <strong className="poppins-title-bold">Comportement&nbsp;:</strong>
 
     <ul className="list-disc list-inside space-y-2">

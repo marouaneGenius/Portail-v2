@@ -52,8 +52,8 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
   });
 
   return (
-    <div className="space-y-4 m-1 py-2">
-      <strong className="text-body">Procédure de Résiliation&nbsp;:</strong>
+    <div className="space-y-4 m-1 py-2" style={{ letterSpacing: '0.02em' }}>
+      <strong className="text-body">Procédure de Résiliation &nbsp;:</strong>
       <p>
         La résiliation doit être notifiée sur la plateforme de gestion&nbsp;
         <a
@@ -70,7 +70,7 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
         {items.map(({ endFr, deadlineFr }, idx) => (
           <li key={idx}>
             {endFr} <br />
-            <em>Résiliation au plus tard le : {deadlineFr}</em>
+            <em>Résiliation  au plus tard  le  : {deadlineFr}</em>
           </li>
         ))}
       </ul>

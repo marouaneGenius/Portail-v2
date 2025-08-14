@@ -37,7 +37,7 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
       {MEMEBERSHIP_FEE && (
         <p>
           <strong>Frais d&apos;inscription&nbsp;</strong> de {MEMEBERSHIP_FEE / 2}€ (après
-          réduction), facturés le{" "}
+          réduction), facturés&nbsp; le{" "}
           {formatDateFr(fraisInscriptionEndDate)} (Avance Immédiate URSSAF).
         </p>
       )}
@@ -52,8 +52,8 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
             le {formatDateFr(fraisInscriptionEndDate)}.
           </strong>
              <p className="mt-2">
-            À défaut, les paiements s&apos;effectueront sur une base trimestrielle, conformément à
-            l&apos;engagement minimal requis.
+            À défaut, les paiements&nbsp; s&apos;effectueront&nbsp; sur une base trimestrielle,&nbsp; conformément&nbsp; à
+            l&apos;engagement minimal&nbsp; requis.
           </p>
         </div>
     </div>

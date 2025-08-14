@@ -50,14 +50,14 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
             <thead>
               <tr>
                 <th className="px-0 bg-transparent border-top-0">
-                  <span className="h6">Description</span>
+                  <span className="h6">Mensualité&nbsp;</span>
                 </th>
                 <th className="px-0 bg-transparent border-top-0">
                   <span className="h6">Date du prélèvement</span>
                 </th>
                 {!isStage && (
                   <th className="px-0 bg-transparent border-top-0 text-end">
-                    <span className="h6">Nombre de séances</span>
+                    <span className="h6">Séances/mois</span>
                   </th>
                 )}
                 <th className="px-0 bg-transparent border-top-0 text-end">

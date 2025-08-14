@@ -31,7 +31,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
           previewId={previewId}
         />
         <style>{`
-          .page-break { page-break-before: always; }
+          .page-break { page-break-before: always; letter-spacing: 0.02em; break-before: page; break-inside: avoid; page-break-inside: avoid; }
           #${previewId} 
           
           .defaut_invisible {
@@ -61,6 +61,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             background-position: 50% 50%;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            letter-spacing: 0.02em;
           }
           
           .firstpage .page-number-print {
@@ -89,10 +90,12 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
               margin: 0 !important;
               padding: 0 !important;
               background: none !important;
+              letter-spacing: 0.02em;
             }
 
             #conditions {
               font-size: 8px;
+              letter-spacing: 0.02em;
             }
 
             .nouvelle-page {
@@ -103,13 +106,14 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
               position: relative;
               -webkit-region-break: before;
               font-family: 'Poppins', sans-serif;
-              min-height: 105vh;
+              min-height: 110vh;
               background-image: url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png');
               background-repeat: no-repeat;
               background-size: 80%;
               background-position: 50% 50%;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              letter-spacing: 0.02em;
             }
 
             .mini-logo-top-left {
@@ -123,54 +127,66 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             .questions {
               display: flex !important;
               min-height: 100vh;
+              letter-spacing: 0.02em;
             }
             .page-footer {
               display: block !important;
+              letter-spacing: 0.02em;
             }
             .second-page-style{
               display: flex !important;
               flex-direction: column;
               justify-content: space-between;
               min-height: 90vh;
+              letter-spacing: 0.02em;
             }
             .other-page-style{
               display: flex !important;
               flex-direction: column;
               justify-content: space-between;
               min-height: 85vh;
+              letter-spacing: 0.02em;
             }
             .welcomTitle{
               display: block !important;
+              letter-spacing: 0.02em;
             }
             .welcomTitleFont{
               font-size: 45px;
+              letter-spacing: 0.02em;
             }
             .table-page-style{
               display: flex !important;
               flex-direction: column;
               justify-content: space-between;
               min-height: 90vh;
+              letter-spacing: 0.02em;
             }
             .last-page-style{
               display: flex !important;
               flex-direction: column;
               justify-content: space-between;
               min-height: 100vh;
+              letter-spacing: 0.02em;
             }
             .paiementPhrase{
               font-size: 15px;
+              letter-spacing: 0.02em;
             }
             .new-page-style{
               display: flex !important;
               flex-direction: column;
               justify-content: space-between;
               min-height: 70vh;
+              letter-spacing: 0.02em;
             }
             .spaceDesignation{
               margin-top: 80px;
+              letter-spacing: 0.02em;
             }
             .spaceDesignation2{
               margin-top: 100px;
+              letter-spacing: 0.02em;
             }
 
             .remise {
@@ -189,6 +205,7 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
               page-break-after: always !important;
+              letter-spacing: 0.02em;
             }
             
             .firstpage .page-number-print {

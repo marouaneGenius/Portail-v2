@@ -375,7 +375,7 @@ import api from "../../api/aixos";
       const tarifApres = price ;
     
       return {
-        description: `${idx + 1}${idx === 0 ? 'er' : 'ème'} <br/> mensualité`,
+        description: `${idx + 1}${idx === 0 ? 'er' : 'ème'} mensualité`,
         datePrelevement: `${jourNames[date.getDay()]} ${date.getDate()} ${moisNames[idx]} ${date.getFullYear()}`,
         nbSeances: nbSeancesMois,
         tarifAvant :montant * 2,

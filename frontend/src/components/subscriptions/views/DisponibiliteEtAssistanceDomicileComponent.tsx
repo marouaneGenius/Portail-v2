@@ -6,7 +6,7 @@ import React from "react";
  * Bloc statique : détails sur la disponibilité de l’assistance pédagogique à domicile.
  */
 const DisponibiliteEtAssistanceDomicileComponent: React.FC = () => (
-  <div className="space-y-4">
+  <div className="space-y-4 m-1 py-2" style={{ letterSpacing: '0.02em' }}>
     <strong className="poppins-title-bold">Disponibilité et Assistance à Domicile&nbsp;:</strong>
 
     <ul className="list-disc list-inside space-y-2">
