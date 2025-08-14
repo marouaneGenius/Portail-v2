@@ -45,7 +45,7 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
   const centerSiret = center.siret || '90501854500012';
 
   return (
-    <div className="nouvelle-page" style={{
+    <div className="nouvelle-page welcome-page" style={{
       minHeight: '105vh',
       backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
       backgroundRepeat: 'no-repeat',

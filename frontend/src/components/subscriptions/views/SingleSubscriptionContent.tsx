@@ -39,7 +39,9 @@ const pageBgStyle: React.CSSProperties = {
 };
 
 const Page: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className }) => (
-    <div className={`nouvelle-page ${className ?? ''}`} style={pageBgStyle}>{children}</div>
+    <div className={`nouvelle-page ${className ?? ''}`} style={pageBgStyle}>
+        {children}
+    </div>
 );
 
 /**
@@ -102,7 +104,7 @@ const StageSubscriptionContent: React.FC<FullContractProps & { price: number; sh
                     )}
 
                     {Student && (
-                        <div className="nouvelle-page second-page-style">
+                        <div className="nouvelle-page welcome-page second-page-style">
                             <WelcomePageComponent student={Student} subscriptionType={SubscriptionType} subscription={Subscription} />
                         </div>
                     )}
@@ -146,7 +148,7 @@ const NonStageSubscriptionContent: React.FC<FullContractProps & { price: number;
                     )}
 
                     {Student && (
-                        <div className="nouvelle-page second-page-style">
+                        <div className="nouvelle-page welcome-page second-page-style">
                             <WelcomePageComponent student={Student} subscriptionType={SubscriptionType} subscription={Subscription} />
                         </div>
                     )}

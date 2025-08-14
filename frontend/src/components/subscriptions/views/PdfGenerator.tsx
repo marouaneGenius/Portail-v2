@@ -68,6 +68,29 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             display: none !important;
           }
 
+          .nouvelle-page:not(.firstpage):not(.welcome-page):not(.table-page-style) {
+            position: relative;
+            overflow: hidden;
+            padding-top: 70px !important;
+          }
+          
+div.nouvelle-page:not(.firstpage):not(.welcome-page)::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 2%;
+    height: 2%;
+    background: url('/logo/GENIUS-THUNDERBOLD-LITTLE.png') no-repeat;
+    background-size: contain;
+    background-position: center; /* ou 'left center' */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    z-index: 1000;
+    box-sizing: border-box;
+    display: block;
+}
+
           @media screen {
             .page-number-print {
               display: none;
@@ -116,14 +139,6 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
               letter-spacing: 0.02em;
             }
 
-            .mini-logo-top-left {
-              background-image: url('/logo/GENIUS-THUNDERBOLD-LITTLE.png');
-              background-repeat: no-repeat;
-              background-size: 6%;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-              min-height: 10vh;
-            }
             .questions {
               display: flex !important;
               min-height: 100vh;

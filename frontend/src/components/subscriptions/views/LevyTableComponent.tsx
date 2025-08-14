@@ -43,16 +43,6 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
       // justifyContent: 'space-between',
     }}>
 
-        <div style={{
-          backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-LITTLE.png')",
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '6%',
-          WebkitPrintColorAdjust: 'exact',
-          printColorAdjust: 'exact',
-          minHeight: '10vh'
-        }}>
-        </div>
-        
       <div className="second-page-style">
         <div className="table-responsive">
           <table className="table my-4">
