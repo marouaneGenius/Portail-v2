@@ -34,6 +34,8 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 }) => {
   const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | null>(null);
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
+  const [isPaid, isIsPaid] = useState(student.session.is_paid);
+  const [sessionType, setSessionType] = useState(student.session.session_type);
   const [isAbsent, setIsAbsent] = useState(student.session.is_absent);
   const [applyAll, setApplyAll] = useState<any>(false);
   const [values, setValues] = useState<any>({
@@ -55,7 +57,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       sessionHour,
     },
   });
-
+  console.log(isPaid , sessionType , isPaid === false, sessionType === 'trial_session')
   const updateStudentSlots = () => {
     const newValues = {
       tutor_id: values.tutor_id,
@@ -63,7 +65,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       update_all:   applyAll,
       updated_by: user?.email,
     }
-    console.log(newValues)
     api.patch(`/api/sessions/move-future-slots/${currentSession.id}`, newValues)
     .then((r) =>  {
       setShowEditModal(null)
@@ -157,8 +158,12 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           ${isAbsent && !isCanceled ? 'bg-red-50 border border-red-200' : 'bg-white border border-fading-grey'}
           ${isCanceled ? 'bg-gray-100 border border-gray-300 opacity-60' : ''}
           ${!isAbsent && !isCanceled ? 'bg-fading-grey/60' : ''}
+          ${sessionType === 'trial_session' ? 'border-hello-yellow bg-yellow-100' : ''}
         `}
       >
+
+
+                                                 
         <div className="flex justify-between items-center">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
@@ -189,6 +194,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
               ))}
             </div>
           </div>
+  
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="p-1 hover:bg-fading-grey rounded transition">
@@ -217,8 +223,15 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {
+           (  isPaid === false && sessionType === 'trial_session') && (
+              <div className='text-red-500 text-xs mt-2'>
+                Attention, cette séance n'est pas encore payée. Veuillez vérifier le statut de paiement.
+              </div>
+            )
+          }
       </div>
-
+  
       {showEditModal === 'cancel' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Annuler ou reprogrammer la séance" >
           <div className='p-3'>

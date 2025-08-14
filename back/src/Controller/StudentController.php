@@ -205,7 +205,7 @@ class StudentController extends AbstractController
                 'is_canceled'    => $s->isIsCanceled(),
                 'scheduled_at'    => $s->getScheduledAt(),
                 'tutor_id'       => $s->getIdTutor()?->getId(),
-
+                'is_paid'       => $s->isIsPaid(),
             ];
         })->toArray();
 

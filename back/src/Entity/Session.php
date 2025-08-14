@@ -35,6 +35,7 @@ class Session
     private ?User $id_tutor = null;
 
     #[ORM\ManyToMany(targetEntity: Student::class, inversedBy: 'sessions')]
+    #[ORM\JoinTable(name: 'session_student')]
     private Collection $id_student;
 
     #[ORM\ManyToMany(targetEntity: Subscription::class, inversedBy: 'sessions')]

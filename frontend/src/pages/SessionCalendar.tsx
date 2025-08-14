@@ -82,16 +82,19 @@ export default function SessionCalendar() {
       const date = new Date(selectedDate);
       const period = currentView === 'weekly' ? 'week' : 'day';
 
-      api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
-        params: { date: formatDate(date), period }
-      })
-        .then(({ data }) => {
-          const filteredTutors = data.map((item: any) => ({
-            tutor: item,
-            sessions: item.sessions
-          }));
-          setTutors(filteredTutors);
-        });
+      if(selectedCenter) {
+        api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
+          params: { date: formatDate(date), period }
+        })
+          .then(({ data }) => {
+            const filteredTutors = data.map((item: any) => ({
+              tutor: item,
+              sessions: item.sessions
+            }));
+            setTutors(filteredTutors);
+          });
+      }
+
     }
   }, [selectedCenter, selectedDate, currentView]);
 
@@ -193,8 +196,6 @@ export default function SessionCalendar() {
     updateAll: boolean
   ) => {
 
-    // console.log(sessionId,fromTutorId,toTutorId, scheduledAt,  studentId, updateAll )
-
     api.patch(`/api/sessions/${sessionId}`, {
       tutor_id: fromTutorId !== toTutorId ? toTutorId : undefined,
       scheduled_at: scheduledAt,
@@ -237,8 +238,6 @@ export default function SessionCalendar() {
 
   // Récupère les groupes/sessions pour un jour et un créneau (à adapter selon ta structure)
   const getSessionsForDayAndSlot = (day: Date, slot: string) => {
-    // Ici, tu dois adapter pour retourner les sessions du bon jour/créneau
-    // Exemple : filtrer tutors/sessions selon la date et l'heure
     return tutors
       .map(t => ({
         tutor: t.tutor,
@@ -507,8 +506,11 @@ export default function SessionCalendar() {
                                           return (
                                             <div
                                               key={`${student.id}-${student.session_id}`}
-                                              className={`flex items-center justify-between bg-slate-50 rounded-md hover:bg-slate-100 transition-colors px-2 py-2 mb-1 border
-                                                ${currentSession?.is_canceled ? 'opacity-50 bg-red-50 border-red-200' : 'border-fading-grey'}
+                                              className={`flex items-center justify-between rounded-md hover:bg-slate-100 transition-colors px-2 py-2 mb-1 border
+                                                ${currentSession?.is_canceled ? 'opacity-50 bg-red-50 border-red-200' : 
+                                                  currentSession?.session_type === 'trial_session' ? 
+                                                    (currentSession?.is_paid ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300') : 
+                                                    'bg-slate-50 border-fading-grey'}
                                               `}
                                             >
                                               <div className="flex flex-col gap-1 w-full">

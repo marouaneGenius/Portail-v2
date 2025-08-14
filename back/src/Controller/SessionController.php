@@ -186,18 +186,69 @@ class SessionController extends AbstractController
         $session->setCreatedAt(new \DateTimeImmutable());
         $session->setCreatedBy($data['scheduled_by'] ?? 'system');
         $session->setUpdatedBy($data['scheduled_by'] ?? 'system');
+        if (array_key_exists('tutor_id', $data)) {
+            $tutor = $this->userRepo->find($data['tutor_id']);
+            if (!$tutor) {
+                return new JsonResponse(['error' => 'Tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
+            }
+            $session->setIdTutor($tutor);
+        }
 
         // Ajouter tous les étudiants
         foreach ($students as $student) {
             $session->addIdStudent($student);
+            // Persister l'étudiant au cas où il ne serait pas dans l'EntityManager
+            $this->em->persist($student);
+            error_log("Ajout étudiant ID " . $student->getId() . " à la session");
         }
+        
+        // Vérifier que les étudiants sont bien associés
+        error_log("Nombre d'étudiants associés à la session : " . $session->getIdStudent()->count());
 
         // 5) Persister la session
         $this->em->persist($session);
+        
+        // Forcer la persistence des étudiants dans la relation
+        foreach ($session->getIdStudent() as $student) {
+            $this->em->persist($student);
+        }
+        
         $this->em->flush();
 
+        // Vérification que la session a bien un ID après le flush
+        $sessionId = $session->getId();
+        if (!$sessionId) {
+            return new JsonResponse(['error' => 'Erreur lors de la création de la session'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        
+        error_log("Session créée avec ID : " . $sessionId);
+        error_log("Nombre d'étudiants dans la session après flush : " . $session->getIdStudent()->count());
+
         // 6) Créer le lien de paiement Stripe et envoyer SMS
-        return $this->createTrialSessionPayment($session);
+        try {
+            return $this->createTrialSessionPayment($session);
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne supprime pas la session
+            error_log("Erreur dans createTrialSessionPayment: " . $e->getMessage());
+            
+            // Retourner les détails de la session créée sans le paiement
+            return new JsonResponse([
+                'success' => true,
+                'session_id' => $sessionId,
+                'error' => 'Session créée mais erreur lors du paiement: ' . $e->getMessage(),
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $students),
+                'scheduled_at' => $session->getScheduledAt()->format(\DateTime::ATOM),
+                'center' => [
+                    'id' => $center->getId(),
+                    'name' => $center->getName(),
+                    'city' => $center->getCity()
+                ]
+            ], JsonResponse::HTTP_CREATED);
+        }
     }
 
     private function createTrialSessionPayment(Session $session): JsonResponse
@@ -304,12 +355,26 @@ class SessionController extends AbstractController
             ], JsonResponse::HTTP_CREATED);
 
         } catch (\Exception $e) {
-            // En cas d'erreur, supprimer la session créée
-            $this->em->remove($session);
-            $this->em->flush();
+            // Log l'erreur complète pour débugger
+            error_log("Erreur complète dans createTrialSessionPayment: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             
+            // Ne pas supprimer la session, juste retourner l'erreur
             return new JsonResponse([
-                'error' => 'Erreur lors de la création de la séance d\'essai: ' . $e->getMessage()
+                'success' => false,
+                'session_id' => $session->getId(),
+                'error' => 'Session créée mais erreur lors du processus de paiement: ' . $e->getMessage(),
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $session->getIdStudent()->toArray()),
+                'scheduled_at' => $session->getScheduledAt()->format(\DateTime::ATOM),
+                'center' => [
+                    'id' => $session->getCenter()->getId(),
+                    'name' => $session->getCenter()->getName(),
+                    'city' => $session->getCenter()->getCity()
+                ]
             ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -746,6 +811,83 @@ class SessionController extends AbstractController
         } catch (\Exception $e) {
             return new JsonResponse(
                 ['error' => 'Erreur lors de la création du paiement: ' . $e->getMessage()], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    #[Route('/{id}/payment-status', name: 'check_payment_status', methods: ['GET'])]
+    public function checkPaymentStatus(int $id): JsonResponse
+    {
+        try {
+            $session = $this->sessionRepo->find($id);
+            
+            if (!$session) {
+                return new JsonResponse(
+                    ['error' => 'Session non trouvée'], 
+                    JsonResponse::HTTP_NOT_FOUND
+                );
+            }
+
+            // Si la session est déjà marquée comme payée en base
+            if ($session->isIsPaid()) {
+                return new JsonResponse([
+                    'is_paid' => true,
+                    'payment_details' => [
+                        'amount_paid' => $session->getIdStudent()->count() * 30, // 30€ par étudiant
+                        'payment_date' => $session->getUpdatedAt()?->format('Y-m-d H:i:s')
+                    ],
+                    'message' => 'Paiement confirmé'
+                ]);
+            }
+
+            // Vérifier si la session a un stripe_number (payment_link_id) pour vérifier sur Stripe
+            $paymentLinkId = $session->getStripeNumber();
+            if (!$paymentLinkId) {
+                return new JsonResponse([
+                    'is_paid' => false,
+                    'message' => 'Aucun lien de paiement associé à cette session'
+                ]);
+            }
+
+            // Vérifier le statut sur Stripe
+            $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
+            $checkoutSessions = $stripe->checkout->sessions->all([
+                'payment_link' => $paymentLinkId,
+                'limit' => 10,
+            ]);
+
+            // Chercher une session payée
+            foreach ($checkoutSessions->data as $checkoutSession) {
+                if ($checkoutSession->payment_status === 'paid') {
+                    // Marquer la session comme payée en base de données
+                    $session->setIsPaid(true);
+                    $session->setUpdatedAt(new \DateTimeImmutable());
+                    $this->em->persist($session);
+                    $this->em->flush();
+
+                    return new JsonResponse([
+                        'is_paid' => true,
+                        'payment_details' => [
+                            'amount_paid' => $checkoutSession->amount_total / 100, // Convertir centimes en euros
+                            'payment_date' => date('Y-m-d H:i:s', $checkoutSession->created),
+                            'stripe_payment_intent' => $checkoutSession->payment_intent
+                        ],
+                        'message' => 'Paiement confirmé sur Stripe et mis à jour en base'
+                    ]);
+                }
+            }
+
+            // Aucun paiement trouvé
+            return new JsonResponse([
+                'is_paid' => false,
+                'payment_link_url' => "https://buy.stripe.com/test_" . substr($paymentLinkId, 3), // Approximation de l'URL
+                'message' => 'Paiement en attente'
+            ]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                ['error' => 'Erreur lors de la vérification du paiement: ' . $e->getMessage()], 
                 JsonResponse::HTTP_INTERNAL_SERVER_ERROR
             );
         }

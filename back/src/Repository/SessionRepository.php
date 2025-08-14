@@ -153,6 +153,8 @@ class SessionRepository extends ServiceEntityRepository
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
                     'resume'        => $session->getResume(),
                     'is_canceled'        => $session->isIsCanceled(),
+                    'session_type'             => $session->getSessionType(),
+                    'is_paid'         => $session->isIsPaid(),
                     'is_absent'        => $session->isIsAbsent(),
                     'students'      => $studentsArr,
                     'school_subjects' => $session->getSchoolSubjects(),

@@ -169,7 +169,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             return;
         }
 
-        // Validation des niveaux du tuteur avant soumission (seulement si des frères/sœurs sont sélectionnés)
+        // // Validation des niveaux du tuteur avant soumission (seulement si des frères/sœurs sont sélectionnés)
         if (values.tutor_id && values.school_subjects?.length && selectedSiblings.length > 0) {
 
 
@@ -197,13 +197,13 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             api.post('/api/sessions/trial-session', newValues).then((res) => {
                 if(res) {
                     alert(`Session d'essai créée avec succès pour ${allStudentIds.length} étudiant(s) - Total: ${totalPrice}€`)
-                    navigate(`/studentDetails/${student.id}`);
+                    navigate(`/student/${student.id}`);
                 }
             })
         } catch(e:any) {
             console.error('ERROR =>', e)
         }
-        console.log("Données soumises:", newValues)
+        // console.log("Données soumises:", newValues)
     }
 
     // Fonction pour récupérer les frères/sœurs

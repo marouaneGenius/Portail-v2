@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars, FileText, Building, CalendarCheck, CreditCard, CalendarDays, Zap, ShieldCheck, UserRound, GraduationCap } from 'lucide-react';
 import { actions } from '../mocks/mocks'; // Assure-toi que le chemin est correct
 import { getLevelOfClass } from './subscriptions/SubscriptionFunctions';
+import { PaymentStatus } from './TrialSessionCard';
 
 export interface DetailPageParams {
   resource: string;
@@ -55,6 +56,7 @@ const ItemDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { isOpen, open, close } = useModal();
   const [students, setStudents] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,7 +75,7 @@ const ItemDetails: React.FC = () => {
     if (resource === 'student') {
       getBrothers();
     }
-  }, [resource, id, updateItem]);
+  }, [resource, id, updateItem, refreshKey]);
 
   const updateCurrentItem = (student: any) => {
     setUpdateItem(student);
@@ -394,6 +396,15 @@ const ItemDetails: React.FC = () => {
                 <CustomSessionComponent currentkey="sessions" value={item.sessions} />
               </CardContent>
             </Card>
+          )}
+
+          {/* Séances d'essai - Seulement pour les étudiants */}
+          {resource === "student" && item.sessions && (
+            <PaymentStatus 
+              studentId={item.id}
+              sessions={item.sessions}
+              onSessionUpdate={() => setRefreshKey(prev => prev + 1)}
+            />
           )}
 
           {/* Actions rapides */}
