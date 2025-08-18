@@ -11,9 +11,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/subs', name: 'api_subscription_')]
 class SubscriptionController extends AbstractController
@@ -29,7 +31,8 @@ class SubscriptionController extends AbstractController
         CenterRepository $centerRepository,
         SubscriptionRepository $subscriptionRepository,
         StudentRepository $studentRepository,
-        private UserRepository $userRepository
+        private UserRepository $userRepository,
+        private HttpClientInterface $httpClient
     ) {
         $this->em               = $em;
         $this->centerRepository = $centerRepository;
@@ -357,6 +360,52 @@ class SubscriptionController extends AbstractController
         ], JsonResponse::HTTP_OK);
     }
 
-    
+    #[Route('/{id}/download-pdf', name: 'download_pdf', methods: ['GET'])]
+    public function downloadPDF(int $id): Response
+    {
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            return new JsonResponse(['error' => 'Abonnement introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // Récupérer l'URL du PDF depuis la subscription
+        $subscriptionUrl = $subscription->getSubscriptionURLs()->first();
+        if (!$subscriptionUrl || !$subscriptionUrl->getUrl()) {
+            return new JsonResponse(['error' => 'URL du contrat introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $pdfUrl = $subscriptionUrl->getUrl();
+
+        try {
+            // Extraire le chemin du fichier depuis l'URL
+            $urlPath = parse_url($pdfUrl, PHP_URL_PATH);
+            $filePath = $this->getParameter('kernel.project_dir') . '/public' . $urlPath;
+            
+            // Vérifier que le fichier existe
+            if (!file_exists($filePath) || !is_readable($filePath)) {
+                return new JsonResponse(['error' => 'Fichier PDF non trouvé ou non accessible'], JsonResponse::HTTP_NOT_FOUND);
+            }
+            
+            // Lire le contenu du fichier
+            $content = file_get_contents($filePath);
+            
+            // Créer le nom du fichier
+            $fileName = "contrat_{$subscription->getSubscriptionType()}_{$subscription->getId()}.pdf";
+            
+            // Retourner le PDF comme réponse de téléchargement
+            $response = new Response($content);
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', "attachment; filename=\"{$fileName}\"");
+            $response->headers->set('Content-Length', strlen($content));
+            
+            return $response;
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors du téléchargement du PDF',
+                'message' => $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

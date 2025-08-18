@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BadgeCheck, Check, Clock, Eye, ProportionsIcon, XCircle } from "lucide-react";
+import { BadgeCheck, Check, Clock, Download, Eye, ProportionsIcon, XCircle } from "lucide-react";
 import api from "@/api/aixos";
 import { useAuth } from "@/Hooks/auth";
 import { getNiveauScolaire, getPrice, IsStudentIsMember } from "./SubscriptionFunctions";
@@ -8,6 +8,7 @@ import { buildSessions } from "@/services/functions";
 import { LoaderOverlay } from "../LoaderOverlay";
 import { BadgeMark } from "@mui/material";
 import { nbSeancesperWeek } from "@/mocks/mocks";
+import { Student } from "@/types/entities";
 
 type Subscription = {
   id: number;
@@ -59,6 +60,35 @@ const badgeContent = (isActive: boolean) =>
       </span>
      )
 }
+
+  const downloadPDF = async (subscriptionId: number, student: Student) => {
+    try {
+      const response = await api.get(`/api/subs/${subscriptionId}/download-pdf`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Récupérer le nom du fichier depuis les headers ou utiliser un nom par défaut
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `contrat_${subscriptionId}_${student.centers?.id}_${student.lastname}_${student.firstname}.pdf`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        fileName = contentDisposition.split('filename=')[1].replace(/"/g, '');
+      }
+      
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du PDF:', error);
+      alert('Erreur lors du téléchargement du PDF');
+    }
+  };
 
 export function StudentSubscriptionCard({ studentId, student, hasParent }: Props) {
   const [subs, setSubs] = useState<Subscription[]>([]);
@@ -212,14 +242,6 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
             )
           );
   
-      // const res = await api.patch(  `/api/subs/${subscription.id}/validate`, { updated_by: user?.email } );
-      // if (res.status === 200) {
-          //  setSubs(prev =>
-          //       prev.map(s =>
-          //         s.id === subscription.id ? { ...s, is_valide: true } : s
-          //       )
-          //    );
-      // }
     } catch (err) {
       console.error("Erreur de validation :", err);
     }
@@ -437,6 +459,15 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                   }}
                 >
                   <Eye size={16} /> Voir 
+                </button>
+                
+                <button
+                  className="border border-blue-300 text-blue-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-blue-50 transition text-sm"
+                  onClick={() => {
+                    downloadPDF(sub.id, student);
+                  }}
+                >
+                  <Download size={16} /> PDF
                 </button>
 
                 {
