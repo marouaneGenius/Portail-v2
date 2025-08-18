@@ -70,7 +70,7 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
   const centerName = center.name || '';
   const centerCity = center.city || '';
   const centerAddress = center.address || '';
-  const centerPostal = center.zipcode || '';
+  const centerPostal = center.zip_code || '';
   const centerSiret = center.siret || '90501854500012';
 
   return (

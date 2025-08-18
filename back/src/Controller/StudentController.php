@@ -237,6 +237,7 @@ class StudentController extends AbstractController
                     'city'    => $user->getIdCenter()->getCity(),
                     'phone'    => $user->getIdCenter()->getPhone(),
                     'email'    => $user->getIdCenter()->getEmail(),
+                    'zip_code' => $user->getIdCenter()->getZipCode(),
 
                 ]
                 : null,
