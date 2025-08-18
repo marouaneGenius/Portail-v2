@@ -8,6 +8,8 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\CenterRepository;
 use App\Repository\UserRepository;
+use App\Service\NameNormalizerService;
+use App\Service\PhoneValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +20,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 #[Route('/api/user', name: 'api_user_')]
 class UserController extends AbstractController
@@ -30,7 +33,9 @@ class UserController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
         CenterRepository $centerRepository,
-        private UserRepository $userRepository
+        private UserRepository $userRepository,
+        private NameNormalizerService $nameNormalizer,
+        private PhoneValidatorService $phoneValidator
     ) {
         $this->em               = $em;
         $this->passwordHasher   = $passwordHasher;
@@ -51,7 +56,41 @@ class UserController extends AbstractController
             );
         }
 
-        // 2. Créer et hydrater l’entité User
+        // 2. Validation des noms si présents
+        if (!empty($data['firstname']) && !$this->nameNormalizer->isValidName($data['firstname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['firstname']);
+            return new JsonResponse([
+                'error' => 'Le prénom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (!empty($data['lastname']) && !$this->nameNormalizer->isValidName($data['lastname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['lastname']);
+            return new JsonResponse([
+                'error' => 'Le nom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 2.5. Validation du téléphone (requis)
+        if (empty($data['phone'])) {
+            return new JsonResponse([
+                'error' => 'Le numéro de téléphone est requis.'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (!$this->phoneValidator->isValidPhone($data['phone'])) {
+            $suggestions = $this->phoneValidator->getSuggestions($data['phone']);
+            return new JsonResponse([
+                'error' => 'Numéro de téléphone invalide.',
+                'phone_provided' => $data['phone'],
+                'suggestions' => $suggestions,
+                'example' => '06 12 34 56 78'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 3. Créer et hydrater l'entité User
         $user = new User();
         $user->setFirstname($data['firstname'] ?? null);
         $user->setLastname($data['lastname'] ?? null);

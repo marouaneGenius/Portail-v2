@@ -49,10 +49,11 @@ security:
             # jwt_cookie: true
       
 
-    # 4) Contrôles d’accès
+    # 4) Contrôles d'accès
     access_control:
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/connect/google, roles: PUBLIC_ACCESS }
+        - { path: ^/api/address, roles: PUBLIC_ACCESS }
         - { path: ^/api,     roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

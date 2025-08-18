@@ -71,7 +71,8 @@ class StudentParent
 
     public function setFirstname(string $firstname): static
     {
-        $this->firstname = $firstname;
+        // Normalisation directe en attendant que l'EventSubscriber soit actif
+        $this->firstname = $this->normalizeFirstname($firstname);
 
         return $this;
     }
@@ -83,7 +84,8 @@ class StudentParent
 
     public function setLastname(string $lastname): static
     {
-        $this->lastname = $lastname;
+        // Normalisation directe en attendant que l'EventSubscriber soit actif
+        $this->lastname = $this->normalizeName($lastname);
 
         return $this;
     }
@@ -119,7 +121,7 @@ class StudentParent
 
     public function setPhone(string $phone): static
     {
-        $this->phone = $phone;
+        $this->phone = $phone ? $this->normalizePhoneParent($phone) : $phone;
 
         return $this;
     }
@@ -233,5 +235,134 @@ class StudentParent
         }
 
         return $this;
+    }
+
+    private function normalizeFirstname(string $firstname): string
+    {
+        if (empty($firstname)) {
+            return '';
+        }
+
+        // Nettoyer et normaliser
+        $normalized = $this->cleanAndFormat($firstname, true);
+        
+        // Valider les caractères
+        $normalized = $this->validateCharacters($normalized, true);
+        
+        return $normalized;
+    }
+
+    private function normalizeName(string $name): string
+    {
+        if (empty($name)) {
+            return '';
+        }
+
+        // Nettoyer et normaliser
+        $normalized = $this->cleanAndFormat($name, false);
+        
+        // Valider les caractères
+        $normalized = $this->validateCharacters($normalized, false);
+        
+        return $normalized;
+    }
+
+    private function cleanAndFormat(string $input, bool $isFirstname = false): string
+    {
+        // Supprimer les espaces en début/fin et multiples espaces
+        $input = trim($input);
+        $input = preg_replace('/\s+/', ' ', $input);
+        
+        // Convertir en minuscules puis capitaliser
+        $input = mb_strtolower($input, 'UTF-8');
+        
+        if ($isFirstname) {
+            // Pour les prénoms composés avec trait d'union ou espace
+            $input = preg_replace_callback('/(\b\w+)/u', function($matches) {
+                return mb_convert_case($matches[1], MB_CASE_TITLE, 'UTF-8');
+            }, $input);
+        } else {
+            // Pour les noms de famille
+            $input = mb_convert_case($input, MB_CASE_TITLE, 'UTF-8');
+        }
+
+        return $input;
+    }
+
+    private function validateCharacters(string $input, bool $allowHyphen = false): string
+    {
+        // Caractères autorisés : lettres, espaces, apostrophes
+        $allowedPattern = '/[^a-zA-ZÀ-ÿ\s\']/u';
+        
+        if ($allowHyphen) {
+            // Pour les prénoms, autoriser aussi les traits d'union
+            $allowedPattern = '/[^a-zA-ZÀ-ÿ\s\'\-]/u';
+        }
+        
+        // Supprimer les caractères non autorisés
+        $cleaned = preg_replace($allowedPattern, '', $input);
+        
+        // Nettoyer les caractères spéciaux en double
+        $cleaned = preg_replace('/[\'\-]{2,}/', '', $cleaned);
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned);
+        
+        return trim($cleaned);
+    }
+
+    private function normalizePhoneParent(string $phone): string
+    {
+        if (empty($phone)) {
+            return '';
+        }
+
+        // Nettoyer le numéro
+        $cleaned = $this->cleanParentPhone($phone);
+        
+        // Normaliser au format français si valide
+        if ($this->isValidParentPhone($cleaned)) {
+            return $this->formatParentPhone($cleaned);
+        }
+        
+        return $phone; // Retourner tel quel si format invalide
+    }
+
+    private function cleanParentPhone(string $phone): string
+    {
+        // Supprimer tous les caractères non numériques sauf le +
+        $cleaned = preg_replace('/[^\d+]/', '', $phone);
+        
+        // Gérer les préfixes internationaux courants
+        if (str_starts_with($cleaned, '+33')) {
+            $cleaned = '0' . substr($cleaned, 3);
+        } elseif (str_starts_with($cleaned, '0033')) {
+            $cleaned = '0' . substr($cleaned, 4);
+        } elseif (str_starts_with($cleaned, '33') && strlen($cleaned) === 11) {
+            $cleaned = '0' . substr($cleaned, 2);
+        }
+        
+        return $cleaned;
+    }
+
+    private function isValidParentPhone(string $cleaned): bool
+    {
+        // Doit faire 10 chiffres et commencer par 0
+        if (strlen($cleaned) !== 10 || !str_starts_with($cleaned, '0')) {
+            return false;
+        }
+        
+        // Vérifier le préfixe
+        $prefix = substr($cleaned, 0, 2);
+        $validPrefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09'];
+        
+        return in_array($prefix, $validPrefixes, true);
+    }
+
+    private function formatParentPhone(string $cleaned): string
+    {
+        return substr($cleaned, 0, 2) . ' ' . 
+               substr($cleaned, 2, 2) . ' ' . 
+               substr($cleaned, 4, 2) . ' ' . 
+               substr($cleaned, 6, 2) . ' ' . 
+               substr($cleaned, 8, 2);
     }
 }

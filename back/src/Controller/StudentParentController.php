@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Student;
 use App\Entity\StudentParent;
 use App\Repository\StudentParentRepository;
+use App\Service\NameNormalizerService;
+use App\Service\PhoneValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,7 +19,9 @@ class StudentParentController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface    $em,
-        private StudentParentRepository   $parentRepo
+        private StudentParentRepository   $parentRepo,
+        private NameNormalizerService     $nameNormalizer,
+        private PhoneValidatorService     $phoneValidator
     ) {}
 
     /**
@@ -46,6 +50,33 @@ class StudentParentController extends AbstractController
             }
         }
 
+        // Validation et normalisation des noms
+        if (!$this->nameNormalizer->isValidName($data['firstname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['firstname']);
+            return $this->json([
+                'error' => 'Le prénom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (!$this->nameNormalizer->isValidName($data['lastname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['lastname']);
+            return $this->json([
+                'error' => 'Le nom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Validation du téléphone (requis pour les parents)
+        if (!$this->phoneValidator->isValidPhone($data['phone'])) {
+            $suggestions = $this->phoneValidator->getSuggestions($data['phone']);
+            return new JsonResponse([
+                'error' => 'Numéro de téléphone invalide.',
+                'phone_provided' => $data['phone'],
+                'suggestions' => $suggestions,
+                'example' => '06 12 34 56 78'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         $parent = new StudentParent();
         $parent

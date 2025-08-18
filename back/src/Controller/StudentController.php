@@ -8,6 +8,8 @@ use App\Repository\CenterRepository;
 use App\Repository\StudentParentRepository;
 use App\Repository\StudentRepository;
 use App\Repository\SubscriptionRepository;
+use App\Service\NameNormalizerService;
+use App\Service\PhoneValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,6 +26,8 @@ class StudentController extends AbstractController
         private StudentRepository      $studentRepo,
         private CenterRepository $centerRepository,
         private StudentParentRepository $studentParentRepository,
+        private NameNormalizerService $nameNormalizer,
+        private PhoneValidatorService $phoneValidator,
 
     ) {}
 
@@ -40,7 +44,7 @@ class StudentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         // Champs requis
-        $required = ['firstname', 'lastname', 'gender', 'class', 'email', 'id_center'];
+        $required = ['firstname', 'lastname', 'gender', 'class',  'id_center'];
         foreach ($required as $f) {
             if (empty($data[$f] ?? null)) {
                 return $this->json(
@@ -50,13 +54,41 @@ class StudentController extends AbstractController
             }
         }
 
+        // Validation et normalisation des noms
+        if (!$this->nameNormalizer->isValidName($data['firstname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['firstname']);
+            return $this->json([
+                'error' => 'Le prénom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (!$this->nameNormalizer->isValidName($data['lastname'])) {
+            $suggestions = $this->nameNormalizer->getSuggestions($data['lastname']);
+            return $this->json([
+                'error' => 'Le nom contient des caractères non valides.',
+                'suggestions' => $suggestions
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Validation du téléphone si fourni (optionnel pour les étudiants)
+        if (!empty($data['phone']) && !$this->phoneValidator->isValidPhone($data['phone'])) {
+            $suggestions = $this->phoneValidator->getSuggestions($data['phone']);
+            return new JsonResponse([
+                'error' => 'Numéro de téléphone invalide.',
+                'phone_provided' => $data['phone'],
+                'suggestions' => $suggestions,
+                'example' => '06 12 34 56 78'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
         $student = new Student();
         $student
             ->setFirstname($data['firstname'])
             ->setLastname($data['lastname'])
             ->setGender($data['gender'])
             ->setClass($data['class'])
-            ->setEmail($data['email'])
+            // ->setEmail($data['email'])
             ->setPhone($data['phone'] ?? null)
             ->setIsActive(true)
             ->setIsDeleted(false)
@@ -133,7 +165,7 @@ class StudentController extends AbstractController
                 'lastname'  => $student->getLastname(),
                 'gender'    => $student->getGender(),
                 'class'     => $student->getClass(),
-                'email'     => $student->getEmail(),
+                // 'email'     => $student->getEmail(),
                 'phone'     => $student->getPhone(),
                 'is_active' => $student->isIsActive(),
                 'is_deleted'=> $student->isIsDeleted(),
@@ -163,7 +195,7 @@ class StudentController extends AbstractController
             'lastname'   => $s->getLastname(),
             'gender'     => $s->getGender(),
             'class'      => $s->getClass(),
-            'email'      => $s->getEmail(),
+            // 'email'      => $s->getEmail(),
             'phone'      => $s->getPhone(),
             'is_active'  => $s->isIsActive(),
             'is_deleted' => $s->isIsDeleted(),
@@ -265,7 +297,7 @@ class StudentController extends AbstractController
         }
 
         // 3. Hydrater les champs simples
-        foreach (['firstname', 'lastname', 'gender', 'class', 'email', 'phone'] as $field) {
+        foreach (['firstname', 'lastname', 'gender', 'class',  'phone'] as $field) {
             if (array_key_exists($field, $data)) {
                 $setter = 'set' . ucfirst($field);
                 $student->$setter($data[$field]);
@@ -309,7 +341,7 @@ class StudentController extends AbstractController
             'lastname'   => $student->getLastname(),
             'gender'     => $student->getGender(),
             'class'      => $student->getClass(),
-            'email'      => $student->getEmail(),
+            // 'email'      => $student->getEmail(),
             'phone'      => $student->getPhone(),
             'is_active'  => $student->isIsActive(),
             'is_deleted' => $student->isIsDeleted(),
@@ -391,7 +423,7 @@ class StudentController extends AbstractController
                     'firstname' => $child->getFirstname(),
                     'lastname'  => $child->getLastname(),
                     'class'     => $child->getClass(),
-                    'email'     => $child->getEmail(),
+                    // 'email'     => $child->getEmail(),
                 ];
             }
         }
