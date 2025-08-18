@@ -41,11 +41,13 @@ class CenterController extends AbstractController
         }
 
         $center = new Center();
+
         $center
             ->setName($data['name'])
             ->setAddress($data['address'])
             ->setCity($data['city'])
             ->setPhone($data['phone'])
+            ->setZipCode($data['zip_code'])
             ->setEmail($data['email']);
 
         $this->em->persist($center);
@@ -59,6 +61,7 @@ class CenterController extends AbstractController
                 'city'    => $center->getCity(),
                 'phone'    => $center->getPhone(),
                 'email'    => $center->getEmail(),
+                'zip_code' => $center->getZipCode(),
             ],
             JsonResponse::HTTP_CREATED
         );
@@ -81,6 +84,7 @@ class CenterController extends AbstractController
             'city'    => $c->getCity(),
             'phone'    => $c->getPhone(),
             'email'    => $c->getEmail(),
+            'zip_code' => $c->getZipCode(),
 
         ], $centers);
 
@@ -100,6 +104,7 @@ class CenterController extends AbstractController
             'city'      => $center->getCity(),
             'phone'    => $center->getPhone(),
             'email'    => $center->getEmail(),
+            'zip_code'  => $center->getZipCode(),
             ]);
     }
 
@@ -126,6 +131,11 @@ class CenterController extends AbstractController
                 $center->$setter($data[$field]);
             }
         }
+
+        if($data['zip_code'] ?? null) {
+            $center->setZipCode($data['zip_code']);
+        }
+
 
         // 4. Mettre à jour la date et l’utilisateur
         // $center-> setUpdatedAt(new \DateTimeImmutable());

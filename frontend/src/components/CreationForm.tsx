@@ -85,7 +85,6 @@ export default function CreationForm() {
   };
 
   const handleSubmit = async (values: Record<string, any>) => {
-
     try{
      await postData(values);
       if(resource === "tutorschedule") {

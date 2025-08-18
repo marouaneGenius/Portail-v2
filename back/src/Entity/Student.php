@@ -43,6 +43,9 @@ class Student
     private ?string $stripe_key = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    private ?string $stripe_customer_id = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $url_notion_public = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -446,6 +449,18 @@ class Student
     public function getSubscriptionURLs(): Collection
     {
         return $this->subscriptionURLs;
+    }
+
+    public function getStripeCustomerId(): ?string
+    {
+        return $this->stripe_customer_id;
+    }
+
+    public function setStripeCustomerId(?string $stripe_customer_id): static
+    {
+        $this->stripe_customer_id = $stripe_customer_id;
+
+        return $this;
     }
 
     public function addSubscriptionURL(SubscriptionURL $subscriptionURL): static
