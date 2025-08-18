@@ -53,7 +53,7 @@ export const studentFields: FormField[] = [
     ]
   },
   { name: 'class', label: 'Classe', type: 'select', required: true },
-  { name: 'email', label: 'E‑mail', type: 'email', required: true },
+  // { name: 'email', label: 'E‑mail', type: 'email', required: true },
   { name: 'id_center', label: 'Centre', type: 'select', required: true },
 ];
 

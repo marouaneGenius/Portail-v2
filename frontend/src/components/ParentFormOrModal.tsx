@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { NameNormalizer } from "../utils/nameNormalizer";
+import { PhoneValidator } from "../utils/phoneValidator";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 export default function ParentFormOrModal({
   emptyFields,
@@ -7,8 +10,54 @@ export default function ParentFormOrModal({
   handleChange,
   getParent,
   ParentSelector,
+  onAddressSelect,
 }:any) {
   const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Handler personnalisé avec validation
+  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked, options }:any = e.target;
+    const multiple = (e.target as HTMLSelectElement).multiple;
+    
+    let processedValue = value;
+    let error = '';
+
+    // Normalisation et validation
+    if (name === 'firstname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, true);
+    } else if (name === 'lastname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, false);
+    } else if (name === 'phone') {
+      processedValue = PhoneValidator.normalizeOnInput(value);
+      
+      // Validation en temps réel pour le téléphone
+      if (value && !PhoneValidator.isValidPhone(value)) {
+        error = PhoneValidator.getValidationMessage(value) || 'Numéro invalide';
+      }
+    }
+
+    // Mettre à jour les erreurs
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+
+    // Créer un événement synthétique compatible
+    const syntheticEvent = {
+      target: {
+        name,
+        type,
+        value: processedValue,
+        checked,
+        options,
+        multiple,
+        id: e.target.id
+      }
+    } as any;
+
+    handleChange(syntheticEvent);
+  };
 
   return (
     <div className="mb-8 w-full mt-3">
@@ -35,13 +84,14 @@ export default function ParentFormOrModal({
                   className="block text-xs font-semibold text-[#333333] mb-1 bg-[#F2F2F2] px-2 py-2 rounded"
                 >
                   {f.label}
+                  {f.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
                 {f.type === "select" ? (
                   <select
                     id={f.name}
                     name={f.name}
                     value={values[f.name] || ""}
-                    onChange={handleChange}
+                    onChange={handleLocalChange}
                     className="w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333] text-sm"
                     required={!!f.required}
                   >
@@ -52,17 +102,53 @@ export default function ParentFormOrModal({
                       </option>
                     ))}
                   </select>
+                ) : f.name === 'address_parent' ? (
+                  <>
+                    <AddressAutocomplete
+                      name={f.name}
+                      value={values[f.name] || ''}
+                      onChange={handleLocalChange}
+                      onAddressSelect={onAddressSelect}
+                      placeholder="Tapez votre adresse..."
+                      required={!!f.required}
+                      className={errors[f.name] 
+                        ? 'border-red-500 focus:ring-red-300' 
+                        : 'border-[#FFB800] focus:ring-[#FFB800]'
+                      }
+                    />
+                    {errors[f.name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[f.name]}
+                      </p>
+                    )}
+                  </>
                 ) : (
-                  <input
-                    id={f.name}
-                    name={f.name}
-                    type={f.type}
-                    checked={f.type === "checkbox" ? values[f.name] : undefined}
-                    value={f.type !== "checkbox" ? values[f.name] || "" : undefined}
-                    onChange={handleChange}
-                    className="w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333] text-sm"
-                    required={!!f.required}
-                  />
+                  <>
+                    <input
+                      id={f.name}
+                      name={f.name}
+                      type={f.type}
+                      checked={f.type === "checkbox" ? values[f.name] : undefined}
+                      value={f.type !== "checkbox" ? values[f.name] || "" : undefined}
+                      onChange={handleLocalChange}
+                      className={`w-full rounded border px-3 py-2 outline-none focus:ring-2 bg-[#FFFFFF] text-[#333333] text-sm ${
+                        errors[f.name] 
+                          ? 'border-red-500 focus:ring-red-300' 
+                          : 'border-[#FFB800] focus:ring-[#FFB800]'
+                      }`}
+                      required={!!f.required}
+                    />
+                    {errors[f.name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[f.name]}
+                        {f.name === 'phone' && (
+                          <span className="block text-gray-500 mt-1">
+                            Exemple: 06 12 34 56 78
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ))}

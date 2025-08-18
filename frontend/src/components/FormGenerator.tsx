@@ -1,5 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import api from '../api/aixos';
+import { NameNormalizer } from '../utils/nameNormalizer';
+import { PhoneValidator } from '../utils/phoneValidator';
 import { ClassesOptions, Days, SchoolSubjects} from '../mocks/mocks';
 import { parentFields } from '../forms/schemas';
 import {renameFields } from '../services/functions';
@@ -11,6 +13,7 @@ import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useModal } from '@/Hooks/useModal';
 import ParentSelector from './ParentFinder';
 import ParentFormOrModal from './ParentFormOrModal';
+import AddressAutocomplete from './AddressAutocomplete';
 
 export interface FormField {
   name: string;
@@ -153,6 +156,18 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
+    
+    let processedValue = value;
+    
+    // Normalisation automatique pour les champs nom/prénom
+    if (name === 'firstname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, true);
+    } else if (name === 'lastname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, false);
+    } else if (name === 'phone') {
+      // Validation et normalisation du téléphone
+      processedValue = PhoneValidator.normalizeOnInput(value);
+    }
 
     //pour gerer les select multiple
     setValues(prev => ({
@@ -161,7 +176,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
         : type === 'checkbox'
         ? checked
-        : value,
+        : processedValue,
     }));
 
     // pour gerer les select one
@@ -198,16 +213,27 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
     
+    let processedValue = value;
+    
+    // Normalisation automatique pour les champs nom/prénom et téléphone des parents
+    if (name === 'firstname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, true);
+    } else if (name === 'lastname') {
+      processedValue = NameNormalizer.normalizeOnInput(value, false);
+    } else if (name === 'phone') {
+      processedValue = PhoneValidator.normalizeOnInput(value);
+    }
+    
     setParentValues(prev => ({
       ...prev,
       [name]: multiple
         ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
         : type === 'checkbox'
         ? checked
-        : value,
+        : processedValue,
     }));
 
-    if(e.target.id.includes('_parent')){
+    if(e.target.id && e.target.id.includes('_parent')){
       const key = name.replace(/_parent$/, '');
       setParentData(prev =>  ({...prev, [key]: value }));
     }
@@ -227,10 +253,30 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   }, [emptyFields, endpoint]);
 
 
-  useEffect(() => {console.log(values)}, [values]);
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    console.log('Values before submit:', values);
+
+    // Validation côté client pour les téléphones
+    if (values.phone && !PhoneValidator.isValidPhone(values.phone)) {
+      const validation = PhoneValidator.validateAndFormat(values.phone);
+      alert(`Numéro de téléphone invalide: ${values.phone}\n\nSuggestions: ${validation.suggestions.join(', ') || 'Aucune'}\n\nExemple: 06 12 34 56 78`);
+      return;
+    }
+
+    // Validation pour les parents si présents
+    if (values.parent && values.parent.phone && !PhoneValidator.isValidPhone(values.parent.phone)) {
+      const validation = PhoneValidator.validateAndFormat(values.parent.phone);
+      alert(`Numéro de téléphone parent invalide: ${values.parent.phone}\n\nSuggestions: ${validation.suggestions.join(', ') || 'Aucune'}\n\nExemple: 06 12 34 56 78`);
+      return;
+    }
+
+    // Vérifier que l'email du parent est présent s'il y a un parent
+    if (values.parent && !values.parent.email) {
+      alert('L\'email du parent est requis');
+      return;
+    }
 
     if(action === 'update') {
       const scheduleData = values.schedules[0];
@@ -265,6 +311,31 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     setValues(prev => ({
       ...prev,
       parent: parent
+    }));
+  };
+
+  const handleAddressSelect = (addressData: any) => {
+    setValues(prev => ({
+      ...prev,
+      address: addressData.address,
+      city: addressData.city,
+      zip_code: addressData.zip_code
+    }));
+  };
+
+  const handleParentAddressSelect = (addressData: any) => {
+    setParentValues(prev => ({
+      ...prev,
+      address_parent: addressData.address,
+      city_parent: addressData.city,
+      zip_code_parent: addressData.zip_code
+    }));
+    
+    setParentData(prev => ({
+      ...prev,
+      address: addressData.address,
+      city: addressData.city,
+      zip_code: addressData.zip_code
     }));
   };
 
@@ -410,6 +481,15 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                         </option>
                       ))}
                     </select>
+                  ) : f.name === 'address' ? (
+                    <AddressAutocomplete
+                      name={f.name}
+                      value={values[f.name] || ''}
+                      onChange={handleChange}
+                      onAddressSelect={handleAddressSelect}
+                      placeholder="Tapez votre adresse..."
+                      required={!!f.required}
+                    />
                   ) : (
                     <input
                       id={f.name}
@@ -438,7 +518,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                 isOpen={isOpen}
                 close={close}
                 getParent={getParent}
-                ParentSelector={ParentSelector} 
+                ParentSelector={ParentSelector}
+                onAddressSelect={handleParentAddressSelect}
               />
           }
           {endpoint === 'tutorschedule' && (
