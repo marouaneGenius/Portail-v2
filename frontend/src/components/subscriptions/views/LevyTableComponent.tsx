@@ -12,7 +12,7 @@ export interface TarificationTableProps {
   lignes: TarificationLigne[];
   totalApresReduction: number;
   coutHoraire: number;
-  subscription_type:any
+  subscription_type: any
 }
 
 const TarificationTable: React.FC<TarificationTableProps> = ({
@@ -24,99 +24,82 @@ const TarificationTable: React.FC<TarificationTableProps> = ({
 
   const isStage = subscription_type === "stage";
 
+  // Vérifier si lignes est défini et est un tableau
+  if (!lignes || !Array.isArray(lignes) || lignes.length === 0) {
+    return <div>Aucune donnée de tarification disponible</div>;
+  }
 
   return (
-    <>    
-    {
-      isStage ? 
-      
-      <table className="table-auto w-full my-4 text-sm border-separate border-spacing-y-2">
-        <thead>
-          <tr>
-            <th className="text-left">Description</th>
-            <th className="text-left">Date du prélèvement</th>
-            <th className="text-right">Tarif TTC (avant réduction)</th>
-            <th className="text-right">Tarif TTC (après réduction)</th>
-          </tr>
-        </thead>
+    <div className="nouvelle-page" style={{
+      minHeight: '105vh',
+      backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: '80%',
+      backgroundPosition: '50% 50%',
+      WebkitPrintColorAdjust: 'exact',
+      printColorAdjust: 'exact',
+      display: 'flex',
+      flexDirection: 'column',
+      // justifyContent: 'space-between',
+    }}>
 
-        <tbody>
-          {lignes.map((ligne, i) => (
-            <tr key={i}>
-              <td>{ligne.description}</td>
-              <td>{ligne.datePrelevement}</td>
-              <td className="text-right">{ligne.tarifAvant} €</td>
-              <td className="text-right">{ligne.tarifApres} €</td>
-            </tr>
-          ))}
-        </tbody>
+      <div className="second-page-style">
+        <div className="table-responsive">
+          <table className="table my-4">
+            <thead>
+              <tr>
+                <th className="px-0 bg-transparent border-top-0">
+                  <span className="h6">Mensualité&nbsp;</span>
+                </th>
+                <th className="px-0 bg-transparent border-top-0">
+                  <span className="h6">Date du prélèvement</span>
+                </th>
+                {!isStage && (
+                  <th className="px-0 bg-transparent border-top-0 text-end">
+                    <span className="h6">Séances/mois</span>
+                  </th>
+                )}
+                <th className="px-0 bg-transparent border-top-0 text-end">
+                  <span className="h6">Tarif TTC (avant réduction)</span>
+                </th>
+                <th className="px-0 bg-transparent border-top-0 text-end">
+                  <span className="h6">Tarif TTC (après réduction)</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {lignes.map((ligne, i) => (
+                <tr key={i}>
+                  <td className="px-0" style={{ whiteSpace: 'pre-line' }}>{ligne.description || ''}</td>
+                  <td className="px-0">{ligne.datePrelevement || ''}</td>
+                  {!isStage && <td className="px-0 text-end">{ligne.nbSeances || 0}</td>}
+                  <td className="px-0 text-end">{(ligne.tarifAvant || 0).toLocaleString('fr-FR')} €</td>
+                  <td className="px-0 text-end">{(ligne.tarifApres || 0).toLocaleString('fr-FR')} €</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colSpan={isStage ? 4 : 4} className="text-end">Total après réduction :</th>
+                <th className="text-end">{(totalApresReduction || 0).toLocaleString('fr-FR')} €</th>
+              </tr>
+              <tr>
+                <th colSpan={isStage ? 4 : 4} className="text-end">Coût horaire :</th>
+                <th className="text-end">{(coutHoraire || 0).toFixed(2).replace('.', ',')} € / heure</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
 
-        <tfoot>
-          <tr>
-            <th colSpan={4} className="text-right font-semibold">
-              Total après réduction :
-            </th>
-            <th className="text-right">{totalApresReduction} €</th>
-            {/* <th className="text-right">{totalApresReduction.toLocaleString("fr-FR")} €</th> */}
-
-          </tr>
-          <tr>
-            <th colSpan={4} className="text-right font-semibold">
-              Coût horaire :
-            </th>
-            <th className="text-right">{coutHoraire.toFixed(2)} € / heure</th>
-          </tr>
-        </tfoot>
-      </table>
-      
-      : 
-      <table className="table-auto w-full my-4 text-sm border-separate border-spacing-y-2">
-        <thead>
-          <tr>
-            <th className="text-left">Description</th>
-            <th className="text-left">Date du prélèvement</th>
-            <th className="text-right">Nombre de séances</th>
-            <th className="text-right">Tarif TTC (avant réduction)</th>
-            <th className="text-right">Tarif TTC (après réduction)</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {lignes.map((ligne, i) => (
-            <tr key={i}>
-              <td>{ligne.description}</td>
-              <td>{ligne.datePrelevement}</td>
-              <td className="text-right">{ligne.nbSeances}</td>
-              {/* <td className="text-right">{ligne.tarifAvant.toLocaleString("fr-FR")} €</td>
-              <td className="text-right">{ligne.tarifApres.toLocaleString("fr-FR")} €</td> */}
-              <td className="text-right">{ligne.tarifAvant} €</td>
-              <td className="text-right">{ligne.tarifApres} €</td>
-            </tr>
-          ))}
-        </tbody>
-
-        <tfoot>
-          <tr>
-            <th colSpan={4} className="text-right font-semibold">
-              Total après réduction :
-            </th>
-            <th className="text-right">{totalApresReduction} €</th>
-            {/* <th className="text-right">{totalApresReduction.toLocaleString("fr-FR")} €</th> */}
-
-          </tr>
-          <tr>
-            <th colSpan={4} className="text-right font-semibold">
-              Coût horaire :
-            </th>
-            <th className="text-right">{coutHoraire.toFixed(2)} € / heure</th>
-          </tr>
-        </tfoot>
-      </table>
-    }
-
-
-    </>
-
+        {/* <div className="page-footer" style={{ display: 'none', textAlign: 'center', alignItems: 'center' }}>
+          <small>
+            GENIUS<br />
+            Contact : 07.66.18.28.36<br />
+            SAS au capital social de 5000 € - N°SIRET 90501854500061– N° identification TVA : FR39905018545 R.C.S Pontoise Code APE : 8559B
+          </small>
+        </div> */}
+      </div>
+    </div>
   );
 };
 

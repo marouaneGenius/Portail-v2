@@ -126,7 +126,7 @@ const ContractGenerator: React.FC = () => {
 
   return (
     <div className="p-0 h-full bg-gray-200 ">
-      <div className="  p-1 rounded flex flex-col items-center shadow-md">
+      <div className="  p-0 rounded flex flex-col items-center shadow-md">
         <ContractPdfExporter 
         Student={student}
         Subscription={subscription}

@@ -11,12 +11,12 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   
 
   const pdfOptions = {
-    margin:      [10,10,10,10],
+    margin:      [10,0,10,10],
     filename:    'contrat-genius.pdf',
     image:       { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:   { mode: ['css','legacy'], before: '.page-break' },
+    pagebreak:   { mode: ['css','legacy','avoid-all'], before: '.page-break' },
   };
 
   const generatePdf = async () => {

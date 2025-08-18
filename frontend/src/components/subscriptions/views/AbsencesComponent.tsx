@@ -7,7 +7,7 @@ import React from "react";
  * puisque ce bloc ne contient plus de variables ni de calculs.
  */
 const AbsencesComponent: React.FC = () => (
-  <div className="space-y-4">
+  <div className="space-y-4 m-1 py-2">
     <strong className="poppins-title-bold">Absences&nbsp;:</strong>
 
     <ul className="list-disc list-inside space-y-2">

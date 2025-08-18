@@ -317,7 +317,7 @@ import api from "../../api/aixos";
         const tarifReduit = price * (1 - remise / 100);
   
         lignes.push({
-          description: `${i + 1}ᵉ – mensualité`,
+          description: `${i + 1}ᵉ – \nmensualité`,
           datePrelevement: fmtFR(dpStd),
           nbSeances: seancesCeMois,
           tarifAvant: price * 2,
