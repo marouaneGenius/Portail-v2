@@ -39,13 +39,14 @@ export default function AddressAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const justSelectedRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const searchAddresses = async () => {
       console.log('AddressAutocomplete: searching for:', value, 'length:', value?.length);
-      if (value && value.length >= 3) {
+      if (value && value.length >= 3 && !justSelectedRef.current) {
         setLoading(true);
         try {
           console.log('AddressAutocomplete: calling AddressService.searchAddresses');
@@ -71,13 +72,16 @@ export default function AddressAutocomplete({
   }, [value]);
 
   const handleSuggestionClick = async (suggestion: AddressSuggestion) => {
+    // Masquer immédiatement les suggestions et marquer comme sélectionné
+    setShowSuggestions(false);
+    justSelectedRef.current = true;
     setLoading(true);
     try {
       const details = await AddressService.getAddressDetails(suggestion.place_id);
       if (details) {
         const parsedAddress = AddressService.parseAddress(details);
         
-        // Mettre à jour le champ d'entrée
+        // Mettre à jour le champ d'entrée sans déclencher les suggestions
         const syntheticEvent = {
           target: {
             name,
@@ -102,7 +106,8 @@ export default function AddressAutocomplete({
       console.error('Failed to get address details:', error);
     } finally {
       setLoading(false);
-      setShowSuggestions(false);
+      // Remettre le flag après un délai pour permettre de nouvelles recherches
+      setTimeout(() => justSelectedRef.current = false, 1000);
     }
   };
 
@@ -136,6 +141,10 @@ export default function AddressAutocomplete({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Reset le flag quand l'utilisateur tape
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+    }
     onChange(e);
   };
 
@@ -154,7 +163,7 @@ export default function AddressAutocomplete({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        onFocus={() => value.length >= 3 && setShowSuggestions(suggestions.length > 0)}
+        onFocus={() => value.length >= 3 && !justSelectedRef.current && setShowSuggestions(suggestions.length > 0)}
         placeholder={placeholder}
         className={`w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333] ${className}`}
         required={required}
@@ -175,7 +184,7 @@ export default function AddressAutocomplete({
           {suggestions.map((suggestion, index) => (
             <div
               key={suggestion.place_id}
-              onClick={() => handleSuggestionClick(suggestion)}
+              onMouseDown={() => handleSuggestionClick(suggestion)}
               className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-[#FFF8E1] ${
                 index === selectedIndex ? 'bg-[#FFF8E1]' : ''
               }`}
