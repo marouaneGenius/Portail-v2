@@ -18,19 +18,19 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
 
   return (
     <div className="space-y-0  ">
-        <link rel="preconnect" href="https://fonts.gstatic.com/" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@300&display=swap" rel="stylesheet" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossOrigin="anonymous" />
-        <DownloadButtonsComponents 
-          student={Student}  
-          subscription={Subscription}    
-          previewId={previewId}
-        />
-        <style>{`
+      <link rel="preconnect" href="https://fonts.gstatic.com/" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@300&display=swap" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossOrigin="anonymous" />
+      <DownloadButtonsComponents
+        student={Student}
+        subscription={Subscription}
+        previewId={previewId}
+      />
+      <style>{`
           .page-break { page-break-before: always; letter-spacing: 0.02em; break-before: page; break-inside: avoid; page-break-inside: avoid; }
           #${previewId} 
           
@@ -74,22 +74,22 @@ const PdfGenerator: React.FC<FullContractProps> = ({ Student, Subscription }) =>
             padding-top: 70px !important;
           }
           
-div.nouvelle-page:not(.firstpage):not(.welcome-page)::before {
-    content: '';
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    width: 2%;
-    height: 2%;
-    background: url('/logo/GENIUS-THUNDERBOLD-LITTLE.png') no-repeat;
-    background-size: contain;
-    background-position: center; /* ou 'left center' */
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    z-index: 1000;
-    box-sizing: border-box;
-    display: block;
-}
+            // div.nouvelle-page:not(.firstpage):not(.welcome-page)::before {
+            //     content: '';
+            //     position: absolute;
+            //     top: 15px;
+            //     left: 15px;
+            //     width: 2%;
+            //     height: 2%;
+            //     background: url('/logo/GENIUS-THUNDERBOLD-LITTLE.png') no-repeat;
+            //     background-size: contain;
+            //     background-position: center; /* ou 'left center' */
+            //     -webkit-print-color-adjust: exact;
+            //     print-color-adjust: exact;
+            //     z-index: 1000;
+            //     box-sizing: border-box;
+            //     display: block;
+            // }
 
           @media screen {
             .page-number-print {
@@ -228,8 +228,8 @@ div.nouvelle-page:not(.firstpage):not(.welcome-page)::before {
             }
           }
         `}</style>
-        <script dangerouslySetInnerHTML={{
-          __html: `
+      <script dangerouslySetInnerHTML={{
+        __html: `
             (function () {
               window.onload = function () {
                 const preloader = document.querySelector('.page-loading');
@@ -277,22 +277,22 @@ div.nouvelle-page:not(.firstpage):not(.welcome-page)::before {
             // Exécuter après un délai pour les contenus dynamiques
             setTimeout(addPagination, 1000);
           `
-        }} />
-        {
-          <div className="p-0" style={{
-            backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center center',
-            backgroundSize: '30%',
-            backgroundAttachment: 'fixed',
-            WebkitPrintColorAdjust: 'exact',
-            printColorAdjust: 'exact'
-          }}>
-            <Preview id={previewId}>
-              <ContractContentComponent Student={Student} Subscription={Subscription}  />
-            </Preview>
-          </div>
-        }
+      }} />
+      {
+        <div className="p-0" style={{
+          backgroundImage: "url('/logo/GENIUS-THUNDERBOLD-FILIGRANE.png')",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center center',
+          backgroundSize: '30%',
+          backgroundAttachment: 'fixed',
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact'
+        }}>
+          <Preview id={previewId}>
+            <ContractContentComponent Student={Student} Subscription={Subscription} />
+          </Preview>
+        </div>
+      }
     </div>
   );
 };

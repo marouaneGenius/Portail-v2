@@ -8,7 +8,7 @@ export interface WelcomePageProps {
 
 const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscription, subscriptionType }) => {
   const parent = student?.parents?.[0] || {};
-  const nbSeances = subscription?.session_per_week || '';
+  // const nbSeances = subscription?.session_per_week || '';
   const favoriteSlots = subscription?.favorite_slots || [];
 
   // Récupère toutes les matières uniques (school_subjects + favorite_slots)
@@ -19,17 +19,46 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
   const allSubjects = Array.from(new Set([...mainSubjects, ...slotSubjects]));
   const subjects = allSubjects.join(', ');
 
-  const weeklyHours = subscription?.weekly_hours || nbSeances || '';
+  // const weeklyHours = subscription?.weekly_hours || nbSeances || '';
   const studentName = student?.firstname || '';
   const studentClass = student?.class || '';
+
+  // Calculer le nombre d'heures basé sur les données disponibles
+  const sessionPerWeek = subscription?.session_per_week || 1;
+  const weeklyHours = subscription?.weekly_hours || '';
+
+  let phrase = '';
+  let nbSeances = 1;
+
+  if (sessionPerWeek === 2 || weeklyHours === '3h00/semaine') {
+    nbSeances = 2;
+    phrase = '3h';
+  } else if (sessionPerWeek === 4 || weeklyHours === '6h00/semaine') {
+    nbSeances = 4;
+    phrase = '6h';
+  } else if (sessionPerWeek === 3 || weeklyHours === '4h30/semaine') {
+    nbSeances = 3;
+    phrase = '4h30';
+  } else {
+    nbSeances = 1;
+    phrase = '1h30';
+  }
+
+  // Si on a weeklyHours directement, l'utiliser
+  if (weeklyHours && weeklyHours.includes('h')) {
+    const match = weeklyHours.match(/(\d+h\d*)/);
+    if (match) {
+      phrase = match[1];
+    }
+  }
 
   const contractType =
     subscriptionType === 'stage'
       ? `Stage de ${subscription.week_count} semaines à raison de 3h/jour du lundi au vendredi`
       : subscriptionType === 'annuel'
-        ? `Abonnement annuel à raison de ${weeklyHours}`
+        ? `Abonnement annuel à raison de ${phrase}`
         : subscriptionType === 'preinscription'
-          ? `Abonnement Pré-inscription à raison de ${weeklyHours}`
+          ? `Abonnement Pré-inscription à raison de ${phrase}`
           : '';
 
   const contractStart = subscription?.subscription_start_date || subscription?.selected_weeks?.[0] || '';
