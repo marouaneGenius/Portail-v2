@@ -9,6 +9,7 @@ use App\Repository\UserRepository;
 use App\Repository\StudentRepository;
 use App\Repository\SubscriptionRepository;
 use App\Service\ZapierSmsSender;
+use App\Service\StripeCustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Psr7\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,7 +33,8 @@ class SessionController extends AbstractController
         private readonly SubscriptionRepository $subRepo,
         private readonly SessionRepository $sessionRepo,
         private readonly CenterRepository $centerRepo,
-        private readonly StripeClient $stripe ,
+        private readonly StripeClient $stripe,
+        private readonly StripeCustomerService $stripeCustomerService,
         ZapierSmsSender $smsSender
     ) {
         $this->smsSender = $smsSender;
@@ -271,37 +273,29 @@ class SessionController extends AbstractController
             // 1) Calcul du prix basé sur le nombre d'étudiants
             $studentCount = $students->count();
             $totalAmount = $studentCount * 3000; // 30€ en centimes par étudiant
+            
+            $description = $studentCount > 1 
+                ? sprintf('Séance d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
+                : 'Séance d\'essai – 1 étudiant';
 
-            // 2) Création du prix Stripe
-            $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
-            $price = $stripe->prices->create([
-                'unit_amount' => $totalAmount,
-                'currency' => 'eur',
-                'product_data' => [
-                    'name' => $studentCount > 1 
-                        ? sprintf('Séance d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
-                        : 'Séance d\'essai – 1 étudiant',
-                ],
-            ]);
-
-            // 3) Création du lien de paiement
-            $paymentLink = $stripe->paymentLinks->create([
-                'line_items' => [
-                    [
-                        'price' => $price->id,
-                        'quantity' => 1,
-                    ],
-                ],
-                'metadata' => [
+            // 2) Création du lien de paiement via le service optimisé
+            $paymentLinkId = $this->stripeCustomerService->createPaymentLink(
+                $mainStudent,
+                $totalAmount,
+                $description,
+                [
                     'session_id' => $session->getId(),
                     'session_type' => 'trial_session',
                     'student_count' => $studentCount,
                     'student_ids' => implode(',', array_map(fn($s) => $s->getId(), $students->toArray())),
-                ],
-            ]);
+                ]
+            );
+
+            // 3) Récupération du payment link pour obtenir l'URL
+            $paymentLink = $this->stripe->paymentLinks->retrieve($paymentLinkId);
 
             // 4) Mise à jour de la session avec le lien Stripe
-            $session->setStripeNumber($paymentLink->id);
+            $session->setStripeNumber($paymentLinkId);
             $this->em->flush();
 
             // 5) Préparation des données pour le SMS
@@ -710,38 +704,30 @@ class SessionController extends AbstractController
         }
     
         try {
-            $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
-            
             // Calculer le prix basé sur le nombre d'étudiants (30€ par étudiant)
             $studentCount = $session->getIdStudent()->count();
             $totalAmount = $studentCount * 3000; // 30€ en centimes par étudiant
             
-            $price = $stripe->prices->create([
-                'unit_amount'   => $totalAmount,
-                'currency'      => 'eur',
-                'product_data'  => [
-                    'name'        => $studentCount > 1 
-                        ? sprintf('Session d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
-                        : 'Session d\'essai – 1 étudiant',
-                ],
-            ]);
-    
-            // 4. Créer le lien de paiement Stripe
-            $paymentLink = $stripe->paymentLinks->create([
-                'line_items' => [
-                    [
-                        'price'    => $price->id,  
-                        'quantity' => 1,
-                    ],
-                ],
-                'metadata' => [
+            $description = $studentCount > 1 
+                ? sprintf('Session d\'essai – %d étudiants (30€ × %d)', $studentCount, $studentCount)
+                : 'Session d\'essai – 1 étudiant';
+
+            // Créer le lien de paiement via le service optimisé
+            $paymentLinkId = $this->stripeCustomerService->createPaymentLink(
+                $student,
+                $totalAmount,
+                $description,
+                [
                     'session_id' => $session->getId(),
                     'student_id' => $student->getId()
-                ],
-            ]);
+                ]
+            );
+
+            // Récupération du payment link pour obtenir l'URL
+            $paymentLink = $this->stripe->paymentLinks->retrieve($paymentLinkId);
     
-            // 5. Mettre à jour la session
-            $session->setStripeNumber($paymentLink->id);
+            // Mettre à jour la session
+            $session->setStripeNumber($paymentLinkId);
             $session->setIsPaid(false); // Explicitement marqué comme non payé
             $this->em->flush();
     
@@ -1284,6 +1270,32 @@ class SessionController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
+    }
+
+    #[Route('/subscription/{subscriptionId}', name: 'sessions_by_subscription', methods: ['GET'])]
+    public function getSessionsBySubscription(int $subscriptionId): JsonResponse
+    {
+        $subscription = $this->subRepo->find($subscriptionId);
+        if (!$subscription) {
+            return new JsonResponse(['error' => 'Subscription not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $sessions = $subscription->getSessions();
+        
+        $data = array_map(function($session) {
+            return [
+                'id' => $session->getId(),
+                'date_slot' => $session->getDateSlot()?->format('Y-m-d'),
+                'scheduled_at' => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
+                'payment_date' => $session->getPaymentDate()?->format('Y-m-d'),
+                'is_paid' => $session->isIsPaid(),
+                'is_absent' => $session->isIsAbsent(),
+                'is_canceled' => $session->isIsCanceled(),
+                'session_type' => $session->getSessionType(),
+            ];
+        }, $sessions->toArray());
+
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
     }
 
 }

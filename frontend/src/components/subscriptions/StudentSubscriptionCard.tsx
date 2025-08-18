@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { buildSessions } from "@/services/functions";
 import { LoaderOverlay } from "../LoaderOverlay";
 import { BadgeMark } from "@mui/material";
+import { nbSeancesperWeek } from "@/mocks/mocks";
 
 type Subscription = {
   id: number;
@@ -68,13 +69,95 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
   const [isProgramed, setIsProgramed] = useState<boolean>( );
   const { user } = useAuth();
   const loadedCombined = useRef<Set<number>>(new Set());
+  const [subscriptionSessions, setSubscriptionSessions] = useState<{[key: number]: any[]}>({});
 
+  // Helper function to format decimal hours to "Xh30" format
+  const formatHours = (hours: number): string => {
+    const wholeHours = Math.floor(hours);
+    const minutes = (hours - wholeHours) * 60;
+    
+    if (minutes === 0) {
+      return `${wholeHours}h`;
+    } else {
+      return `${wholeHours}h${minutes.toString().padStart(2, '0')}`;
+    }
+  };
+
+  // Helper function to calculate used hours (sessions with dates before today)
+  const calculateUsedHours = (subscriptionId: number) => {
+    const sessions = subscriptionSessions[subscriptionId] || [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const usedSessions = sessions.filter(session => {
+      const sessionDate = new Date(session.date_slot || session.scheduled_at);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate < today;
+    });
+    
+    return formatHours(usedSessions.length * 1.5); // 1.5h per session
+  };
+
+  // Helper function to calculate total hours (total sessions × 1.5h)
+  const calculateTotalHours = (subscriptionId: number) => {
+    const sessions = subscriptionSessions[subscriptionId] || [];
+    return formatHours(sessions.length * 1.5); // 1.5h per session
+  };
+
+  // Helper functions for numeric calculations (for percentage)
+  const calculateUsedHoursNumeric = (subscriptionId: number): number => {
+    const sessions = subscriptionSessions[subscriptionId] || [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const usedSessions = sessions.filter(session => {
+      const sessionDate = new Date(session.date_slot || session.scheduled_at);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate < today;
+    });
+    
+    return usedSessions.length * 1.5;
+  };
+
+  const calculateTotalHoursNumeric = (subscriptionId: number): number => {
+    const sessions = subscriptionSessions[subscriptionId] || [];
+    return sessions.length * 1.5;
+  };
+
+
+  // Function to fetch sessions for a subscription
+  const fetchSessionsForSubscription = async (subscriptionId: number) => {
+    try {
+      const response = await api.get(`/api/sessions/subscription/${subscriptionId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching sessions for subscription ${subscriptionId}:`, error);
+      return [];
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
     api
       .get(`/api/subs/student/${studentId}`)
-      .then(res => setSubs(res.data))
+      .then(async res => {
+        setSubs(res.data);
+        
+        // Fetch sessions for each subscription
+        const sessionsPromises = res.data.map(async (sub: any) => {
+          const sessions = await fetchSessionsForSubscription(sub.id);
+          return { subscriptionId: sub.id, sessions };
+        });
+        
+        const allSessions = await Promise.all(sessionsPromises);
+        const sessionsMap: {[key: number]: any[]} = {};
+        
+        allSessions.forEach(({ subscriptionId, sessions }) => {
+          sessionsMap[subscriptionId] = sessions;
+        });
+        
+        setSubscriptionSessions(sessionsMap);
+      })
       .finally(() => setLoading(false));
       IsStudentIsMember(studentId).then(setIsMember);
   }, [studentId, ]);
@@ -298,13 +381,14 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
           ).map((sub, i) => {
             const isActive = sub.is_valide ;
             const isProgramed = sub.is_programed ;
-
             const isCanceled = !!sub.is_canceled;
-            const used = sub.used_hours ?? 0;
-            const total = sub.total_hours ?? 60; // par défaut 60h, à remplacer selon tes données
+            const used = calculateUsedHours(sub.id);
+            const total = calculateTotalHours(sub.id);
+            const usedNumeric = calculateUsedHoursNumeric(sub.id);
+            const totalNumeric = calculateTotalHoursNumeric(sub.id);
             const niveau = getNiveauScolaire(student.class)
             const price = getPrice(sub.subscription_type, sub?.session_per_week, niveau, { combined: sub?.is_combined ? true : false, isMember: isMember })
-            const percent = Math.min(100, Math.round((used / total) * 100));
+            const percent = totalNumeric > 0 ? Math.min(100, Math.round((usedNumeric / totalNumeric) * 100)) : 0;
             const isCombined = sub.combined_id !== null;
             const label = isCombined !== null
             ? sub.combined?.map((c: any) => c.subscription_type).join(' / ') || 'Multiple'
@@ -384,7 +468,11 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 Du <span className="font-medium">{sub.subscription_start_date && new Date(sub.subscription_start_date).toLocaleDateString("fr-FR")}</span> au <span className="font-medium">{sub.subscription_end_date && new Date(sub.subscription_end_date).toLocaleDateString("fr-FR")}</span>
               </div>
               <div className="text-gray-700 text-sm">Heures: <span className="font-medium">{used}/{total}</span> utilisées</div>
+              <div className="text-gray-700 text-sm mb-2">Contrat de <span className="font-medium">{nbSeancesperWeek[sub.session_per_week -1]} par semaine</span></div>
               <div className="text-gray-700 text-sm mb-2">Prix: <span className="font-medium">{price}€/mois</span></div>
+              
+
+              
               <div className="flex flex-wrap gap-2 mt-2 mb-3">
                 {(sub.school_subjects || []).map((mat, idx) => (
                   <span key={idx} className="bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold text-gray-700">{mat}</span>
