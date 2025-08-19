@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   CalendarRange,
+  HistoryIcon,
   GraduationCap as TutorIcon
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
@@ -33,6 +34,8 @@ const menuItems = [
   { title: 'Planning séances', url: '/session-calendar', icon: Calendar },
   { title: 'Planning tuteurs',url: '/tutors', icon: CalendarRange },
   { title: 'Mon profil', url: '/profile', icon: User },
+  { title: 'History', url: '/historique', icon: HistoryIcon },
+  
 ];
 
 const CustomSidebar: React.FC = () => {

@@ -21,6 +21,7 @@ import ContractGenerator from "../components/subscriptions/ContractGenerator";
 import StudentSubscriptions from "../pages/StudentSubscriptions";
 import SessionCalendar from "@/pages/SessionCalendar";
 import Tutors from "../pages/Tutors";
+import HistoriqueModifications from "@/pages/HistoriqueModifications";
 
 export const router = createBrowserRouter([
     {
@@ -49,6 +50,8 @@ export const router = createBrowserRouter([
             { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
             { path: "/session-calendar", element: <SessionCalendar /> },
             { path: "/tutors", element: <Tutors /> },
+            { path: "/historique", element: <HistoriqueModifications /> },
+
 
           ],
         },
