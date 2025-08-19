@@ -71,9 +71,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $sessions;
 
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: TutorSchedule::class)]
-    private Collection $day;
-
-    #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: TutorSchedule::class)]
     private Collection $tutorSchedules;
 
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: Report::class)]
@@ -96,7 +93,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
-        $this->day = new ArrayCollection();
         $this->tutorSchedules = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->centres        = new ArrayCollection();
@@ -349,35 +345,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, TutorSchedule>
-     */
-    public function getDay(): Collection
-    {
-        return $this->day;
-    }
-
-    public function addDay(TutorSchedule $day): static
-    {
-        if (!$this->day->contains($day)) {
-            $this->day->add($day);
-            $day->setIdUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDay(TutorSchedule $day): static
-    {
-        if ($this->day->removeElement($day)) {
-            // set the owning side to null (unless already changed)
-            if ($day->getIdUser() === $this) {
-                $day->setIdUser(null);
-            }
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, TutorSchedule>
