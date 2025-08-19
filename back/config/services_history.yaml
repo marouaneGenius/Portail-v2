@@ -1,0 +1,59 @@
+# Configuration des services pour l'historique des modifications
+# À inclure dans config/services.yaml
+
+services:
+    # Service principal de tracking
+    App\Service\HistoryTracker:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $security: '@security.token_storage'
+            $requestStack: '@request_stack'
+            $logger: '@logger'
+        tags:
+            - { name: 'monolog.logger', channel: 'history' }
+
+    # Event Listener pour les modifications d'entités
+    App\EventListener\EntityModificationListener:
+        tags:
+            - { name: 'doctrine.event_listener', event: 'postPersist' }
+            - { name: 'doctrine.event_listener', event: 'preUpdate' }  
+            - { name: 'doctrine.event_listener', event: 'postRemove' }
+
+    # Repository avec injection des dépendances
+    App\Repository\ModificationHistoryRepository:
+        arguments:
+            $registry: '@doctrine'
+
+    # Contrôleur avec toutes ses dépendances
+    App\Controller\HistoriqueController:
+        arguments:
+            $historyRepository: '@App\Repository\ModificationHistoryRepository'
+            $userRepository: '@App\Repository\UserRepository'
+            $studentRepository: '@App\Repository\StudentRepository'
+            $parentRepository: '@App\Repository\StudentParentRepository'
+            $centerRepository: '@App\Repository\CenterRepository'
+            $validator: '@validator'
+        tags:
+            - { name: 'controller.service_arguments' }
+
+# Configuration Monolog pour les logs d'historique
+when@prod:
+    monolog:
+        channels: ['history']
+        handlers:
+            history:
+                type: rotating_file
+                path: '%kernel.logs_dir%/history.log'
+                level: info
+                channels: [history]
+                max_files: 30
+
+when@dev:
+    monolog:
+        channels: ['history']
+        handlers:
+            history:
+                type: stream
+                path: '%kernel.logs_dir%/history.log'
+                level: debug
+                channels: [history]
