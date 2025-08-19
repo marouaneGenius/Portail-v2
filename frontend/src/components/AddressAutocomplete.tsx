@@ -45,7 +45,6 @@ export default function AddressAutocomplete({
 
   useEffect(() => {
     const searchAddresses = async () => {
-      console.log('AddressAutocomplete: searching for:', value, 'length:', value?.length);
       if (value && value.length >= 3 && !justSelectedRef.current) {
         setLoading(true);
         try {

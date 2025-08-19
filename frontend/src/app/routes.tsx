@@ -16,6 +16,7 @@ import EditionForm from "../components/EditionForm";
 import Subscriptions from "../pages/Subscriptions";
 import { StudentDetails } from "../pages/studentDetails";
 import { Planing } from "../pages/Planing";
+import Planning from "../pages/Planning";
 import SubscriptionsFormView from "../components/subscriptions/views/SubscriptionFormsView";
 import ContractGenerator from "../components/subscriptions/ContractGenerator";
 import StudentSubscriptions from "../pages/StudentSubscriptions";
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
             { path: '/:resource/:id/edit', element: <EditionForm /> },
             { path: '/studentDetails/:id', element: <StudentDetails />},
             { path: '/planing', element: <Planing/>},
+            { path: '/planning', element: <Planning/>},
             { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
             { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
             { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},

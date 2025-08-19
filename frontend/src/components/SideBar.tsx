@@ -24,23 +24,90 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar';
 import { useAuth } from '../Hooks/auth';
+import { usePermissions } from '@/hooks/usePermissions';
 
+// Définir les items de menu avec leurs permissions requises
 const menuItems = [
-  { title: 'Utilisateurs', url: '/users', icon: Users },
-  // { title: 'Tuteurs', url: '/tutors', icon: TutorIcon },
-  { title: 'Centres', url: '/centers', icon: Building },
-  { title: 'Étudiants', url: '/students', icon: GraduationCap },
-  { title: 'Parents', url: '/parents', icon: UserCheck },
-  { title: 'Planning séances', url: '/session-calendar', icon: Calendar },
-  { title: 'Planning tuteurs',url: '/tutors', icon: CalendarRange },
-  { title: 'Mon profil', url: '/profile', icon: User },
-  { title: 'History', url: '/historique', icon: HistoryIcon },
-  
+  { 
+    title: 'Utilisateurs', 
+    url: '/users', 
+    icon: Users,
+    permission: 'user:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] 
+  },
+  { 
+    title: 'Centres', 
+    url: '/centers', 
+    icon: Building,
+    permission: 'center:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
+  },
+  { 
+    title: 'Étudiants', 
+    url: '/students', 
+    icon: GraduationCap,
+    permission: 'student:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
+  },
+  { 
+    title: 'Parents', 
+    url: '/parents', 
+    icon: UserCheck,
+    permission: 'parent:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'a pas accès aux parents
+  },
+  { 
+    title: 'Planning séances', 
+    url: '/session-calendar', 
+    icon: Calendar,
+    permission: 'session:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
+  },
+  { 
+    title: 'Planning tuteurs', 
+    url: '/tutors', 
+    icon: CalendarRange,
+    permission: 'planning:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // Gestion globale pour ADMIN/USER
+  },
+  { 
+    title: 'Mon Planning', 
+    url: '/planning', 
+    icon: CalendarRange,
+    permission: 'planning:view',
+    roles: ['ROLE_TUTOR'] // Vue personnelle pour TUTOR
+  },
+  { 
+    title: 'Mon profil', 
+    url: '/profile', 
+    icon: User,
+    roles: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_TUTOR'] // Tous les rôles
+  },
+  { 
+    title: 'Historique', 
+    url: '/historique', 
+    icon: HistoryIcon,
+    permission: 'history:view',
+    roles: ['ROLE_ADMIN'] // Seulement ADMIN
+  },
 ];
 
 const CustomSidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { hasPermission, hasRole } = usePermissions();
+  
   if (!user) return null;
+
+  // Filtrer les items selon les permissions de l'utilisateur
+  const visibleMenuItems = menuItems.filter(item => {
+    // Vérifier si l'utilisateur a un des rôles requis pour cet item
+    const hasRequiredRole = item.roles.some(role => hasRole(role));
+    
+    // Si une permission spécifique est définie, la vérifier aussi
+    const hasRequiredPermission = item.permission ? hasPermission(item.permission as any) : true;
+    
+    return hasRequiredRole && hasRequiredPermission;
+  });
 
   return (
     <Sidebar className="border-r border-fading-grey bg-white">
@@ -65,7 +132,7 @@ const CustomSidebar: React.FC = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map(({ url, icon: Icon, title }) => (
+              {visibleMenuItems.map(({ url, icon: Icon, title }) => (
                 <SidebarMenuItem key={url}>
                   <NavLink
                     to={url}

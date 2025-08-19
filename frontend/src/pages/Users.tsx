@@ -1,14 +1,21 @@
-// src/pages/Profile.tsx
+// src/pages/Users.tsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
+import { usePermissions } from '../hooks/usePermissions';
 import CustomDataTable from '../components/CustomDataTable';
 
 const Users: React.FC = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Vérifier les permissions d'accès à la page utilisateurs
+  if (!hasPermission('user:view')) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

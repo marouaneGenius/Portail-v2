@@ -233,25 +233,32 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         : processedValue,
     }));
 
+    // Ajouter tous les champs du parent à parentData
     if(e.target.id && e.target.id.includes('_parent')){
       const key = name.replace(/_parent$/, '');
       setParentData(prev =>  ({...prev, [key]: value }));
+    } else {
+      // Pour les champs normaux du parent (firstname, lastname, email, phone, gender)
+      setParentData(prev =>  ({...prev, [name]: processedValue }));
     }
-
-    setValues(prev =>({
-      ...prev,
-      parent :parentData
-    }))
   }
+
+  // Synchroniser parentData avec values.parent
+  useEffect(() => {
+    if (endpoint === 'student' && Object.keys(parentData).length > 0) {
+      setValues(prev => ({
+        ...prev,
+        parent: parentData
+      }));
+    }
+  }, [parentData, endpoint]);
 
   useEffect(() => {
     if (endpoint === 'student' && emptyFields) {
       const withParentKeys: any = renameFields(currenParentFields);
-
       setCurrenParentFields(withParentKeys);
     }
   }, [emptyFields, endpoint]);
-
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -330,7 +337,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       city_parent: addressData.city,
       zip_code_parent: addressData.zip_code
     }));
-    
+
     setParentData(prev => ({
       ...prev,
       address: addressData.address,

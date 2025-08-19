@@ -8,6 +8,7 @@ import { Detail } from "../components/CustomInputField";
 import { validatePasswords } from "../services/functions";
 import { Edit, Key, Save, Ban, User, Mail, Phone, Building, Shield, Camera } from 'lucide-react';
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -18,6 +19,8 @@ const Profile: React.FC = () => {
   const [passwordErrorMesssage, setpasswordErrorMesssage] = useState(false);
   const [errorMesssage, setErrorMesssage] = useState('');
   const [enableSaveButton, setEnableSaveButton] = useState(true);
+  const { hasPermission, hasRole } = usePermissions();
+  
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked }: any = e.target;
@@ -73,6 +76,8 @@ const Profile: React.FC = () => {
       }
     }
   }
+
+  console.log()
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -174,7 +179,7 @@ const Profile: React.FC = () => {
                     </>
                   )}
                   {/* Mode lecture */}
-                  {!updateMode && !updatePasswordMode && (
+                  {!updateMode && !updatePasswordMode && (user?.roles &&  hasRole(user?.roles[0]) && user?.roles[0] !== 'ROLE_TUTOR') &&(
                     <>
                       <button
                         type="button"
