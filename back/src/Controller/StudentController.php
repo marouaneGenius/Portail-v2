@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use App\Security\Voter\StudentVoter;
 
 #[Route('/api/student')]
 class StudentController extends AbstractController
@@ -38,9 +39,11 @@ class StudentController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', name: 'api_students_create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): JsonResponse
     {
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(StudentVoter::CREATE);
+        
         $data = json_decode($request->getContent(), true);
 
         // Champs requis

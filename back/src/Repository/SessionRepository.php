@@ -28,9 +28,9 @@ class SessionRepository extends ServiceEntityRepository
     public function getSessionsDataByTutor($tutor): array
     {
         $sessions = $this->createQueryBuilder('s')
-            ->andWhere('s.id_tutor = :tutor')
+            ->andWhere('s.idTutor = :tutor')
             ->setParameter('tutor', $tutor)
-            ->orderBy('s.date_slot', 'ASC')
+            ->orderBy('s.scheduled_at', 'ASC')
             ->getQuery()
             ->getResult();
 
@@ -40,7 +40,7 @@ class SessionRepository extends ServiceEntityRepository
                 'payment_date'       => $s->getPaymentDate()?->format('Y-m-d'),
                 'stripe_number'      => $s->getStripeNumber(),
                 'school_subjects'    => $s->getSchoolSubjects(),
-                'date_slot'          => $s->getDateSlot()?->format(\DateTimeInterface::ATOM),
+                'scheduled_at'       => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
                 'resume'             => $s->getResume(),
                 'tutor_id'           => $s->getIdTutor()?->getId(),
                 'students' => array_map(function(\App\Entity\Student $stu) {
@@ -70,10 +70,9 @@ class SessionRepository extends ServiceEntityRepository
                                 'payment_date'  => $s->getPaymentDate()?->format('Y-m-d'),
                                 'stripe_number' => $s->getStripeNumber(),
                                 'school_subjects'=> $s->getSchoolSubjects(),
-                                'date_slot'     => $s->getDateSlot()?->format(\DateTimeInterface::ATOM),
+                                'scheduled_at'  => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
                                 'resume'        => $s->getResume(),
                                 'tutor_id'      => $s->getIdTutor()?->getId(),
-                                'scheduled_at'  => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
                                 'scheduled_by'  => $s->getScheduledBy(),
                                 'session_type'  => $s->getSessionType(),
                                 'is_canceled'   => $s->isIsCanceled(),
@@ -95,12 +94,16 @@ class SessionRepository extends ServiceEntityRepository
                     fn($sub) => $sub->getId(),
                     $s->getIdSubscription()->toArray()
                 ),
-                'scheduled_at'       => $s->getScheduledAt()?->format(\DateTimeInterface::ATOM),
                 'scheduled_by'       => $s->getScheduledBy(),
                 'session_type'       => $s->getSessionType(),
                 'is_canceled'        => $s->isIsCanceled(),
                 'canceled_by'        => $s->getCanceledBy(),
                 'is_paid'            => $s->isIsPaid(),
+                'center'             => $s->getCenter() ? [
+                    'id'      => $s->getCenter()->getId(),
+                    'name'    => $s->getCenter()->getName(),
+                    'address' => $s->getCenter()->getAddress(),
+                ] : null,
                 'reports'            => array_map(
                     fn($r) => [
                         'id'        => $r->getId(),

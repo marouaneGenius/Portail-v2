@@ -67,7 +67,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinTable(name: 'user_center')]
     private Collection $centres;
 
-    #[ORM\OneToMany(mappedBy: 'id_tutor', targetEntity: Session::class)]
+    // #[ORM\OneToMany(mappedBy: 'id_tutor', targetEntity: Session::class)]
+    // private Collection $sessions;
+    #[ORM\OneToMany(mappedBy: 'idTutor', targetEntity: Session::class)]
     private Collection $sessions;
 
     #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: TutorSchedule::class)]
@@ -82,7 +84,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $school_subjects = null;
 
-    #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: SubscriptionURL::class)]
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: SubscriptionURL::class)]
     private Collection $subscriptionURLs;
 
     #[ORM\Column(nullable: true)]
@@ -448,7 +450,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->subscriptionURLs->contains($subscriptionURL)) {
             $this->subscriptionURLs->add($subscriptionURL);
-            $subscriptionURL->setIdUser($this);
+            $subscriptionURL->setUser($this);
         }
 
         return $this;
@@ -458,8 +460,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->subscriptionURLs->removeElement($subscriptionURL)) {
             // set the owning side to null (unless already changed)
-            if ($subscriptionURL->getIdUser() === $this) {
-                $subscriptionURL->setIdUser(null);
+            if ($subscriptionURL->getUser() === $this) {
+                $subscriptionURL->setUser(null);
             }
         }
 

@@ -31,8 +31,12 @@ class Session
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resume = null;
 
-    #[ORM\ManyToOne(inversedBy: 'sessions')]
-    private ?User $id_tutor = null;
+    // #[ORM\ManyToOne(inversedBy: 'sessions')]
+    // #[ORM\JoinColumn(name: 'id_tutor', referencedColumnName: 'id')]
+    // private ?User $tutor = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'sessions')]
+    #[ORM\JoinColumn(name: 'id_tutor_id', referencedColumnName: 'id', nullable: true)]
+    private ?User $idTutor = null;
 
     #[ORM\ManyToMany(targetEntity: Student::class, inversedBy: 'sessions')]
     #[ORM\JoinTable(name: 'session_student')]
@@ -41,8 +45,8 @@ class Session
     #[ORM\ManyToMany(targetEntity: Subscription::class, inversedBy: 'sessions')]
     private Collection $id_subscription;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $Scheduled_at = null;
+    #[ORM\Column(name: 'Scheduled_at', nullable: true)]
+    private ?\DateTimeImmutable $scheduled_at = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $scheduled_by = null;
@@ -157,13 +161,12 @@ class Session
 
     public function getIdTutor(): ?User
     {
-        return $this->id_tutor;
+        return $this->idTutor;
     }
-
-    public function setIdTutor(?User $id_tutor): static
+    
+    public function setIdTutor(?User $user): static
     {
-        $this->id_tutor = $id_tutor;
-
+        $this->idTutor = $user;
         return $this;
     }
 
@@ -217,12 +220,12 @@ class Session
 
     public function getScheduledAt(): ?\DateTimeImmutable
     {
-        return $this->Scheduled_at;
+        return $this->scheduled_at;
     }
 
-    public function setScheduledAt(?\DateTimeImmutable $Scheduled_at): static
+    public function setScheduledAt(?\DateTimeImmutable $scheduled_at): static
     {
-        $this->Scheduled_at = $Scheduled_at;
+        $this->scheduled_at = $scheduled_at;
 
         return $this;
     }

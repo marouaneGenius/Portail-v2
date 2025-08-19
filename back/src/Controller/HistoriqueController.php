@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Security\Voter\HistoryVoter;
 
 /**
  * Contrôleur pour l'API d'historique des modifications
@@ -54,6 +55,9 @@ class HistoriqueController extends AbstractController
      */
     public function listModifications(Request $request): JsonResponse
     {
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(HistoryVoter::VIEW);
+        
         // Validation des paramètres
         $errors = $this->validateListParameters($request);
         if (!empty($errors)) {
@@ -101,6 +105,9 @@ class HistoriqueController extends AbstractController
      */
     public function getFilterOptions(): JsonResponse
     {
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(HistoryVoter::VIEW);
+        
         try {
             $options = $this->historyRepository->getFilterOptions();
 

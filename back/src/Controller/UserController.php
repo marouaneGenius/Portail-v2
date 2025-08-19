@@ -21,6 +21,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use App\Security\Voter\UserVoter;
 
 #[Route('/api/user', name: 'api_user_')]
 class UserController extends AbstractController
@@ -44,9 +45,11 @@ class UserController extends AbstractController
 
 
     #[Route('', name: 'create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): JsonResponse
     {
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(UserVoter::CREATE);
+        
         // 1. Récupérer et décoder le JSON
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
@@ -172,12 +175,14 @@ class UserController extends AbstractController
     }
     
     #[Route('', name: 'api_users_list', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function list(): JsonResponse
     {
+        $this->denyAccessUnlessGranted(UserVoter::VIEW);
+
+        // Note: La vérification se fera au niveau individuel dans le mapping
         $users = $this->userRepository->findAll();
 
-        // On mappe chaque entité User en tableau simple
+        // Filtrer et mapper les utilisateurs selon les permissions
         $data = array_map(fn($u) => [
             'id'        => $u->getId(),
             'email'     => $u->getEmail(),
@@ -185,18 +190,22 @@ class UserController extends AbstractController
             'lastname'  => $u->getLastname(),
             'is_active'  => $u->isIsActive(),
             'roles'     => $u->getRoles(),
-            'google_id' => $u->getGoogleId()
-        ], $users);
+            'google_id' => $u->getGoogleId(),
+            'can_edit'  => $this->isGranted(UserVoter::EDIT, $u),
+            'can_delete' => $this->isGranted(UserVoter::DELETE, $u),
+        ], array_filter($users, fn($u) => $this->isGranted(UserVoter::VIEW, $u)));
 
         return $this->json($data);
     }
 
     #[Route('/{id}', methods: ['GET'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function show(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
         if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(UserVoter::VIEW, $user);
         return $this->json([
             'id'                => $user->getId(),
             'email'             => $user->getEmail(),
@@ -252,7 +261,10 @@ class UserController extends AbstractController
     #[Route('/tutors', name: 'api_tutors_list', methods: ['GET'])]
     public function tutorsList(): JsonResponse
     {
+
         $users = $this->userRepository->findTutors();
+        $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
+
         // On mappe chaque entité User en tableau simple
         $data = array_map(fn($u) => [
             'id'        => $u->getId(),
@@ -293,7 +305,7 @@ class UserController extends AbstractController
     public function tutorsCompleteList(): JsonResponse
     {
         $users = $this->userRepository->findTutors();
-        
+        $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
         // On mappe chaque entité User avec toutes les informations complètes
         $data = array_map(fn($u) => [
             'id'              => $u->getId(),
@@ -341,13 +353,16 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function update(int $id, Request $request): JsonResponse
     {
+
         $user = $this->userRepository->find($id);
         if (!$user) {
             return $this->json(['error'=>'Utilisateur non trouvé'], 404);
         }
+        
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(UserVoter::EDIT, $user);
 
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
@@ -445,13 +460,15 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_users_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function delete(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
         }
+        
+        // Vérifier les permissions
+        $this->denyAccessUnlessGranted(UserVoter::DELETE, $user);
 
         $this->em->remove($user);
         $this->em->flush();
