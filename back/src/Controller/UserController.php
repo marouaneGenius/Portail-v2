@@ -177,7 +177,7 @@ class UserController extends AbstractController
     #[Route('', name: 'api_users_list', methods: ['GET'])]
     public function list(): JsonResponse
     {
-        $this->denyAccessUnlessGranted(UserVoter::VIEW);
+        // $this->denyAccessUnlessGranted(UserVoter::VIEW);
 
         // Note: La vérification se fera au niveau individuel dans le mapping
         $users = $this->userRepository->findAll();

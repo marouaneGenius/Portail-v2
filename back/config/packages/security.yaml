@@ -3,11 +3,16 @@ security:
     # 1) Hashing des mots de passe
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Security\StudentParentUser: 'auto'
 
     # 2) Chargement des utilisateurs
     providers:
         users_in_memory:
             memory: null
+        # Provider unifié qui cherche dans User et StudentParent
+        unified_user_provider:
+            id: App\Security\UnifiedUserProvider
+        # Provider original pour compatibilité (si nécessaire)
         app_user_provider:
             entity:
                 class: App\Entity\User
@@ -20,11 +25,11 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Point d’entrée login (stateless, JSON)
+        # Point d'entrée login (stateless, JSON)
         login:
             pattern:  ^/login$
             stateless: true
-            provider: app_user_provider
+            provider: unified_user_provider
             json_login:
                 check_path:      /login
                 username_path:   email
@@ -43,7 +48,7 @@ security:
         api:
             pattern:   ^/api
             stateless: true
-            provider:  app_user_provider   # ← ajoute ceci
+            provider:  unified_user_provider
             jwt: ~
             # si tu veux des cookies HttpOnly à la place des headers :
             # jwt_cookie: true

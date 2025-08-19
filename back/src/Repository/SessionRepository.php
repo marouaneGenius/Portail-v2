@@ -266,7 +266,7 @@ class SessionRepository extends ServiceEntityRepository
             ->join('s.id_student', 'stu')                     // nom de la propriété, pas idStudent
             ->andWhere('stu.id = :stuId')
             ->andWhere('s.center = :center')
-            ->andWhere('s.Scheduled_at BETWEEN :start AND :end') // propriété $Scheduled_at
+            ->andWhere('s.scheduled_at BETWEEN :start AND :end') // propriété $scheduled_at
             ->setParameters([
                 'stuId'   => $studentId,
                 'center'  => $center,
@@ -291,7 +291,7 @@ class SessionRepository extends ServiceEntityRepository
             ->join('s.id_student', 'stu')
             ->andWhere('stu.id = :stuId')
             ->andWhere('s.center = :center')
-            ->andWhere('s.Scheduled_at BETWEEN :start AND :end')
+            ->andWhere('s.scheduled_at BETWEEN :start AND :end')
             ->setParameters([
                 'stuId'   => $studentId,
                 'center'  => $center,

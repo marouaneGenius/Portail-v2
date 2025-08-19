@@ -144,7 +144,7 @@ class StudentController extends AbstractController
                         ->setGender($pData['gender'])
                         ->setEmail($pData['email'])
                         ->setPhone($pData['phone'] ?? null)
-                        ->setAddress($pData['address'] ?? null)
+                        ->setAddress($pData['address'] ?? '')
                         ->setZipCode($pData['zip_code'] ?? null)
                         ->setCity($pData['city'] ?? null)
                         ->setCreatedAt(new \DateTimeImmutable())

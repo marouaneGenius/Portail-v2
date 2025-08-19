@@ -45,7 +45,7 @@ class Session
     #[ORM\ManyToMany(targetEntity: Subscription::class, inversedBy: 'sessions')]
     private Collection $id_subscription;
 
-    #[ORM\Column(name: 'Scheduled_at', nullable: true)]
+    #[ORM\Column(name: 'scheduled_at', nullable: true)]
     private ?\DateTimeImmutable $scheduled_at = null;
 
     #[ORM\Column(length: 255, nullable: true)]

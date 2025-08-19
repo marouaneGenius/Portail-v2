@@ -54,6 +54,9 @@ class StudentParent
     #[ORM\ManyToMany(targetEntity: Student::class, mappedBy: 'id_parent')]
     private Collection $students;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $password = null;
+
     public function __construct()
     {
         $this->students = new ArrayCollection();
@@ -364,5 +367,17 @@ class StudentParent
                substr($cleaned, 4, 2) . ' ' . 
                substr($cleaned, 6, 2) . ' ' . 
                substr($cleaned, 8, 2);
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(?string $password): static
+    {
+        $this->password = $password;
+
+        return $this;
     }
 }
