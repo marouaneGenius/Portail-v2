@@ -10,6 +10,7 @@ use App\Repository\StudentRepository;
 use App\Repository\SubscriptionRepository;
 use App\Service\NameNormalizerService;
 use App\Service\PhoneValidatorService;
+use App\Service\StripeCustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Security\StudentParentUser;
@@ -35,6 +36,7 @@ class StudentController extends AbstractController
         private PhoneValidatorService $phoneValidator,
         private UserPasswordHasherInterface $passwordHasher,
         private HttpClientInterface $httpClient,
+        private StripeCustomerService $stripeCustomerService,
 
 
     ) {}
@@ -179,7 +181,17 @@ class StudentController extends AbstractController
         $this->em->persist($student);
         $this->em->flush();
 
-        // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive + stripe)
+        // Créer le customer Stripe et sauvegarder l'ID
+        try {
+            $stripeCustomerId = $this->stripeCustomerService->createCustomer($student);
+            $student->setIdStripe($stripeCustomerId);
+            $this->em->flush();
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne pas empêcher la création de l'étudiant
+            error_log('Erreur création Stripe customer: ' . $e->getMessage());
+        }
+
+        // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive)
         $dataZapier = [
             'mail'      => !empty($parent) ? $parent->getEmail() : null,
             'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),

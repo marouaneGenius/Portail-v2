@@ -19,6 +19,7 @@ class StripeCustomerService
     public function getOrCreateCustomer(Student $student): string
     {
         // Si l'étudiant a déjà un ID Stripe, on le vérifie OBLIGATOIREMENT
+
         if ($student->getIdStripe()) {
             try {
                 $customer = $this->stripe->customers->retrieve($student->getIdStripe());
@@ -62,6 +63,43 @@ class StripeCustomerService
         );
     }
 
+    public function createCustomer(Student $student): string
+    {
+        $parent = $student->getIdParent()->first();
+        
+        $customerData = [
+            'name' => $student->getFirstname() . ' ' . $student->getLastname(),
+            'metadata' => [
+                'student_id' => $student->getId(),
+                'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
+                'center_id' => $student->getIdCenter()?->getId(),
+            ]
+        ];
+
+        if ($parent) {
+            $customerData['email'] = $parent->getEmail();
+            $customerData['phone'] = $parent->getPhone();
+            $customerData['metadata']['parent_id'] = $parent->getId();
+        }
+
+        try {
+            $customer = $this->stripe->customers->create($customerData);
+            
+            $this->logger->info('Created new Stripe customer', [
+                'student_id' => $student->getId(),
+                'stripe_customer_id' => $customer->id
+            ]);
+
+            return $customer->id;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create Stripe customer', [
+                'student_id' => $student->getId(),
+                'error' => $e->getMessage()
+            ]);
+            throw new \RuntimeException('Impossible de créer le compte Stripe: ' . $e->getMessage());
+        }
+    }
+
     public function updateCustomerMetadata(Student $student, array $additionalMetadata = []): void
     {
         $customerId = $this->getOrCreateCustomer($student);
@@ -90,42 +128,59 @@ class StripeCustomerService
         }
     }
 
-    public function createPaymentLink(Student $student, int $amountInCents, string $description, array $metadata = []): string
+    public function createCheckoutSession(Student $student, int $amountInCents, string $description, array $metadata = []): string
     {
         $customerId = $this->getOrCreateCustomer($student);
 
-        $price = $this->stripe->prices->create([
-            'unit_amount' => $amountInCents,
-            'currency' => 'eur',
-            'product_data' => [
-                'name' => $description,
-            ],
-        ]);
-
-        $paymentLink = $this->stripe->paymentLinks->create([
-            'line_items' => [
-                [
-                    'price' => $price->id,
-                    'quantity' => 1,
-                ],
-            ],
-            'metadata' => array_merge([
-                'customer_id' => $customerId,
-                'student_id' => $student->getId(),
-            ], $metadata),
-            'custom_fields' => [
-                [
-                    'key' => 'student_name',
-                    'label' => [
-                        'type' => 'custom',
-                        'custom' => 'Nom de l\'étudiant'
+        try {
+            $session = $this->stripe->checkout->sessions->create([
+                'mode' => 'payment',
+                'customer' => $customerId,
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'eur',
+                        'unit_amount' => $amountInCents,
+                        'product_data' => ['name' => $description],
                     ],
-                    'type' => 'text',
-                    'optional' => true,
-                ]
-            ]
-        ]);
+                    'quantity' => 1,
+                ]],
+                'client_reference_id' => (string)$student->getId(),
+                'metadata' => array_merge([
+                    'student_id' => $student->getId(),
+                ], $metadata),
+                'success_url' => $_ENV['FRONTEND_URL'] . '/payment/success?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $_ENV['FRONTEND_URL'] . '/payment/cancel?session_id={CHECKOUT_SESSION_ID}',
+                'expires_at' => time() + 24*3600,
+            ]);
 
-        return $paymentLink->id;
+            $this->logger->info('Created Stripe checkout session', [
+                'student_id' => $student->getId(),
+                'session_id' => $session->id,
+                'amount' => $amountInCents
+            ]);
+
+            return $session->id;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create checkout session', [
+                'student_id' => $student->getId(),
+                'amount' => $amountInCents,
+                'error' => $e->getMessage()
+            ]);
+            throw new \RuntimeException('Impossible de créer la session de paiement: ' . $e->getMessage());
+        }
+    }
+
+    public function getCheckoutSessionUrl(string $sessionId): string
+    {
+        try {
+            $session = $this->stripe->checkout->sessions->retrieve($sessionId);
+            return $session->url;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve checkout session URL', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            throw new \RuntimeException('Impossible de récupérer l\'URL de paiement: ' . $e->getMessage());
+        }
     }
 }
