@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 // MUI X Date Pickers imports
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -49,6 +49,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   const [draft, setDraft] = useState<Schedule>({ day: '', start_hour: null, end_hour: null, id: id, center: '' });
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [showError, setShowError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [centers, setCenters] = useState<any>([]);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
   const [days, setDays] = useState<any>(dayOptions);
@@ -59,53 +60,79 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
   const [disabledSchedules, setDisabledSchedules] = useState<number[]>([]);
   // const { id_tutor } = useParams<any>();
 
+  // --- Helpers temps ---
+  const toBaseTime = (d: Date) => new Date(0, 0, 0, d.getHours(), d.getMinutes());
+  const addMinutes = (d: Date, minutes: number) => {
+    const total = d.getHours() * 60 + d.getMinutes() + minutes;
+    return new Date(0, 0, 0, Math.floor(total / 60), total % 60);
+  };
+  const minutesBetween = (a?: Date | null, b?: Date | null) => {
+    if (!(a instanceof Date) || !(b instanceof Date)) return 0;
+    const ma = a.getHours() * 60 + a.getMinutes();
+    const mb = b.getHours() * 60 + b.getMinutes();
+    return mb - ma;
+  };
 
   const addSlot = () => {
     const { day, start_hour, end_hour, id, center, id_user } = draft;
+
     if (!day || !start_hour || !end_hour) {
-        setShowError(true)
-    } else {
-      setShowError(false)
-      const newSlot:any = {
-        day,
-        center,
-        start_hour: start_hour instanceof Date
-          ? scheduleformatTime(start_hour)
-          : String(start_hour),
-        end_hour:   end_hour   instanceof Date
-          ? scheduleformatTime(end_hour)
-          : String(end_hour),
-        id: id?.toString(),
-        id_user: Number(tutor_id)
-      };
+      setShowError(true);
+      setErrorMsg("Veuillez remplir tous les champs !");
+      return;
+    }
 
-      const updatedSchedules:any = scheduls.map((s: any) => {
+    // validations temps
+    const diff = minutesBetween(start_hour as Date, end_hour as Date);
+    if (diff <= 0) {
+      setShowError(true);
+      setErrorMsg("L'heure de fin doit être après l'heure de début.");
+      return;
+    }
+    if (diff < 90) {
+      setShowError(true);
+      setErrorMsg("La durée minimale d'un créneau est de 1h30 (90 minutes).");
+      return;
+    }
 
-        if (s.id === Number(newSlot.id)) {
-          console.log('dd')
-          return {
-            ...s,
-            day: newSlot.day,
-            start_hour: newSlot.start_hour,
-            end_hour: newSlot.end_hour,
-            centers: [{ id: newSlot.center, name: centers.find((c:any) => c.value === newSlot.center)?.label }],
-          };
-        } else {
-          console.log('tt')
-        }
-        return s;
-      });
+    setShowError(false);
+    setErrorMsg(null);
 
-      if(isUpdate && newSlot) {
-        onChange?.([newSlot]);
-        setSchedules([newSlot]);
-        setScheduls(updatedSchedules);
-      } else {
-        const updated = [...schedules, newSlot];
-        setSchedules(updated);
-        onChange?.(updated);
-        setDraft({ day: '', start_hour: null, end_hour: null, id: id, center: center });
+    const newSlot:any = {
+      day,
+      center,
+      start_hour: start_hour instanceof Date
+        ? scheduleformatTime(start_hour)
+        : String(start_hour),
+      end_hour:   end_hour   instanceof Date
+        ? scheduleformatTime(end_hour)
+        : String(end_hour),
+      id: id?.toString(),
+      id_user: Number(tutor_id)
+    };
+
+    const updatedSchedules:any = scheduls.map((s: any) => {
+      if (s.id === Number(newSlot.id)) {
+        return {
+          ...s,
+          day: newSlot.day,
+          start_hour: newSlot.start_hour,
+          end_hour: newSlot.end_hour,
+          centers: [{ id: newSlot.center, name: centers.find((c:any) => c.value === newSlot.center)?.label }],
+        };
       }
+      return s;
+    });
+
+    if (isUpdate && newSlot) {
+      onChange?.([newSlot]);
+      setSchedules([newSlot]);
+      setScheduls(updatedSchedules);
+    } else {
+      const updated = [...schedules, newSlot];
+      setSchedules(updated);
+      onChange?.(updated);
+      setDraft({ day: '', start_hour: null, end_hour: null, id: id, center: center });
     }
   };
 
@@ -224,7 +251,6 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
 
     for (let s of scheduls) {
       const hasSessions = await checkScheduleHasSessions(s.id, scheduls);
-      // console.log(hasSessions, schedule)
       if (hasSessions) {
         disabled.push(s.id);
       }
@@ -349,7 +375,12 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
                     }}
                     minutesStep={15}
                     ampm={false}
-                    minTime={new Date(0, 0, 0, 9, 30)}
+                    // minTime dynamique = début + 90 min si début défini, sinon borne par défaut (09:30 + 1h30 = 11:00)
+                    minTime={
+                      draft.start_hour instanceof Date
+                        ? addMinutes(toBaseTime(draft.start_hour), 90)
+                        : new Date(0, 0, 0, 11, 0)
+                    }
                     maxTime={new Date(0, 0, 0, 18, 0)}
                 />
             </div>
@@ -399,7 +430,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
 
         </div>
         
-        { showError &&  <AlertMessage message={'Veuillez remplir tous les champs !'} /> }
+        {(showError || errorMsg) &&  <AlertMessage message={errorMsg ?? 'Veuillez remplir tous les champs !'} /> }
         
         <div className="flex ">
           <div className="flex flex-wrap gap-2 mb-4">
