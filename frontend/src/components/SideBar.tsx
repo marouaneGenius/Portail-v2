@@ -81,7 +81,7 @@ const menuItems = [
     title: 'Mon profil', 
     url: '/profile', 
     icon: User,
-    roles: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_TUTOR'] // Tous les rôles
+    roles: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_TUTOR', 'ROLE_PARENT'] // Tous les rôles
   },
   { 
     title: 'Historique', 

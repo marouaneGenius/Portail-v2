@@ -92,8 +92,8 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
   const getTotalHours = () => {
     return weekSessions.reduce((total, session) => {
-      const start = new Date(`1970-01-01T${session.startTime}`);
-      const end = new Date(`1970-01-01T${session.endTime}`);
+      const start:any = new Date(`1970-01-01T${session.startTime}`);
+      const end:any = new Date(`1970-01-01T${session.endTime}`);
       return total + (end - start) / (1000 * 60 * 60); // Conversion en heures
     }, 0);
   };

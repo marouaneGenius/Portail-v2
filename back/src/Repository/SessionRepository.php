@@ -95,6 +95,8 @@ class SessionRepository extends ServiceEntityRepository
                     $s->getIdSubscription()->toArray()
                 ),
                 'scheduled_by'       => $s->getScheduledBy(),
+                'is_absent'         => $s->isIsAbsent(),
+                'absent_by'         => $s->getAbsentBy(),
                 'session_type'       => $s->getSessionType(),
                 'is_canceled'        => $s->isIsCanceled(),
                 'canceled_by'        => $s->getCanceledBy(),
@@ -156,6 +158,7 @@ class SessionRepository extends ServiceEntityRepository
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
                     'resume'        => $session->getResume(),
                     'is_canceled'        => $session->isIsCanceled(),
+                    'canceled_by'        => $session->getCanceledBy(),
                     'session_type'             => $session->getSessionType(),
                     'is_paid'         => $session->isIsPaid(),
                     'is_absent'        => $session->isIsAbsent(),
@@ -229,7 +232,9 @@ class SessionRepository extends ServiceEntityRepository
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
                     'resume'        => $session->getResume(),
                     'is_canceled'   => $session->isIsCanceled(),
+                    'canceled_by'   => $session->getCanceledBy(),
                     'is_absent'     => $session->isIsAbsent(),
+                    'absent_by'     => $session->getAbsentBy(),
                     'students'      => $studentsArr,
                     'school_subjects' => $session->getSchoolSubjects(),
                 ];

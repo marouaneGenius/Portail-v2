@@ -879,7 +879,7 @@ class SessionController extends AbstractController
         }
     }
 
-    #[Route('/move-future-slots/{id}', name: 'session_move_future_slots', methods: ['PATCH'])]
+    #[Route('/move-future-slots/{id}', name: 'session_move_future_slots', methods: ['PATCH', 'PUT'])]
     public function moveFutureSlots( int $id, Request $request, LoggerInterface $logger ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
@@ -918,6 +918,19 @@ class SessionController extends AbstractController
         if (array_key_exists('updated_by', $data)) {
             $session->setUpdatedBy($data['updated_by']);
         }
+
+        // Si c'est un PUT (reprogrammation par parent), réactiver la séance annulée
+        $isPutRequest = $request->getMethod() === 'PUT';
+        $isParentReschedule = $data['rescheduled_by_parent'] ?? false;
+        
+        if ($isPutRequest && $isParentReschedule && $session->isIsCanceled()) {
+            $session->setIsCanceled(false);
+            $session->setCanceledBy(null);
+            $logger->info('Session réactivée lors de la reprogrammation par parent', [
+                'session_id' => $session->getId(),
+                'parent_user' => $data['updated_by'] ?? 'unknown'
+            ]);
+        }
     
         // Modifier seulement UNE séance
         if (!$updateAll) {
@@ -929,6 +942,11 @@ class SessionController extends AbstractController
                 $session->setUpdatedBy($data['updated_by']);
             }
 
+            // Mettre à jour les matières si fourni
+            if (array_key_exists('school_subjects', $data) && is_array($data['school_subjects'])) {
+                $session->setSchoolSubjects($data['school_subjects']);
+            }
+
             $this->em->persist($session);
             $this->em->flush();
     
@@ -936,7 +954,11 @@ class SessionController extends AbstractController
                 'id' => $session->getId(),
                 'scheduled_at' => $session->getScheduledAt()?->format(\DateTime::ATOM),
                 'tutor_id' => $session->getIdTutor()?->getId(),
-                'multiple' => false
+                'school_subjects' => $session->getSchoolSubjects(),
+                'is_canceled' => $session->isIsCanceled(),
+                'canceled_by' => $session->getCanceledBy(),
+                'multiple' => false,
+                'rescheduled' => $isPutRequest && $isParentReschedule
             ], JsonResponse::HTTP_OK);
         }
     

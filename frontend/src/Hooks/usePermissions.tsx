@@ -24,6 +24,7 @@ export const usePermissions = () => {
   const isAdmin = (): boolean => hasRole('ROLE_ADMIN');
   const isUser = (): boolean => hasRole('ROLE_USER'); 
   const isTutor = (): boolean => hasRole('ROLE_TUTOR');
+  const isParent = (): boolean => hasRole('ROLE_PARENT');
 
   const hasPermission = (permission: Permission, targetUser?: User): boolean => {
     if (!user) return false;
@@ -182,6 +183,7 @@ export const usePermissions = () => {
     isAdmin,
     isUser, 
     isTutor,
+    isParent,
     user
   };
 };

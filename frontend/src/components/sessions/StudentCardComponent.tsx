@@ -57,7 +57,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       sessionHour,
     },
   });
-  console.log(isPaid , sessionType , isPaid === false, sessionType === 'trial_session')
+
   const updateStudentSlots = () => {
     const newValues = {
       tutor_id: values.tutor_id,
@@ -182,6 +182,34 @@ export const StudentCard: React.FC<StudentCardProps> = ({
                 <Badge variant="destructive" className="text-xs px-2 py-0.5">Séance annulée</Badge>
               )}
             </div>
+            
+            {/* Informations sur qui a annulé ou marqué absent */}
+            {(isCanceled || isAbsent) && (
+              <div className="mt-2 space-y-1">
+                {isCanceled && currentSession.canceled_by && (
+                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                    <span className="font-medium">Annulé par :</span>
+                    <div className="mt-1">
+                      <span className="text-gray-700">{currentSession.canceled_by || 'Email non disponible'}</span>
+                      {currentSession.canceled_by_role && (
+                        <span className="ml-2 text-blue-600">({currentSession.canceled_by_role})</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {isAbsent && !isCanceled && currentSession.absent_by && (
+                  <div className="text-xs text-gray-500 bg-red-50 px-2 py-1 rounded">
+                    <span className="font-medium">Marqué absent par :</span>
+                    <div className="mt-1">
+                      <span className="text-gray-700">{currentSession.absent_by}</span>
+                      {currentSession.absent_by_role && (
+                        <span className="ml-2 text-blue-600">({currentSession.absent_by_role})</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap gap-1 mt-1">
               {values.school_subjects.map((matiere: any, index: number) => (
                 <Badge

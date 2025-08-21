@@ -101,8 +101,6 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
           const isLoading = loading[session.id];
           const isPaid = paymentStatus?.is_paid || session.is_paid;
           
-
-          console.log(session)
           return (
             <div key={session.id} className={`border rounded-xl p-4 ${
               session.is_canceled 
@@ -211,15 +209,6 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
                       </div>
                     </div>
                   )}
-                  
-                  <Button 
-                    variant="outlined" 
-                    color="error" 
-                    size="small"
-                    onClick={() => cancelSession(session)}
-                  >
-                    Annuler
-                  </Button>
                 </div>
               )}
             </div>

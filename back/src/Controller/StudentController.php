@@ -11,6 +11,8 @@ use App\Repository\SubscriptionRepository;
 use App\Service\NameNormalizerService;
 use App\Service\PhoneValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Security\StudentParentUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +31,7 @@ class StudentController extends AbstractController
         private StudentParentRepository $studentParentRepository,
         private NameNormalizerService $nameNormalizer,
         private PhoneValidatorService $phoneValidator,
+        private UserPasswordHasherInterface $passwordHasher,
 
     ) {}
 
@@ -149,6 +152,16 @@ class StudentController extends AbstractController
                         ->setCity($pData['city'] ?? null)
                         ->setCreatedAt(new \DateTimeImmutable())
                         ->setCreatedBy($this->getUser()->getUserIdentifier());
+
+                    // Générer un mot de passe automatique : prenomnom2025
+                    $firstname = strtolower($pData['firstname']);
+                    $lastname = strtolower($pData['lastname']);
+                    $rawPassword = $firstname . $lastname . '2025';
+                    
+                    // Hasher le mot de passe avec le système unifié
+                    $studentParentUser = new StudentParentUser($parent);
+                    $hashedPassword = $this->passwordHasher->hashPassword($studentParentUser, $rawPassword);
+                    $parent->setPassword($hashedPassword);
         
                     $this->em->persist($parent);
                 }

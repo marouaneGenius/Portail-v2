@@ -56,7 +56,12 @@ const Planning: React.FC = () => {
               } : undefined,
               status: session.is_canceled ? 'cancelled' : 
                       new Date(session.scheduled_at) < new Date() ? 'completed' : 'scheduled',
-              notes: session.notes || undefined
+              notes: session.notes || undefined,
+              canceled_by: session.canceled_by || undefined,
+              absent_by: session.absent_by || undefined,
+              is_absent: session.is_absent || undefined,
+
+              markedByParent: session.marked_by_parent || false
             }));
           });
           setSessions(formattedSessions);
@@ -86,7 +91,7 @@ const Planning: React.FC = () => {
     try {
       // Appel API pour mettre à jour la présence en utilisant la route existante
       const isAbsent = attendance === 'absent';
-      const response = await api.patch(`/api/sessions/manage/${sessionId}`, {
+      await api.patch(`/api/sessions/manage/${sessionId}`, {
         student_ids: [studentId],
         update_all: false,
         is_absent: isAbsent,

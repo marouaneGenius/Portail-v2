@@ -58,7 +58,7 @@ class Session
     private ?bool $is_canceled = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $canceled_by = null;
+    private ?string $canceled_by = null;
 
     #[ORM\OneToMany(mappedBy: 'id_session', targetEntity: Report::class)]
     private Collection $reports;
@@ -266,12 +266,12 @@ class Session
         return $this;
     }
 
-    public function getCanceledBy(): ?int
+    public function getCanceledBy(): ?string
     {
         return $this->canceled_by;
     }
 
-    public function setCanceledBy(?int $canceled_by): static
+    public function setCanceledBy(?string $canceled_by): static
     {
         $this->canceled_by = $canceled_by;
 

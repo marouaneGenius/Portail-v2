@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, BookOpen, MapPin, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, User, BookOpen, MapPin, Calendar, XCircle } from 'lucide-react';
 
 export interface SessionData {
   id: number;
@@ -23,6 +23,12 @@ export interface SessionData {
   };
   status: 'scheduled' | 'completed' | 'cancelled';
   notes?: string;
+  is_canceled?: any;
+  is_absent?: string;
+
+  absent_by?: string;
+  markedByParent?: boolean;
+  canceled_by?: string;
 }
 
 interface SessionCardProps {
@@ -40,6 +46,8 @@ const SessionCard: React.FC<SessionCardProps> = ({
   onAttendanceChange,
   isTutor = false
 }) => {
+
+  console.log(session)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -96,9 +104,22 @@ const SessionCard: React.FC<SessionCardProps> = ({
                 {formatTime(session.startTime)} - {formatTime(session.endTime)}
               </span>
             </div>
-            <Badge className={getStatusColor(session.status)} variant="secondary">
-              {getStatusText(session.status)}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge className={getStatusColor(session.status)} variant="secondary">
+                {getStatusText(session.status)}
+              </Badge>
+              {/* Informations sur qui a annulé ou marqué absent */}
+              {session.status === 'cancelled' && session.is_canceled && (
+                <span className="text-xs text-gray-500">
+                  Annulé par : {session.markedByParent ? 'Parent' : session.is_canceled}
+                </span>
+              )}
+              {session.is_absent  && (
+                <span className="text-xs text-gray-500">
+                  Marqué absent par : {session.markedByParent ? 'Parent' : session.absent_by}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-2 mb-1">
@@ -114,32 +135,21 @@ const SessionCard: React.FC<SessionCardProps> = ({
             </Badge>
           </div>
           
-          {/* Boutons de présence pour les tuteurs en mode compact */}
+          {/* Bouton toggle de présence pour les tuteurs en mode compact */}
           {isTutor && onAttendanceChange && (
-            <div className="flex gap-1 mt-2">
-              <Button
-                size="sm"
-                variant={session.student.attendance === 'present' ? 'default' : 'outline'}
-                className="h-6 px-2 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAttendanceChange(session.id, session.student.id, 'present');
-                }}
-              >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Présent
-              </Button>
+            <div className="flex mt-2">
               <Button
                 size="sm"
                 variant={session.student.attendance === 'absent' ? 'destructive' : 'outline'}
                 className="h-6 px-2 text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAttendanceChange(session.id, session.student.id, 'absent');
+                  const newAttendance = session.student.attendance === 'absent' ? 'present' : 'absent';
+                  onAttendanceChange(session.id, session.student.id, newAttendance);
                 }}
               >
                 <XCircle className="h-3 w-3 mr-1" />
-                Absent
+                {session.student.attendance === 'absent' ? 'Marquer présent' : 'Marquer absent'}
               </Button>
             </div>
           )}
@@ -161,9 +171,22 @@ const SessionCard: React.FC<SessionCardProps> = ({
             <Calendar className="h-5 w-5 text-blue-600" />
             {formatDate(session.date)}
           </CardTitle>
-          <Badge className={getStatusColor(session.status)}>
-            {getStatusText(session.status)}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={getStatusColor(session.status)}>
+              {getStatusText(session.status)}
+            </Badge>
+            {/* Informations sur qui a annulé ou marqué absent */}
+            {session.status === 'cancelled' && session.canceled_by && (
+              <span className="text-xs text-gray-500">
+                Annulé par : {session.markedByParent ? 'Parent' : session.canceled_by}
+              </span>
+            )}
+            {session.student.attendance === 'absent' && session.absent_by && (
+              <span className="text-xs text-gray-500">
+                Marqué absent par : {session.markedByParent ? 'Parent' : session.absent_by}
+              </span>
+            )}
+          </div>
         </div>
       </CardHeader>
       
@@ -244,30 +267,19 @@ const SessionCard: React.FC<SessionCardProps> = ({
                 </Badge>
               )}
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={session.student.attendance === 'present' ? 'default' : 'outline'}
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAttendanceChange(session.id, session.student.id, 'present');
-                }}
-                className="flex-1"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Marquer présent
-              </Button>
+            <div className="flex justify-center">
               <Button
                 variant={session.student.attendance === 'absent' ? 'destructive' : 'outline'}
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAttendanceChange(session.id, session.student.id, 'absent');
+                  const newAttendance = session.student.attendance === 'absent' ? 'present' : 'absent';
+                  onAttendanceChange(session.id, session.student.id, newAttendance);
                 }}
-                className="flex-1"
+                className="w-48"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Marquer absent
+                {session.student.attendance === 'absent' ? 'Marquer présent' : 'Marquer absent'}
               </Button>
             </div>
           </div>

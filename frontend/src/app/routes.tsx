@@ -23,6 +23,8 @@ import StudentSubscriptions from "../pages/StudentSubscriptions";
 import SessionCalendar from "@/pages/SessionCalendar";
 import Tutors from "../pages/Tutors";
 import HistoriqueModifications from "@/pages/HistoriqueModifications";
+import ParentDashboard from "../pages/ParentDashboard";
+import ParentProtectedRoute from "./ParentProtectedRoute";
 
 export const router = createBrowserRouter([
     {
@@ -33,28 +35,32 @@ export const router = createBrowserRouter([
         {
           element: <ProtectedRoute />,  
           children: [
-            { path: "/dashboard", element: <Dashboard /> },
-            { path: "/profile", element: <Profile /> },
-            { path: "/centers", element: <Centers /> },
-            { path: "/sessions/:id", element: <Sessions /> },
-            { path: "/users", element: <Users /> },
-            { path: "/students", element: <Students /> },
-            { path: "/abonnements/:id", element: <Subscriptions /> },
-            { path: '/:resource/:id', element: <ItemDetails /> },
-            { path: '/parents', element: <Parents /> },
-            { path: '/form/:resource/:id?', element: <CreationForm /> },
-            { path: '/:resource/:id/edit', element: <EditionForm /> },
-            { path: '/studentDetails/:id', element: <StudentDetails />},
-            { path: '/planing', element: <Planing/>},
-            { path: '/planning', element: <Planning/>},
-            { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
-            { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
-            { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
-            { path: "/session-calendar", element: <SessionCalendar /> },
-            { path: "/tutors", element: <Tutors /> },
-            { path: "/historique", element: <HistoriqueModifications /> },
-
-
+            {
+              element: <ParentProtectedRoute />,
+              children: [
+                { path: "/dashboard", element: <Dashboard /> },
+                { path: "/profile", element: <Profile /> },
+                { path: "/centers", element: <Centers /> },
+                { path: "/sessions/:id", element: <Sessions /> },
+                { path: "/users", element: <Users /> },
+                { path: "/students", element: <Students /> },
+                { path: "/abonnements/:id", element: <Subscriptions /> },
+                { path: '/:resource/:id', element: <ItemDetails /> },
+                { path: '/parents', element: <Parents /> },
+                { path: '/form/:resource/:id?', element: <CreationForm /> },
+                { path: '/:resource/:id/edit', element: <EditionForm /> },
+                { path: '/studentDetails/:id', element: <StudentDetails />},
+                { path: '/planing', element: <Planing/>},
+                { path: '/planning', element: <Planning/>},
+                { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
+                { path: '/contract/:id/:student/:combined?', element: <ContractGenerator/>},
+                { path: '/student/subscriptions/:id', element: <StudentSubscriptions/>},
+                { path: "/session-calendar", element: <SessionCalendar /> },
+                { path: "/tutors", element: <Tutors /> },
+                { path: "/historique", element: <HistoriqueModifications /> },
+                { path: "/parent-dashboard", element: <ParentDashboard /> },
+              ],
+            },
           ],
         },
       ],

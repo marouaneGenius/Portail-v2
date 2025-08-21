@@ -1,6 +1,6 @@
 // src/pages/Login.tsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { getCurrentUser, login } from '../../api/api';
 import { useAuth, User } from '../../Hooks/auth';
 
@@ -12,6 +12,15 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  if (user?.roles?.includes('ROLE_TUTOR')) {
+    return <Navigate to="/planning" replace />;
+  } else if( user?.roles?.includes('ROLE_PARENT')) { 
+    return <Navigate to="/parent-dashboard" replace />;
+  } else if( user?.roles?.includes('ROLE_ADMIN') || user?.roles?.includes('ROLE_USER')) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

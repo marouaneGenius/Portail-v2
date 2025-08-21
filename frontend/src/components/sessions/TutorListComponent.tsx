@@ -57,6 +57,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
         
         return true;
       })
+      console.log('Filtered Tutors:', response.data, student, values.school_subjects );
       setTutors(filteresTutorsPeStudentCenter);
     })
 

@@ -1,12 +1,12 @@
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "../Hooks/auth";
 import api from "../api/aixos";
 import { useAlert } from '../Hooks/useAlert';
 import Alert, { AlertMessage } from "../components/Alert";
 import { Detail } from "../components/CustomInputField";
 import { validatePasswords } from "../services/functions";
-import { Edit, Key, Save, Ban, User, Mail, Phone, Building, Shield, Camera } from 'lucide-react';
+import { Edit, Key, Save, Ban, User, Mail, Phone, Building, Shield, Camera, ArrowLeft } from 'lucide-react';
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -19,7 +19,7 @@ const Profile: React.FC = () => {
   const [passwordErrorMesssage, setpasswordErrorMesssage] = useState(false);
   const [errorMesssage, setErrorMesssage] = useState('');
   const [enableSaveButton, setEnableSaveButton] = useState(true);
-  const { hasPermission, hasRole } = usePermissions();
+  const { hasPermission, hasRole, isParent } = usePermissions();
   
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -52,7 +52,8 @@ const Profile: React.FC = () => {
       } else {
         setpasswordErrorMesssage(false)
         try {
-          const { data: updated } = await api.put(`/api/user/${user?.id}/password`, values);
+          const endpoint = isParent() ? `/api/parents/${user?.id}/password` : `/api/user/${user?.id}/password`;
+          const { data: updated } = await api.put(endpoint, values);
           setUpdatePasswordMode(false)
           toast.success('Votre mot de passe a bien été mis à jour.');
         } catch (e: any) {
@@ -79,6 +80,7 @@ const Profile: React.FC = () => {
 
   console.log()
 
+
   if (!user) return <Navigate to="/login" replace />;
 
   return (
@@ -86,6 +88,14 @@ const Profile: React.FC = () => {
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-4">
+          {/* Bouton retour pour les parents */}
+          {isParent() && (
+            <Link to="/parent-dashboard">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+            </Link>
+          )}
           <div className="relative">
             <div className="w-16 h-16 bg-gradient-to-br from-hello-yellow to-crazy-magenta rounded-full flex items-center justify-center">
               <User className="w-8 h-8 text-dat-white" />
@@ -179,8 +189,12 @@ const Profile: React.FC = () => {
                     </>
                   )}
                   {/* Mode lecture */}
-                  {!updateMode && !updatePasswordMode && (user?.roles &&  hasRole(user?.roles[0]) && user?.roles[0] !== 'ROLE_TUTOR') &&(
+                  {!updateMode && !updatePasswordMode &&(
                     <>
+
+
+                    {  (user?.roles &&  hasRole(user?.roles[0]) && user?.roles[0] !== 'ROLE_TUTOR' && !user?.roles.includes('ROLE_PARENT') ) &&
+
                       <button
                         type="button"
                         onClick={() => setUpdateMode(true)}
@@ -189,6 +203,8 @@ const Profile: React.FC = () => {
                         <Edit className="h-4 w-4" />
                         Modifier
                       </button>
+                    }
+
                       <button
                         type="button"
                         onClick={() => setUpdatePasswordMode(true)}

@@ -263,7 +263,7 @@ class UserController extends AbstractController
     {
 
         $users = $this->userRepository->findTutors();
-        $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
+        // $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
 
         // On mappe chaque entité User en tableau simple
         $data = array_map(fn($u) => [
