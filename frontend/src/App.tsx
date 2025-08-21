@@ -5,7 +5,7 @@ import { useAuth } from './Hooks/auth';
 import Sidebar from './components/SideBar';
 import { SidebarProvider } from '@/components/ui/sidebar'; // adapte le chemin selon ton arborescence
 import { Toaster } from '@/components/ui/sonner';
-import { usePermissions } from './hooks/usePermissions';
+import { usePermissions } from './Hooks/usePermissions';
 
 const App = () => {
   const { user } = useAuth();

@@ -1,4 +1,6 @@
-import { useAuth, User } from "./auth";
+// import { useAuth, User } from "./auth";
+import { useAuth, User } from '../Hooks/auth';
+
 
 
 export type Permission = 
@@ -68,7 +70,10 @@ export const usePermissions = () => {
             const hasRestrictedRole = targetUser.roles?.some(role => 
               ['ROLE_ADMIN', 'ROLE_USER'].includes(role)
             );
-            return !hasRestrictedRole && targetUser.roles?.includes('ROLE_TUTOR');
+            const isTutor = targetUser?.roles?.includes('ROLE_TUTOR') ?? false;
+
+            return !hasRestrictedRole && isTutor; // -> boo
+            // return !hasRestrictedRole && targetUser.roles?.includes('ROLE_TUTOR');
           }
           return true; // Si pas de targetUser spécifique, on autorise (sera vérifié côté serveur)
         case 'delete':

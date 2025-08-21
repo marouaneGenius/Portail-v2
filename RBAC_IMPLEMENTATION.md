@@ -20,7 +20,7 @@ Les contrôleurs utilisent `$this->denyAccessUnlessGranted(VoterConstante, $enti
 
 ### Frontend (React)
 
-#### Hook de permissions (`/frontend/src/hooks/usePermissions.tsx`)
+#### Hook de permissions (`/frontend/src/Hooks/usePermissions.tsx`)
 Hook central qui :
 - Vérifie les permissions selon les rôles
 - Fournit des méthodes utilitaires (`hasPermission`, `isAdmin`, etc.)
@@ -91,7 +91,7 @@ public function edit(User $user): Response
 
 ### Frontend - Vérification de permissions
 ```tsx
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../Hooks/usePermissions';
 
 const { hasPermission } = usePermissions();
 

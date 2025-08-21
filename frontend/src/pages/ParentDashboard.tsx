@@ -2,7 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, AlertTriangle, CheckCircle, XCircle, LogOut, Settings, FileText, Download, Ban, Euro, Clock } from 'lucide-react';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../Hooks/usePermissions';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
 import { toast } from 'sonner';

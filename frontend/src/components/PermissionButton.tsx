@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { usePermissions, Permission } from '../hooks/usePermissions';
+import { usePermissions, Permission } from '../Hooks/usePermissions';
 import { User } from '../hooks/auth';
 
 interface PermissionButtonProps {
