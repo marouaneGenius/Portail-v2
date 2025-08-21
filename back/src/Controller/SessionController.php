@@ -279,7 +279,7 @@ class SessionController extends AbstractController
                 : 'Séance d\'essai – 1 étudiant';
 
             // 2) Création du lien de paiement via le service optimisé
-            $paymentLinkId = $this->stripeCustomerService->createPaymentLink(
+            $sessionId = $this->stripeCustomerService->createCheckoutSession(
                 $mainStudent,
                 $totalAmount,
                 $description,
@@ -291,12 +291,12 @@ class SessionController extends AbstractController
                 ]
             );
 
-            // 3) Récupération du payment link pour obtenir l'URL
-            $paymentLink = $this->stripe->paymentLinks->retrieve($paymentLinkId);
-
-            // 4) Mise à jour de la session avec le lien Stripe
-            $session->setStripeNumber($paymentLinkId);
+            // 3) Mise à jour de la session avec l'ID de session Stripe
+            $session->setStripeNumber($sessionId);
             $this->em->flush();
+
+            // 4) Récupération de l'URL pour l'envoi SMS et réponse
+            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($sessionId);
 
             // 5) Préparation des données pour le SMS
             $phone = $parent->getPhone();
@@ -321,14 +321,14 @@ class SessionController extends AbstractController
                 $ville,
                 $adresse,
                 $prenom,
-                $paymentLink->url
+                $paymentUrl
             );
 
             // 7) Réponse avec toutes les informations
             return new JsonResponse([
                 'success' => true,
                 'session_id' => $session->getId(),
-                'payment_link' => $paymentLink->url,
+                'payment_link' => $paymentUrl,
                 'student_count' => $studentCount,
                 'total_amount' => $totalAmount / 100, // En euros
                 'students' => array_map(fn($s) => [
@@ -713,7 +713,7 @@ class SessionController extends AbstractController
                 : 'Session d\'essai – 1 étudiant';
 
             // Créer le lien de paiement via le service optimisé
-            $paymentLinkId = $this->stripeCustomerService->createPaymentLink(
+            $sessionId = $this->stripeCustomerService->createCheckoutSession(
                 $student,
                 $totalAmount,
                 $description,
@@ -723,13 +723,13 @@ class SessionController extends AbstractController
                 ]
             );
 
-            // Récupération du payment link pour obtenir l'URL
-            $paymentLink = $this->stripe->paymentLinks->retrieve($paymentLinkId);
-    
             // Mettre à jour la session
-            $session->setStripeNumber($paymentLinkId);
+            $session->setStripeNumber($sessionId);
             $session->setIsPaid(false); // Explicitement marqué comme non payé
             $this->em->flush();
+
+            // Récupération de l'URL pour l'envoi SMS et réponse
+            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($sessionId);
     
             // 6. Envoyer le SMS
             $students = $session->getIdStudent();
@@ -765,7 +765,7 @@ class SessionController extends AbstractController
                 ? implode(', ', array_slice($studentNames, 0, -1)) . ' et ' . end($studentNames)
                 : $studentNames[0];
             
-            $link = $paymentLink->url;
+            $link = $paymentUrl;
 
             $this->smsSender->sendSessionPaymentLink(
                 $phone,
@@ -779,7 +779,7 @@ class SessionController extends AbstractController
             );
     
             return new JsonResponse([
-                'payment_link' => $paymentLink->url,
+                'payment_link' => $paymentUrl,
                 'session_id' => $session->getId(),
                 'student_count' => $studentCount,
                 'total_amount' => $totalAmount / 100, // Montant en euros

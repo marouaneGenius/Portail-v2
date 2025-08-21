@@ -25,6 +25,8 @@ import Tutors from "../pages/Tutors";
 import HistoriqueModifications from "@/pages/HistoriqueModifications";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProtectedRoute from "./ParentProtectedRoute";
+import PaymentSuccess from "../pages/PaymentSuccess";
+import PaymentCancel from "../pages/PaymentCancel";
 
 export const router = createBrowserRouter([
     {
@@ -32,6 +34,8 @@ export const router = createBrowserRouter([
       children: [
         { path: "/", element: <Home /> },
         { path: "/login", element: <Login /> },
+        { path: "/payment/success", element: <PaymentSuccess /> },
+        { path: "/payment/cancel", element: <PaymentCancel /> },
         {
           element: <ProtectedRoute />,  
           children: [
