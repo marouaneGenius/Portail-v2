@@ -2,9 +2,9 @@ import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import api from '../api/aixos';
 import { NameNormalizer } from '../utils/nameNormalizer';
 import { PhoneValidator } from '../utils/phoneValidator';
-import { ClassesOptions, Days, SchoolSubjects} from '../mocks/mocks';
+import { ClassesOptions, Days, SchoolSubjects } from '../mocks/mocks';
 import { parentFields } from '../forms/schemas';
-import {renameFields } from '../services/functions';
+import { renameFields } from '../services/functions';
 import { ScheduleArrayField } from './forms/TutorScheduleForm';
 import { getCenters, getUser } from '../api/api';
 import { MultiSelectNoCtrl, MultiSelectSchoolSubjectsWithLevels, RenderField } from './forms/customInput';
@@ -22,7 +22,7 @@ export interface FormField {
   options?: { value: any; label: string }[]; // pour les select
   required?: boolean;
   className?: String;
-  multiple?:boolean;
+  multiple?: boolean;
   value?: any; // pour les champs avec valeur par défaut
 }
 
@@ -30,17 +30,17 @@ export interface FormGeneratorProps {
   fields: FormField[];
   initialValues?: Record<string, any>;
   onSubmit: (values: Record<string, any>) => void;
-  endpoint?:String;
+  endpoint?: String;
 }
 
 const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {}, onSubmit, endpoint }) => {
 
   const defaultValues = endpoint === "user" ? {
-    centers: [],   
+    centers: [],
     school_subjects: [],
     // class: [],
     ...initialValues,
-  }: {...initialValues};
+  } : { ...initialValues };
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [currentFields, setFields] = useState(fields);
   const [roleFieldValue, useRoleFieldValue] = useState<Boolean>(false);
@@ -56,7 +56,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects', 'class'];
   const { isOpen, open, close } = useModal();
-  const isEmpty = (obj:any) => Object.keys(obj).length === 0;
+  const isEmpty = (obj: any) => Object.keys(obj).length === 0;
 
   useEffect(() => {
     const hasRoleField = fields.find((item: any) => item.name === 'role');
@@ -69,7 +69,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       } else {
         setFields(filteredFields);
       }
-    } 
+    }
 
     if (!emptyFields) {
       const fieldsWithoutRequired = currentFields.map(({ required, ...rest }) => rest);
@@ -79,7 +79,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
           value: String(c.id),
           label: c.name,
         }));
-    
+
         const updatedFields: FormField[] = fieldsWithoutRequired.map((f: any) => {
           if (f.name === 'centers') {
             return { ...f, options: centerOptions };
@@ -102,7 +102,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       setFields(fieldWithOutRequired);
     }
 
-    if (hasClassField && !hasRoleField ) {
+    if (hasClassField && !hasRoleField) {
       let fieldWithOutRequired: any = [];
       getCenters()
         .then((res) => {
@@ -135,7 +135,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }
   }, [fields, roleFieldValue]);
 
-  const removeShoolSubject = (subjectToRemove:any) => {
+  const removeShoolSubject = (subjectToRemove: any) => {
     setValues(prev => ({
       ...prev,
       school_subjects: Array.isArray(prev.school_subjects)
@@ -144,11 +144,11 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }));
   };
 
-  const removeCenter = (center:any) => {
+  const removeCenter = (center: any) => {
     setValues(prev => ({
       ...prev,
       centers: Array.isArray(prev.centers)
-        ? prev.centers.filter((s:any) => s !== center)
+        ? prev.centers.filter((s: any) => s !== center)
         : [],
     }));
   };
@@ -156,9 +156,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
-    
+
     let processedValue = value;
-    
+
     // Normalisation automatique pour les champs nom/prénom
     if (name === 'firstname') {
       processedValue = NameNormalizer.normalizeOnInput(value, true);
@@ -175,14 +175,14 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       [name]: multiple
         ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
         : type === 'checkbox'
-        ? checked
-        : processedValue,
+          ? checked
+          : processedValue,
     }));
 
     // pour gerer les select one
-    if(type === "select-one" && name === "role"){
-      if(value === 'ROLE_TUTOR') {
-        let fieldWithOutRequired :any = fields;
+    if (type === "select-one" && name === "role") {
+      if (value === 'ROLE_TUTOR') {
+        let fieldWithOutRequired: any = fields;
         useRoleFieldValue(true)
 
         getCenters().then((res) => {
@@ -212,9 +212,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const handleChangeParentFields = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked, options }: any = e.target;
     const multiple = e.target.multiple;
-    
+
     let processedValue = value;
-    
+
     // Normalisation automatique pour les champs nom/prénom et téléphone des parents
     if (name === 'firstname') {
       processedValue = NameNormalizer.normalizeOnInput(value, true);
@@ -223,26 +223,34 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     } else if (name === 'phone') {
       processedValue = PhoneValidator.normalizeOnInput(value);
     }
-    
+
     setParentValues(prev => ({
       ...prev,
       [name]: multiple
         ? Array.from(options).filter((opt: any) => opt.selected).map((opt: any) => opt.value)
         : type === 'checkbox'
-        ? checked
-        : processedValue,
+          ? checked
+          : processedValue,
     }));
 
-    if(e.target.id && e.target.id.includes('_parent')){
+    // Ajouter tous les champs du parent à parentData
+    if (e.target.id && e.target.id.includes('_parent')) {
       const key = name.replace(/_parent$/, '');
-      setParentData(prev =>  ({...prev, [key]: value }));
+      setParentData(prev => ({ ...prev, [key]: value }));
+    } else {
+      // Pour les champs normaux du parent (firstname, lastname, email, phone, gender)
+      setParentData(prev => ({ ...prev, [name]: processedValue }));
     }
-
-    setValues(prev =>({
-      ...prev,
-      parent :parentData
-    }))
   }
+
+  useEffect(() => {
+    if (endpoint === 'student' && Object.keys(parentData).length > 0) {
+      setValues(prev => ({
+        ...prev,
+        parent: parentData
+      }));
+    }
+  }, [parentData, endpoint]);
 
   useEffect(() => {
     if (endpoint === 'student' && emptyFields) {
@@ -278,10 +286,10 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       return;
     }
 
-    if(action === 'update') {
+    if (action === 'update') {
       const scheduleData = values.schedules[0];
       const id = scheduleData.id;
-      
+
       // Préparer les données pour la mise à jour (sans l'id dans les données)
       const updateData = {
         day: scheduleData.day,
@@ -290,8 +298,8 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         id_user: scheduleData.id_user,
         center: scheduleData.center
       };
-      
-      const { data: created } = await api.put<Record<string, any>>( `/api/tutorschedule/${id}`, updateData );
+
+      const { data: created } = await api.put<Record<string, any>>(`/api/tutorschedule/${id}`, updateData);
       // Afficher une alerte de succès
       alert('Créneau modifié avec succès !');
 
@@ -330,7 +338,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       city_parent: addressData.city,
       zip_code_parent: addressData.zip_code
     }));
-    
+
     setParentData(prev => ({
       ...prev,
       address: addressData.address,
@@ -402,36 +410,36 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
 
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {(values[f.name] as string[]).map((val:any) => {
+                        {(values[f.name] as string[]).map((val: any) => {
 
-                          if(Array.isArray(f.options) && f.options) {
-                            const option:any = f.options!.find((o: any) => o.value === val);
-                            const label = typeof option?.label === "object" ? option.label.name  : option?.label || val;
+                          if (Array.isArray(f.options) && f.options) {
+                            const option: any = f.options!.find((o: any) => o.value === val);
+                            const label = typeof option?.label === "object" ? option.label.name : option?.label || val;
 
-                          return (
-                            <div
-                              key={val.id}
-                              className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
-                            >
+                            return (
+                              <div
+                                key={val.id}
+                                className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
+                              >
                                 {label.name ? label.name : label}
-                               <button
-                                 type="button"
-                                 onClick={() => removeCenter(val)}
-                                 className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
-                               >
-                                 &times;
-                               </button>
-                            </div>
-                          );
-                        }
+                                <button
+                                  type="button"
+                                  onClick={() => removeCenter(val)}
+                                  className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          }
                         })}
                       </div>
                     </>
-                  ): (f.name === 'school_subjects') && f.multiple ? (
+                  ) : (f.name === 'school_subjects') && f.multiple ? (
                     <>
-                     {f.options && (
+                      {f.options && (
                         <MultiSelectSchoolSubjectsWithLevels
-                          subjectOptions={SchoolSubjects} 
+                          subjectOptions={SchoolSubjects}
                           values={values}
                           setValues={setValues}
                         />
@@ -441,30 +449,30 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(values[f.name] as string[]).map((val) => {
 
-                          if(Array.isArray(f.options) && f.options) {
+                          if (Array.isArray(f.options) && f.options) {
                             const option = f.options!.find((o: any) => o.value === val);
-                            const label = typeof option?.label === "object" ? option.label.name  : option?.label || val;
-                            
-                          return (
-                            <div
-                              key={val}
-                              className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
-                            >
-                              {label}
-                              <button
-                                type="button"
-                                onClick={() => removeShoolSubject(val)}
-                                className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                            const label = typeof option?.label === "object" ? option.label.name : option?.label || val;
+
+                            return (
+                              <div
+                                key={val}
+                                className="inline-flex items-center bg-[#F2F2F2] text-[#333333] px-3 py-1 rounded-full"
                               >
-                                &times;
-                              </button>
-                            </div>
-                          );
-                        }
+                                {label}
+                                <button
+                                  type="button"
+                                  onClick={() => removeShoolSubject(val)}
+                                  className="ml-2 text-[#FF1585] hover:text-[#FFB800]"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          }
                         })}
-                      </div> 
+                      </div>
                     </>
-                  ):  f.type === 'select' ? (
+                  ) : f.type === 'select' ? (
                     <select
                       id={f.name}
                       name={f.name}
@@ -508,19 +516,19 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
           </div>
           {
-            endpoint == "student" && 
-              <ParentFormOrModal
-                endpoint={endpoint} 
-                emptyFields={emptyFields}
-                currenParentFields={currenParentFields}
-                values={parentValues}
-                handleChange={handleChangeParentFields}
-                isOpen={isOpen}
-                close={close}
-                getParent={getParent}
-                ParentSelector={ParentSelector}
-                onAddressSelect={handleParentAddressSelect}
-              />
+            endpoint == "student" &&
+            <ParentFormOrModal
+              endpoint={endpoint}
+              emptyFields={emptyFields}
+              currenParentFields={currenParentFields}
+              values={parentValues}
+              handleChange={handleChangeParentFields}
+              isOpen={isOpen}
+              close={close}
+              getParent={getParent}
+              ParentSelector={ParentSelector}
+              onAddressSelect={handleParentAddressSelect}
+            />
           }
           {endpoint === 'tutorschedule' && (
             <ScheduleArrayField
@@ -539,7 +547,7 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
               disabled={isEmpty(values)}
               // className="w-full bg-[#FFB800] text-[#333333] font-semibold px-6 py-3 rounded hover:bg-[#F2F2F2] border border-[#FFB800] transition"
               className={isEmpty(values)
-                ? "w-full bg-gray-200 text-[#333333] font-semibold px-6 py-3 rounded hover:bg-gray-200 border border-gray-200 transition cursor-not-allowed" 
+                ? "w-full bg-gray-200 text-[#333333] font-semibold px-6 py-3 rounded hover:bg-gray-200 border border-gray-200 transition cursor-not-allowed"
                 : "w-full bg-[#FFB800] text-[#333333] font-semibold px-6 py-3 rounded hover:bg-[#F2F2F2] border border-[#FFB800] transition"}
             >
               Enregistrer

@@ -18,16 +18,16 @@ class StripeCustomerService
 
     public function getOrCreateCustomer(Student $student): string
     {
-        if ($student->getStripeCustomerId()) {
+        if ($student->getIdStripe()) {
             try {
-                $customer = $this->stripe->customers->retrieve($student->getStripeCustomerId());
+                $customer = $this->stripe->customers->retrieve($student->getIdStripe());
                 if (!$customer->deleted) {
                     return $customer->id;
                 }
             } catch (\Exception $e) {
                 $this->logger->warning('Stripe customer not found, creating new one', [
                     'student_id' => $student->getId(),
-                    'old_stripe_customer_id' => $student->getStripeCustomerId(),
+                    'old_stripe_customer_id' => $student->getIdStripe(),
                     'error' => $e->getMessage()
                 ]);
             }
@@ -51,7 +51,7 @@ class StripeCustomerService
                 ]
             ]);
 
-            $student->setStripeCustomerId($customer->id);
+            $student->setIdStripe($customer->id);
             $this->em->persist($student);
             $this->em->flush();
 

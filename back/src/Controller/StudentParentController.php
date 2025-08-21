@@ -95,6 +95,37 @@ class StudentParentController extends AbstractController
         $this->em->persist($parent);
         $this->em->flush();
 
+        // ✅ Préparation des données à envoyer à Zapier (modification parent dans sinao)
+        $dataZapierParent = [
+            'mail'      => $parent->getEmail(),
+            'phone'     =>  $parent->getPhone(),
+            'name'      => $parent->getLastname(),
+            'prenom'    => $parent->getFirstname(),
+            'ville'     => $parent->getCity(),
+            'code_postal' => $parent->getZipCode(),
+            'adresse'   => $parent->getAddress(),
+            'telephone' => $parent->getPhone(),
+            'id'        => $parent->getId()
+        ];
+
+        // Encodage JSON
+        $jsonDataParent = json_encode($dataZapierParent);
+
+        // URL Zapier
+        $urlParent = 'https://hooks.zapier.com/hooks/catch/22004412/ut5i5cr/';
+
+        // Contexte HTTP POST
+        $optionsParent = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n",
+                'content' => $jsonDataParent
+            ]
+        ];
+
+        $contextParent = stream_context_create($optionsParent);
+        $result = file_get_contents($urlParent, false, $contextParent);
+
         return $this->json(
             [
                 'id'         => $parent->getId(),
@@ -149,9 +180,9 @@ class StudentParentController extends AbstractController
         if (!$parent) {
             return $this->json(['message' => 'Pas trouvé'], 404);
         }
-    
+
         // Sérialisation des élèves liés
-        $students = $parent->getStudents()->map(function(\App\Entity\Student $s) {
+        $students = $parent->getStudents()->map(function (\App\Entity\Student $s) {
             return [
                 'id'        => $s->getId(),
                 'firstname' => $s->getFirstname(),
@@ -161,7 +192,7 @@ class StudentParentController extends AbstractController
                 // 'is_active' => $s->isIsActive(),
             ];
         })->toArray();
-    
+
         return $this->json([
             'id'          => $parent->getId(),
             'firstname'   => $parent->getFirstname(),
@@ -218,6 +249,37 @@ class StudentParentController extends AbstractController
         // 5. Persister
         $this->em->flush();
 
+        // ✅ Préparation des données à envoyer à Zapier (modification parent dans sinao)
+        $dataZapierParent = [
+            'mail'      => $parent->getEmail(),
+            'phone'     =>  $parent->getPhone(),
+            'name'      => $parent->getLastname(),
+            'prenom'    => $parent->getFirstname(),
+            'ville'     => $parent->getCity(),
+            'code_postal' => $parent->getZipCode(),
+            'adresse'   => $parent->getAddress(),
+            'telephone' => $parent->getPhone(),
+            'id'        => $parent->getId()
+        ];
+
+        // Encodage JSON
+        $jsonDataParent = json_encode($dataZapierParent);
+
+        // URL Zapier
+        $urlParent = 'https://hooks.zapier.com/hooks/catch/22004412/ut5i5cr/';
+
+        // Contexte HTTP POST
+        $optionsParent = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n",
+                'content' => $jsonDataParent
+            ]
+        ];
+
+        $contextParent = stream_context_create($optionsParent);
+        $result = file_get_contents($urlParent, false, $contextParent);
+
         // 6. Retour JSON de confirmation
         return $this->json([
             'id'        => $parent->getId(),
@@ -254,7 +316,7 @@ class StudentParentController extends AbstractController
     {
         $q = trim((string) $request->query->get('q', ''));
         if ($q === '') {
-            return $this->json([]);         
+            return $this->json([]);
         }
 
         $parts = array_filter(explode(' ', $q));
@@ -264,20 +326,17 @@ class StudentParentController extends AbstractController
             $qb->andWhere(
                 $qb->expr()->orX(
                     $qb->expr()->like('LOWER(p.firstname)', ":t$k"),
-                    $qb->expr()->like('LOWER(p.lastname)' , ":t$k")
+                    $qb->expr()->like('LOWER(p.lastname)', ":t$k")
                 )
             )
-            ->setParameter("t$k", '%'.strtolower($part).'%');
+                ->setParameter("t$k", '%' . strtolower($part) . '%');
         }
 
         $parents = $qb
-            ->setMaxResults(20)          
+            ->setMaxResults(20)
             ->getQuery()
-            ->getArrayResult();          
+            ->getArrayResult();
 
         return $this->json($parents);
     }
-
-
-
 }

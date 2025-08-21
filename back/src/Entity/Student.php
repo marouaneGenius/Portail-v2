@@ -40,10 +40,7 @@ class Student
     private ?bool $is_deleted = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $stripe_key = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $stripe_customer_id = null;
+    private ?string $id_stripe = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $url_notion_public = null;
@@ -53,9 +50,6 @@ class Student
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $id_pipedrive = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $id_sinao = null;
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     private ?Center $id_center = null;
@@ -202,18 +196,6 @@ class Student
         return $this;
     }
 
-    public function getStripeKey(): ?string
-    {
-        return $this->stripe_key;
-    }
-
-    public function setStripeKey(?string $stripe_key): static
-    {
-        $this->stripe_key = $stripe_key;
-
-        return $this;
-    }
-
     public function getUrlnotionPublic(): ?string
     {
         return $this->url_notion_public;
@@ -246,18 +228,6 @@ class Student
     public function setIdPipedrive(?string $id_pipedrive): static
     {
         $this->id_pipedrive = $id_pipedrive;
-
-        return $this;
-    }
-
-    public function getIdSinao(): ?string
-    {
-        return $this->id_sinao;
-    }
-
-    public function setIdSinao(?string $id_sinao): static
-    {
-        $this->id_sinao = $id_sinao;
 
         return $this;
     }
@@ -453,14 +423,14 @@ class Student
         return $this->subscriptionURLs;
     }
 
-    public function getStripeCustomerId(): ?string
+    public function getIdStripe(): ?string
     {
-        return $this->stripe_customer_id;
+        return $this->id_stripe;
     }
 
-    public function setStripeCustomerId(?string $stripe_customer_id): static
+    public function setIdStripe(?string $id_stripe): static
     {
-        $this->stripe_customer_id = $stripe_customer_id;
+        $this->id_stripe = $id_stripe;
 
         return $this;
     }

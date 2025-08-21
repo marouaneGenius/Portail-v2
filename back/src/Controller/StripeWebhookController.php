@@ -155,8 +155,8 @@ class StripeWebhookController extends AbstractController
             $studentId = $customer->metadata->student_id ?? null;
             if ($studentId) {
                 $student = $this->studentRepo->find($studentId);
-                if ($student && !$student->getStripeCustomerId()) {
-                    $student->setStripeCustomerId($customer->id);
+                if ($student && !$student->getIdStripe()) {
+                    $student->setIdStripe($customer->id);
                     $this->em->persist($student);
                     $this->em->flush();
                     
