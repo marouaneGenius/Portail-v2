@@ -29,6 +29,13 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   const [date, setDate] = React.useState<Date|undefined>(initDate)
   const [time, setTime] = React.useState<string>(initTime)
 
+  // Date d'aujourd'hui pour bloquer les dates passées
+  const today = React.useMemo(() => {
+    const now = new Date()
+    // Réinitialiser l'heure à 00:00:00 pour comparer seulement les dates
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  }, [])
+
   // Fonction de commit date+time en UTC
   const commit = React.useCallback((d: Date, t: string) => {
     const [h, m, s] = t.split(":").map(Number)
@@ -40,6 +47,12 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
 
   // Handlers qui appellent commit **une seule fois**
   const handleDateChange = (d: Date) => {
+    // Vérifier que la date sélectionnée n'est pas dans le passé
+    if (d < today) {
+      console.warn('Tentative de sélection d\'une date passée bloquée')
+      return
+    }
+    
     setDate(d)
     setOpen(false)
     if (time) commit(d, time)
@@ -76,6 +89,8 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
               required={false} 
               selected={date}
               onSelect={handleDateChange}
+              disabled={(date) => date < today}
+              fromDate={today}
             />
           </PopoverContent>
         </Popover>

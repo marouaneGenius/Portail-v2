@@ -40,11 +40,12 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     api.get(`/api/user/tutors`).then((response) => {
       const filteresTutorsPeStudentCenter = response.data.filter((tutor:any) => {
         // Vérification 1: Le tuteur a des centres, des événements, et le centre correspond
-        const hasCenterMatch = tutor.centers && tutor.centers.length !== 0 && tutor.events.length !== 0 && 
+        const hasCenterMatch = tutor.centers && tutor.centers.length !== 0 && tutor.events && tutor.events.length !== 0 && 
           tutor.events.find((event:any) => { 
-            if(event.centers ) {
+            if(event.centers && event.centers.name && student.centers && student.centers.name) {
               return event.centers.name === student.centers.name 
             }
+            return false;
           });
         
         if (!hasCenterMatch) return false;
@@ -149,8 +150,7 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     );
   }
 
-
-  if (student && availableTutors.length === 0) {
+  if (student && availableTutors.length === 0 && tutors.length !== 0) {
     return (
       <div className="mt-6">
         <UnavailableTutorsListComponent tutors={tutors} student={student}/>

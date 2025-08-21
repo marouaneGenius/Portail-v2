@@ -26,7 +26,11 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     const [fields, setFields] = useState<Record<string, any>>([]);
     const [siblings, setSiblings] = useState<Sibling[]>([]);
     const [selectedSiblings, setSelectedSiblings] = useState<number[]>([]);
+    const [currentConfigStep, setCurrentConfigStep] = useState(0); // 0 = étudiant principal, 1+ = frères
+    const [studentsConfigs, setStudentsConfigs] = useState<{[key: number]: {subjects: string[], tutor_id?: number, scheduled_at?: string}}>({});
     const [totalPrice, setTotalPrice] = useState(30);
+    const [availableTutors, setAvailableTutors] = useState<any[]>([]);
+    const [filteredTutors, setFilteredTutors] = useState<any[]>([]);
     const [disablesdButtonUntilFindUser, setDisablesdButtonUntilFindUser] = useState(true);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const navigate = useNavigate();
@@ -34,6 +38,9 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked,  options }:any = e.target ;
     const multiple = e.target.multiple ;
+
+    // Si on change les matières, vider le tuteur sélectionné
+    const shouldClearTutor = name === 'school_subjects';
 
     //pour gerer les select multiple
     setValues(prev => ({
@@ -45,6 +52,8 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
         : type === 'checkbox'
         ? checked
         : value,
+    // Vider le tuteur si on change les matières
+    ...(shouldClearTutor && { tutor_id: undefined })
     }));
     };
 
@@ -55,9 +64,6 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                 setDisablesdButtonUntilFindUser(false);
                 // Vérification en temps réel seulement si des frères/sœurs sont sélectionnés
                 if (values.school_subjects?.length && selectedSiblings.length > 0) {
-
-
-                    console.log(values)
 
                     const validation = await validateTutorForAllStudents(values.tutor_id, values.school_subjects);
                     setValidationErrors(validation.errors);
@@ -80,7 +86,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
         };
 
         checkTutorValidation();
-    }, [values.tutor_id, values.school_subjects, selectedSiblings, student])
+    }, [values.tutor_id, values.school_subjects, selectedSiblings, student, filteredTutors])
 
     const removeValueFromField = (field: any, value: any) => {
         setValues((prev: any) => ({
@@ -169,41 +175,91 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             return;
         }
 
-        // // Validation des niveaux du tuteur avant soumission (seulement si des frères/sœurs sont sélectionnés)
-        if (values.tutor_id && values.school_subjects?.length && selectedSiblings.length > 0) {
+        // Si on n'est pas à la dernière étape, on passe à l'étape suivante
+        if (!isLastStep()) {
+            goToNextStep();
+            return;
+        }
 
-
-            const validation = await validateTutorForAllStudents(values.tutor_id, values.school_subjects);
-            if (!validation.isValid) {
-                setValidationErrors(validation.errors);
-                alert("Erreur: " + validation.errors.join('\n'));
-                return;
+        // Si on est à la dernière étape, on sauvegarde la configuration actuelle puis on crée toutes les sessions
+        const currentStudentId = getCurrentStudentId();
+        const finalConfigs = {
+            ...studentsConfigs,
+            [currentStudentId]: {
+                subjects: values.school_subjects || [],
+                tutor_id: values.tutor_id,
+                scheduled_at: values.scheduled_at
             }
-        }
-        
-        const allStudentIds = [student.id, ...selectedSiblings];
-        const newValues = {...values, 
-            is_canceled:false, 
-            session_type: 'trial_session',
-            scheduled_by: user.email,
-            student_ids: allStudentIds,
-            stripe_number: student.stripe_key,
-            payment_date: new Date().toISOString(),
-            date_slot: new Date().toISOString(),
-            total_price: totalPrice
-        }
+        };
 
         try {
-            api.post('/api/sessions/trial-session', newValues).then((res) => {
-                if(res) {
-                    alert(`Session d'essai créée avec succès pour ${allStudentIds.length} étudiant(s) - Total: ${totalPrice}€`)
-                    navigate(`/student/${student.id}`);
+            const sessionsCreated = [];
+            const allStudentIds = [student.id, ...selectedSiblings];
+
+            // Préparer toutes les sessions à créer
+            const sessionsToCreate = [];
+            
+            for (const studentId of allStudentIds) {
+                const config = finalConfigs[studentId];
+                if (!config) continue;
+
+                const sessionData = {
+                    school_subjects: config.subjects,
+                    tutor_id: config.tutor_id,
+                    scheduled_at: config.scheduled_at,
+                    is_canceled: false,
+                    session_type: 'trial_session',
+                    scheduled_by: user.email,
+                    student_id: studentId, // Un seul student_id par session
+                    stripe_number: student.stripe_key,
+                    payment_date: new Date().toISOString(),
+                    date_slot: new Date().toISOString(),
+                    total_price: 30
+                };
+
+                sessionsToCreate.push(sessionData);
+                
+                if (studentId === student.id) {
+                    sessionsCreated.push(`${student.firstname} ${student.lastname}`);
+                } else {
+                    const sibling = siblings.find(s => s.id === studentId);
+                    sessionsCreated.push(`${sibling?.firstname} ${sibling?.lastname}`);
                 }
-            })
+            }
+
+            // Choisir la stratégie selon le nombre d'étudiants
+            if (sessionsToCreate.length === 1) {
+                // Un seul étudiant : utiliser l'ancienne route
+                console.log('Un seul étudiant - utilisation de la route individuelle');
+                const singleSession = {
+                    ...sessionsToCreate[0],
+                    student_ids: [sessionsToCreate[0].student_id]
+                };
+                delete singleSession.student_id; // Supprimer student_id et utiliser student_ids
+                
+                await api.post('/api/sessions/trial-session', singleSession);
+                alert(`Session d'essai créée avec succès pour ${sessionsCreated[0]} - Total: ${totalPrice}€`);
+            } else {
+                // Plusieurs étudiants : utiliser la nouvelle route groupée
+                console.log('Plusieurs étudiants - utilisation de la route groupée');
+                const groupedRequest = {
+                    sessions: sessionsToCreate,
+                    total_price: totalPrice,
+                    parent_email: student.email || user.email,
+                    family_name: `${student.lastname}`
+                };
+
+                console.log('Envoi groupé des sessions:', groupedRequest);
+                await api.post('/api/sessions/trial-session-group', groupedRequest);
+                alert(`Sessions d'essai créées avec succès pour:\n${sessionsCreated.join('\n')}\n\nTotal: ${totalPrice}€\n\nUn seul lien de paiement sera envoyé au parent.`);
+            }
+            
+            navigate(`/student/${student.id}`);
+
         } catch(e:any) {
-            console.error('ERROR =>', e)
+            console.error('ERROR =>', e);
+            alert('Erreur lors de la création des sessions d\'essai');
         }
-        // console.log("Données soumises:", newValues)
     }
 
     // Fonction pour récupérer les frères/sœurs
@@ -226,25 +282,265 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                 ? prev.filter(id => id !== siblingId)
                 : [...prev, siblingId];
             
+            // Si on change la sélection de frères, réinitialiser le processus
+            setCurrentConfigStep(0);
+            setStudentsConfigs({});
+            setValues({});
+            
             // Recalculer le prix total (30€ par étudiant)
             setTotalPrice((updated.length + 1) * 30); // +1 pour l'étudiant principal
             return updated;
         });
     };
 
+    // Fonction pour obtenir l'étudiant actuel en cours de configuration
+    const getCurrentStudent = () => {
+        if (currentConfigStep === 0) {
+            return student;
+        } else {
+            const siblingIndex = currentConfigStep - 1;
+            return siblings.find(s => s.id === selectedSiblings[siblingIndex]);
+        }
+    };
+
+    // Fonction pour obtenir l'ID de l'étudiant actuel
+    const getCurrentStudentId = () => {
+        if (currentConfigStep === 0) {
+            return student.id;
+        } else {
+            const siblingIndex = currentConfigStep - 1;
+            return selectedSiblings[siblingIndex];
+        }
+    };
+
+    // Fonction pour passer à l'étape suivante
+    const goToNextStep = () => {
+
+        const currentStudentId = getCurrentStudentId();
+        
+        // Sauvegarder la configuration actuelle
+        setStudentsConfigs(prev => ({
+            ...prev,
+            [currentStudentId]: {
+                subjects: values.school_subjects || [],
+                tutor_id: values.tutor_id,
+                scheduled_at: values.scheduled_at
+            }
+        }));
+
+        // Réinitialiser COMPLÈTEMENT pour l'étape suivante
+        setValues({}); // Vider le formulaire
+        setFilteredTutors([]); // Vider les tuteurs filtrés
+        setDisablesdButtonUntilFindUser(true); // Désactiver le bouton
+        setValidationErrors([]); // Vider les erreurs de validation
+        
+        // Passer à l'étape suivante
+        setCurrentConfigStep(prev => prev + 1);
+        
+        console.log('Passage à l\'étape suivante - tout réinitialisé');
+    };
+
     useEffect(() => {
-        setFields(TrialSession.map((f) => {
+        console.log('values', values);
+
+    }, [values])
+
+    // Effet pour s'assurer que tout est réinitialisé lors du changement d'étape
+    useEffect(() => {
+        console.log('Changement d\'étape:', currentConfigStep);
+        console.log('Tuteurs filtrés:', filteredTutors.length);
+        console.log('Values actuels:', values);
+    }, [currentConfigStep])
+
+    // Fonction pour revenir à l'étape précédente
+    const goToPreviousStep = () => {
+        if (currentConfigStep > 0) {
+            // D'abord changer l'étape
+            const newStep = currentConfigStep - 1;
+            setCurrentConfigStep(newStep);
+            
+            // Réinitialiser complètement
+            setValues({});
+            setFilteredTutors([]);
+            setValidationErrors([]);
+            setDisablesdButtonUntilFindUser(true);
+            
+            // Recharger la configuration de l'étape précédente si elle existe
+            const prevStudentId = newStep === 0 ? student.id : selectedSiblings[newStep - 1];
+            const prevConfig = studentsConfigs[prevStudentId];
+            
+            if (prevConfig) {
+                // Attendre un petit moment pour que l'état se mette à jour, puis recharger
+                setTimeout(() => {
+                    setValues({
+                        school_subjects: prevConfig.subjects || [],
+                        tutor_id: prevConfig.tutor_id,
+                        scheduled_at: prevConfig.scheduled_at
+                    });
+                }, 50);
+            }
+        }
+    };
+
+    // Vérifier si on est à la dernière étape
+    const isLastStep = () => {
+        return currentConfigStep >= selectedSiblings.length;
+    };
+
+    // Fonction pour filtrer les tuteurs selon les matières sélectionnées
+    const filterTutorsBySubjects = (selectedSubjects: string[]) => {
+
+        if (!selectedSubjects || selectedSubjects.length === 0) {
+            console.log('Aucune matière - arrêt du filtrage');
+            setFilteredTutors([]);
+            return;
+        }
+
+        const currentStudent = getCurrentStudent();
+        
+        if (!currentStudent) {
+            console.log('Pas d\'étudiant actuel - arrêt du filtrage');
+            setFilteredTutors([]);
+            return;
+        }
+
+        // Vérifier que l'étudiant a un centre
+        if (!currentStudent.centers || !currentStudent.centers.name) {
+            console.log('Étudiant sans centre - utilisation du centre de l\'étudiant principal');
+            // Utiliser le centre de l'étudiant principal si le frère n'en a pas
+            if (currentConfigStep > 0 && student.centers) {
+                currentStudent.centers = student.centers;
+                console.log('Centre assigné depuis l\'étudiant principal:', currentStudent.centers);
+            } else {
+                console.log('Impossible de déterminer le centre - arrêt du filtrage');
+                setFilteredTutors([]);
+                return;
+            }
+        }
+
+        const filtered = availableTutors.filter((tutor) => {
+            console.log(`--- Vérification tuteur: ${tutor.firstname} ${tutor.lastname} ---`);
+            console.log('Matières du tuteur:', tutor.school_subjects);
+            console.log('Centres/événements du tuteur:', tutor.centers, tutor.events);
+            
+            // Vérifier que le tuteur enseigne dans le centre de l'étudiant
+            const hasCenterMatch = tutor.centers && tutor.centers.length !== 0 && tutor.events && tutor.events.length !== 0 && 
+                tutor.events.find((event:any) => { 
+                    if(event.centers && event.centers.name && currentStudent.centers && currentStudent.centers.name) {
+                        return event.centers.name === currentStudent.centers.name;
+                    }
+                    return false;
+                });
+                
+            if (!hasCenterMatch) {
+                console.log('Tuteur ne correspond pas au centre - rejeté');
+                return false;
+            }
+            
+            if (!tutor.school_subjects || tutor.school_subjects.length === 0) {
+                console.log('Tuteur sans matières - rejeté');
+                return false;
+            }
+
+            // Vérifier si le tuteur enseigne au moins une des matières sélectionnées
+            const tutorSubjects = tutor.school_subjects.map((s: string) => s.toLowerCase());
+            const hasMatchingSubjects = selectedSubjects.some(subject => 
+                tutorSubjects.includes(subject.toLowerCase())
+            );
+
+            console.log('Matières correspondent?', hasMatchingSubjects);
+
+            if (!hasMatchingSubjects) {
+                console.log('Aucune matière correspondante - rejeté');
+                return false;
+            }
+
+            // Vérifier si le tuteur peut enseigner au niveau de l'étudiant
+            if (tutor.class && tutor.class.length > 0) {
+                const canTeach = hasLevelForSubject(tutor, currentStudent.class, selectedSubjects);
+                console.log('Peut enseigner ce niveau?', canTeach);
+                return canTeach;
+            }
+
+            console.log('Tuteur accepté (pas de vérification de niveau)');
+            return true;
+        });
+
+        console.log(`=== RÉSULTAT: ${filtered.length} tuteurs filtrés ===`);
+        console.log('Tuteurs filtrés:', filtered.map(t => `${t.firstname} ${t.lastname}`));
+        
+        setFilteredTutors(filtered);
+    };
+
+    // Charger tous les tuteurs au démarrage
+    useEffect(() => {
+        const fetchTutors = async () => {
+            try {
+                const response = await api.get('/api/user/tutors');
+                setAvailableTutors(response.data || []);
+            } catch (error) {
+                console.error('Erreur lors du chargement des tuteurs:', error);
+                setAvailableTutors([]);
+            }
+        };
+
+        fetchTutors();
+    }, []);
+
+    // Filtrer les tuteurs quand les matières changent
+    useEffect(() => {
+        console.log('Filtrage des tuteurs - Matières:', values.school_subjects);
+        console.log('Tuteurs disponibles:', availableTutors.length);
+        
+        if (values.school_subjects && values.school_subjects.length > 0) {
+            console.log('Déclenchement du filtrage...');
+            filterTutorsBySubjects(values.school_subjects);
+        } else {
+            console.log('Aucune matière - vidage des tuteurs filtrés');
+            setFilteredTutors([]);
+        }
+    }, [values.school_subjects, availableTutors]);
+
+    useEffect(() => {
+        console.log('Mise à jour des fields - filteredTutors:', filteredTutors.length);
+        console.log('Matières sélectionnées:', values.school_subjects);
+        
+        const baseFields = TrialSession.map((f) => {
             if (f.name === "school_subjects") {
                 return { ...f, options: SchoolSubjects };
             }
             return f
-        }))
+        });
+
+        // N'ajouter le champ tuteur QUE si des matières sont sélectionnées
+        const hasSelectedSubjects = values.school_subjects && values.school_subjects.length > 0;
+        
+        let updatedFields = [...baseFields];
+        
+        if (hasSelectedSubjects) {
+            const tutorField = {
+                name: 'tutor_id',
+                label: 'Tuteur',
+                type: 'select' as const,
+                required: true,
+                options: filteredTutors.map(tutor => ({
+                    value: tutor.id,
+                    label: `${tutor.firstname} ${tutor.lastname}`
+                }))
+            };
+            updatedFields = [...baseFields, tutorField];
+            console.log('Champ tuteur ajouté avec', tutorField.options.length, 'tuteurs');
+        } else {
+            console.log('Aucune matière sélectionnée - champ tuteur caché');
+        }
+        
+        setFields(updatedFields);
         
         // Récupérer les frères/sœurs au chargement seulement si student existe
-        if (student?.id) {
+        if (student?.id && currentConfigStep === 0) {
             fetchSiblings();
         }
-    }, [student?.id]);
+    }, [student?.id, filteredTutors, currentConfigStep, values.school_subjects]);
 
     // Vérification de sécurité
     if (!student) {
@@ -260,11 +556,39 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
             <div className="mb-4">
-                <h1 className="text-2xl font-bold mb-6">Créer une session d'essai Pour {`${student.firstname} ${student.lastname}`}</h1>
-                <StudentInfoCard student={student} />
+                {/* Indicateur d'étape */}
+                <div className="mb-6">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-2xl font-bold">Sessions d'essai - Configuration</h1>
+                        <Badge variant="secondary">
+                            Étape {currentConfigStep + 1} sur {selectedSiblings.length + 1}
+                        </Badge>
+                    </div>
+                    
+                    {/* Indicateur de progression */}
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${((currentConfigStep + 1) / (selectedSiblings.length + 1)) * 100}%` }}
+                        ></div>
+                    </div>
+                    
+                    {/* Nom de l'étudiant actuel */}
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h2 className="text-lg font-semibold text-blue-800">
+                            Configuration pour: {getCurrentStudent()?.firstname} {getCurrentStudent()?.lastname}
+                            {currentConfigStep === 0 && <span className="text-sm font-normal"> (étudiant principal)</span>}
+                        </h2>
+                        <p className="text-sm text-blue-600 mt-1">
+                            Choisissez d'abord les matières, puis un tuteur sera proposé parmi ceux qui enseignent ces matières.
+                        </p>
+                    </div>
+                </div>
+                
+                <StudentInfoCard student={getCurrentStudent()} />
 
-                {/* Section de sélection des frères/sœurs */}
-                {siblings.length > 0 && (
+                {/* Section de sélection des frères/sœurs (seulement à l'étape 0) */}
+                {siblings.length > 0 && currentConfigStep === 0 && (
                     <Card className="mb-6">
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
@@ -298,18 +622,56 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                                <div className="text-sm text-blue-800">
-                                    <strong>Récapitulatif:</strong>
-                                    <br />• {student.firstname} {student.lastname} (étudiant principal): 30€
-                                    {selectedSiblings.length > 0 && (
-                                        <>
-                                            <br />• {selectedSiblings.length} frère{selectedSiblings.length > 1 ? 's' : ''}/sœur{selectedSiblings.length > 1 ? 's' : ''} sélectionné{selectedSiblings.length > 1 ? 's' : ''}: {selectedSiblings.length * 30}€
-                                        </>
-                                    )}
-                                    <br /><strong>Total: {totalPrice}€</strong>
+                            {selectedSiblings.length > 0 && (
+                                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                                    <div className="text-sm text-blue-800">
+                                        <strong>Étudiants sélectionnés:</strong>
+                                        <br />• {student.firstname} {student.lastname} (étudiant principal)
+                                        {selectedSiblings.map(siblingId => {
+                                            const sibling = siblings.find(s => s.id === siblingId);
+                                            return (
+                                                <div key={siblingId}>
+                                                    <br />• {sibling?.firstname} {sibling?.lastname}
+                                                </div>
+                                            );
+                                        })}
+                                        <br /><strong>Total: {totalPrice}€</strong>
+                                        <br /><span className="text-xs">Vous configurerez chaque étudiant individuellement.</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Récapitulatif des configurations déjà faites (pour les étapes > 0) */}
+                {currentConfigStep > 0 && Object.keys(studentsConfigs).length > 0 && (
+                    <Card className="mb-6 border-green-200 bg-green-50">
+                        <CardHeader>
+                            <CardTitle className="text-green-800">Configurations terminées</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {Object.entries(studentsConfigs).map(([studentId, config]) => {
+                                const isMainStudent = parseInt(studentId) === student.id;
+                                const studentInfo = isMainStudent 
+                                    ? student 
+                                    : siblings.find(s => s.id === parseInt(studentId));
+                                
+                                return (
+                                    <div key={studentId} className="flex items-center justify-between p-2 border-b border-green-200 last:border-b-0">
+                                        <div>
+                                            <span className="font-medium text-green-800">
+                                                {studentInfo?.firstname} {studentInfo?.lastname}
+                                                {isMainStudent && <span className="text-xs"> (principal)</span>}
+                                            </span>
+                                            <div className="text-xs text-green-600">
+                                                Matières: {config.subjects.join(', ')}
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="text-green-700 border-green-300">✓</Badge>
+                                    </div>
+                                );
+                            })}
                         </CardContent>
                     </Card>
                 )}
@@ -346,9 +708,36 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                     </Card>
                 )}
             </div>
+
+            {/* Information sur les tuteurs disponibles - N'afficher QUE si des matières sont sélectionnées */}
+            {values.school_subjects && values.school_subjects.length > 0 && (
+                <div className="mb-4">
+                    {filteredTutors.length > 0 ? (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <h3 className="text-sm font-medium text-green-800 mb-1">
+                                ✅ {filteredTutors.length} tuteur{filteredTutors.length > 1 ? 's' : ''} disponible{filteredTutors.length > 1 ? 's' : ''}
+                            </h3>
+                            <p className="text-xs text-green-600">
+                                Pour les matières: {values.school_subjects.join(', ')}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <h3 className="text-sm font-medium text-orange-800 mb-1">
+                                ⚠️ Aucun tuteur disponible
+                            </h3>
+                            <p className="text-xs text-orange-600">
+                                Aucun tuteur ne peut enseigner les matières sélectionnées ({values.school_subjects.join(', ')}) au niveau {getCurrentStudent()?.class}. 
+                                Essayez de modifier votre sélection de matières.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
                 {fields.map((field:any) => (
-                    <div key={field.name} className="space-y-2">
+                    <div key={`${field.name}-step-${currentConfigStep}`} className="space-y-2">
                         <RenderTrialField
                             f={field}
                             values={values}
@@ -356,22 +745,40 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                             handleChange={handleChange}
                             removeValueFromField={removeValueFromField}
                             fieldName={field.name}
-                            student={student}
+                            student={getCurrentStudent()}
                         />
                     </div>
                 ))}
-                <button
-                    type="submit"
-                    disabled={disablesdButtonUntilFindUser || validationErrors.length > 0}
-                    className={disablesdButtonUntilFindUser || validationErrors.length > 0 ? 
-                            "w-full bg-gray-300 text-white py-3 rounded-md hover:bg-blue-300 transition cursor-not-allowed" :
-                            "w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"}
-                >
-                    {validationErrors.length > 0 
-                        ? "⚠️ Problèmes de compatibilité à résoudre"
-                        : `Créer la session d'essai (${selectedSiblings.length + 1} étudiant${selectedSiblings.length + 1 > 1 ? 's' : ''} - ${totalPrice}€)`
-                    }
-                </button>
+                <div className="flex gap-3">
+                    {/* Bouton Précédent */}
+                    {currentConfigStep > 0 && (
+                        <button
+                            type="button"
+                            onClick={goToPreviousStep}
+                            className="flex-1 bg-gray-500 text-white py-3 rounded-md hover:bg-gray-600 transition"
+                        >
+                            ← Précédent
+                        </button>
+                    )}
+                    
+                    {/* Bouton Suivant/Créer */}
+                    <button
+                        type="submit"
+                        disabled={disablesdButtonUntilFindUser || validationErrors.length > 0}
+                        className={`${currentConfigStep > 0 ? 'flex-1' : 'w-full'} ${
+                            disablesdButtonUntilFindUser || validationErrors.length > 0 ? 
+                            "bg-gray-300 text-white py-3 rounded-md hover:bg-blue-300 transition cursor-not-allowed" :
+                            "bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"
+                        }`}
+                    >
+                        {validationErrors.length > 0 
+                            ? "⚠️ Problèmes de compatibilité à résoudre"
+                            : isLastStep()
+                            ? `Créer les ${selectedSiblings.length + 1} sessions d'essai (${totalPrice}€)`
+                            : `Suivant : ${siblings.find(s => s.id === selectedSiblings[currentConfigStep])?.firstname || 'Étudiant suivant'} →`
+                        }
+                    </button>
+                </div>
             </form>
         </div>
       )

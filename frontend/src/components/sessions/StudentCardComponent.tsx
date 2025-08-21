@@ -42,10 +42,23 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     school_subjects: student.session.school_subjects || [],
     scheduled_at: student.session.scheduled_at
   });
+  const [tutorSubjects, setTutorSubjects] = useState<string[]>([]);
   const navigate = useNavigate();
   const currentSession = student.session;
   const currentStudent = student.student;
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (tutorId) {
+      api.get(`/api/user/${tutorId}`)
+        .then((response) => {
+          setTutorSubjects(response.data.school_subjects || []);
+        })
+        .catch((error) => {
+          console.error('Erreur lors de la récupération des matières du tuteur:', error);
+        });
+    }
+  }, [tutorId]);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `${currentStudent.id}-${currentSession.id}`,
@@ -317,7 +330,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             <div className='p-3'> 
               <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
               {
-                renderMultiSelect(school_subjects_field, values, 'school_subjects', setValues, removeValueFromField)
+                renderMultiSelect({
+                  ...school_subjects_field,
+                  options: tutorSubjects.map(subject => ({ value: subject, label: subject }))
+                }, values, 'school_subjects', setValues, removeValueFromField)
               }
             </div>
             <button onClick={updateSchoolSubjects} className='bg-green-500 text-white rounded p-3 w-full' >Sauvegarder</button>
