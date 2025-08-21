@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use App\Security\Voter\StudentVoter;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
 
 #[Route('/api/student')]
 class StudentController extends AbstractController
@@ -32,6 +34,8 @@ class StudentController extends AbstractController
         private NameNormalizerService $nameNormalizer,
         private PhoneValidatorService $phoneValidator,
         private UserPasswordHasherInterface $passwordHasher,
+        private HttpClientInterface $httpClient,
+
 
     ) {}
 
@@ -46,7 +50,7 @@ class StudentController extends AbstractController
     {
         // Vérifier les permissions
         $this->denyAccessUnlessGranted(StudentVoter::CREATE);
-        
+
         $data = json_decode($request->getContent(), true);
 
         // Champs requis
@@ -104,7 +108,7 @@ class StudentController extends AbstractController
 
         // Lier le centre
         $center = $this->em->getRepository(\App\Entity\Center::class)
-                         ->find($data['id_center']);
+            ->find($data['id_center']);
         if (!$center) {
             return $this->json(
                 ['error' => 'Centre introuvable.'],
@@ -116,11 +120,11 @@ class StudentController extends AbstractController
         if (!empty($data['parent'])) {
 
             $pData = $data['parent'];
-        
+
             /** ----- 3.a  Parent EXISTANT (parent.id fourni) ----------------- */
             if (!empty($pData['id'])) {
                 $parent = $this->studentParentRepository->find($pData['id']);
-        
+
                 if (!$parent) {
                     return $this->json(
                         ['error' => 'Parent introuvable.'],
@@ -137,7 +141,7 @@ class StudentController extends AbstractController
                         );
                     }
                 }
-        
+
                 // (Optionnel) – éviter les doublons : regarder si un parent avec même email existe
                 $parent = $this->studentParentRepository->findOneBy(['email' => $pData['email']]);
                 if (!$parent) {                               // pas trouvé, donc on le crée
@@ -157,22 +161,85 @@ class StudentController extends AbstractController
                     $firstname = strtolower($pData['firstname']);
                     $lastname = strtolower($pData['lastname']);
                     $rawPassword = $firstname . $lastname . '2025';
-                    
+
                     // Hasher le mot de passe avec le système unifié
                     $studentParentUser = new StudentParentUser($parent);
                     $hashedPassword = $this->passwordHasher->hashPassword($studentParentUser, $rawPassword);
                     $parent->setPassword($hashedPassword);
-        
+
+
                     $this->em->persist($parent);
                 }
             }
-        
+
             // Dans les deux cas (existant ou créé) on lie le parent à l’élève
             $student->addIdParent($parent);
         }
 
         $this->em->persist($student);
         $this->em->flush();
+
+        // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive + stripe)
+        $dataZapier = [
+            'mail'      => !empty($parent) ? $parent->getEmail() : null,
+            'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
+            'name'      => $student->getLastname(),
+            'prenom'    => $student->getFirstname(),
+            'classe'    => $student->getClass(),
+            'centre'    => $student->getIdCenter()->getCity(),
+            'centre_id' => $student->getIdCenter()->getId(),
+            'id'        => $student->getId(),
+        ];
+
+        // Encodage JSON
+        $jsonData = json_encode($dataZapier);
+
+        // URL Zapier
+        $url = 'https://hooks.zapier.com/hooks/catch/22004412/utr45fa/';
+
+        // Contexte HTTP POST
+        $options = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n",
+                'content' => $jsonData
+            ]
+        ];
+
+        $context = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+
+
+        // ✅ Préparation des données à envoyer à Zapier (ajout parent dans sinao)
+        $dataZapierParent = [
+            'mail'      => !empty($parent) ? $parent->getEmail() : null,
+            'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
+            'name'      => $parent->getLastname(),
+            'prenom'    => $parent->getFirstname(),
+            'ville'     => $parent->getCity(),
+            'code_postal' => $parent->getZipCode(),
+            'adresse'   => $parent->getAddress(),
+            'telephone' => $parent->getPhone(),
+            'id'        => $parent->getId()
+        ];
+
+        // Encodage JSON
+        $jsonDataParent = json_encode($dataZapierParent);
+
+        // URL Zapier
+        $urlParent = 'https://hooks.zapier.com/hooks/catch/22004412/ut5i5cr/';
+
+        // Contexte HTTP POST
+        $optionsParent = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n",
+                'content' => $jsonDataParent
+            ]
+        ];
+
+        $contextParent = stream_context_create($optionsParent);
+        $result = file_get_contents($urlParent, false, $contextParent);
 
         return $this->json(
             [
@@ -184,11 +251,11 @@ class StudentController extends AbstractController
                 // 'email'     => $student->getEmail(),
                 'phone'     => $student->getPhone(),
                 'is_active' => $student->isIsActive(),
-                'is_deleted'=> $student->isIsDeleted(),
+                'is_deleted' => $student->isIsDeleted(),
                 'id_center' => $student->getIdCenter()->getId(),
-                'created_at'=> $student->getCreatedAt()->format(\DateTime::ATOM),
-                'created_by'=> $student->getCreatedBy(),
-                'stripe_key'=> $student->getStripeKey()
+                'created_at' => $student->getCreatedAt()->format(\DateTime::ATOM),
+                'created_by' => $student->getCreatedBy(),
+                'stripe_key' => $student->getIdStripe()
 
             ],
             JsonResponse::HTTP_CREATED
@@ -229,10 +296,10 @@ class StudentController extends AbstractController
     {
         $student = $this->studentRepo->find($id);
         if (!$student) {
-            return $this->json(['message'=>'Pas trouvé'], 404);
+            return $this->json(['message' => 'Pas trouvé'], 404);
         }
 
-        $parents = $student->getIdParent()->map(function(\App\Entity\StudentParent $p) {
+        $parents = $student->getIdParent()->map(function (\App\Entity\StudentParent $p) {
             return [
                 'id'        => $p->getId(),
                 'firstname' => $p->getFirstname(),
@@ -245,7 +312,7 @@ class StudentController extends AbstractController
             ];
         })->toArray();
 
-        $sessions = $student->getSessions()->map(function(\App\Entity\Session $s) {
+        $sessions = $student->getSessions()->map(function (\App\Entity\Session $s) {
             return [
                 'id'             => $s->getId(),
                 'date_slot'      => $s->getDateSlot()->format('Y-m-d'),
@@ -258,7 +325,9 @@ class StudentController extends AbstractController
         })->toArray();
 
         $user = $this->studentRepo->find($id);
-        if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
+        if (!$user) {
+            return $this->json(['message' => 'Pas trouvé'], 404);
+        }
         return $this->json([
             'id'                => $user->getId(),
             'email'             => $user->getEmail(),
@@ -291,9 +360,9 @@ class StudentController extends AbstractController
                 : null,
             'parents'   => $parents,
             'sessions'  => $sessions,
-            'stripe_key'=> $student->getStripeKey()
+            'stripe_key' => $student->getIdStripe()
 
-            ]);
+        ]);
     }
 
     #[Route('/{id}', name: 'api_students_update', methods: ['PUT'])]
@@ -350,6 +419,36 @@ class StudentController extends AbstractController
         // 7. Persister
         $this->em->flush();
 
+        // ✅ Préparation des données à envoyer à Zapier (update pipedrive + stripe)
+        $dataZapier = [
+            'mail_parent'      => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getEmail() : null,
+            'numero_parent'     => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getPhone() : $student->getPhone(),
+            'nom'      => $student->getLastname(),
+            'prenom'    => $student->getFirstname(),
+            'classe'    => $student->getClass(),
+            'ville'    => $student->getIdCenter()->getCity(),
+            'centre_id' => $student->getIdCenter()->getId(),
+            'id'        => $student->getId(),
+        ];
+
+        // Encodage JSON
+        $jsonData = json_encode($dataZapier);
+
+        // URL Zapier
+        $url = 'https://hooks.zapier.com/hooks/catch/22004412/utrhn6z/';
+
+        // Contexte HTTP POST
+        $options = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n",
+                'content' => $jsonData
+            ]
+        ];
+
+        $context = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+
         // 8. Réponse JSON
         return $this->json([
             'id'         => $student->getId(),
@@ -388,14 +487,14 @@ class StudentController extends AbstractController
         $parentId = $data['parentId'] ?? null;
 
         if (!$parentId) {
-            return $this->json(['error'=>'parentId manquant'], 400);
+            return $this->json(['error' => 'parentId manquant'], 400);
         }
 
         $student = $this->studentRepo->find($studentId);
         $parent  = $this->studentParentRepository->find($parentId);
 
         if (!$student || !$parent) {
-            return $this->json(['error'=>'Étudiant ou parent introuvable'], 404);
+            return $this->json(['error' => 'Étudiant ou parent introuvable'], 404);
         }
 
         // Associer
@@ -498,8 +597,4 @@ class StudentController extends AbstractController
         // Si aucune contract groupé ou aucune n'est valide
         return new JsonResponse(['is_member' => false]);
     }
-
-
-
-
 }

@@ -57,6 +57,10 @@ class StudentParent
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $password = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $id_sinao = null;
+
+
     public function __construct()
     {
         $this->students = new ArrayCollection();
@@ -248,10 +252,10 @@ class StudentParent
 
         // Nettoyer et normaliser
         $normalized = $this->cleanAndFormat($firstname, true);
-        
+
         // Valider les caractères
         $normalized = $this->validateCharacters($normalized, true);
-        
+
         return $normalized;
     }
 
@@ -263,10 +267,10 @@ class StudentParent
 
         // Nettoyer et normaliser
         $normalized = $this->cleanAndFormat($name, false);
-        
+
         // Valider les caractères
         $normalized = $this->validateCharacters($normalized, false);
-        
+
         return $normalized;
     }
 
@@ -275,13 +279,13 @@ class StudentParent
         // Supprimer les espaces en début/fin et multiples espaces
         $input = trim($input);
         $input = preg_replace('/\s+/', ' ', $input);
-        
+
         // Convertir en minuscules puis capitaliser
         $input = mb_strtolower($input, 'UTF-8');
-        
+
         if ($isFirstname) {
             // Pour les prénoms composés avec trait d'union ou espace
-            $input = preg_replace_callback('/(\b\w+)/u', function($matches) {
+            $input = preg_replace_callback('/(\b\w+)/u', function ($matches) {
                 return mb_convert_case($matches[1], MB_CASE_TITLE, 'UTF-8');
             }, $input);
         } else {
@@ -296,19 +300,19 @@ class StudentParent
     {
         // Caractères autorisés : lettres, espaces, apostrophes
         $allowedPattern = '/[^a-zA-ZÀ-ÿ\s\']/u';
-        
+
         if ($allowHyphen) {
             // Pour les prénoms, autoriser aussi les traits d'union
             $allowedPattern = '/[^a-zA-ZÀ-ÿ\s\'\-]/u';
         }
-        
+
         // Supprimer les caractères non autorisés
         $cleaned = preg_replace($allowedPattern, '', $input);
-        
+
         // Nettoyer les caractères spéciaux en double
         $cleaned = preg_replace('/[\'\-]{2,}/', '', $cleaned);
         $cleaned = preg_replace('/\s+/', ' ', $cleaned);
-        
+
         return trim($cleaned);
     }
 
@@ -320,12 +324,12 @@ class StudentParent
 
         // Nettoyer le numéro
         $cleaned = $this->cleanParentPhone($phone);
-        
+
         // Normaliser au format français si valide
         if ($this->isValidParentPhone($cleaned)) {
             return $this->formatParentPhone($cleaned);
         }
-        
+
         return $phone; // Retourner tel quel si format invalide
     }
 
@@ -333,7 +337,7 @@ class StudentParent
     {
         // Supprimer tous les caractères non numériques sauf le +
         $cleaned = preg_replace('/[^\d+]/', '', $phone);
-        
+
         // Gérer les préfixes internationaux courants
         if (str_starts_with($cleaned, '+33')) {
             $cleaned = '0' . substr($cleaned, 3);
@@ -342,7 +346,7 @@ class StudentParent
         } elseif (str_starts_with($cleaned, '33') && strlen($cleaned) === 11) {
             $cleaned = '0' . substr($cleaned, 2);
         }
-        
+
         return $cleaned;
     }
 
@@ -352,21 +356,21 @@ class StudentParent
         if (strlen($cleaned) !== 10 || !str_starts_with($cleaned, '0')) {
             return false;
         }
-        
+
         // Vérifier le préfixe
         $prefix = substr($cleaned, 0, 2);
         $validPrefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09'];
-        
+
         return in_array($prefix, $validPrefixes, true);
     }
 
     private function formatParentPhone(string $cleaned): string
     {
-        return substr($cleaned, 0, 2) . ' ' . 
-               substr($cleaned, 2, 2) . ' ' . 
-               substr($cleaned, 4, 2) . ' ' . 
-               substr($cleaned, 6, 2) . ' ' . 
-               substr($cleaned, 8, 2);
+        return substr($cleaned, 0, 2) . ' ' .
+            substr($cleaned, 2, 2) . ' ' .
+            substr($cleaned, 4, 2) . ' ' .
+            substr($cleaned, 6, 2) . ' ' .
+            substr($cleaned, 8, 2);
     }
 
     public function getPassword(): ?string
@@ -377,6 +381,19 @@ class StudentParent
     public function setPassword(?string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getIdSinao(): ?string
+    {
+        return $this->id_sinao;
+    }
+
+    public function setIdSinao(?string $id_sinao): static
+    {
+        $this->id_sinao = $id_sinao;
+
 
         return $this;
     }
