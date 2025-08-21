@@ -305,7 +305,7 @@ class UserController extends AbstractController
     public function tutorsCompleteList(): JsonResponse
     {
         $users = $this->userRepository->findTutors();
-        $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
+        // $this->denyAccessUnlessGranted(UserVoter::VIEW, $users);
         // On mappe chaque entité User avec toutes les informations complètes
         $data = array_map(fn($u) => [
             'id'              => $u->getId(),
