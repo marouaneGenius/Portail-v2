@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../Hooks/usePermissions';
 import CustomDataTable from '../components/CustomDataTable';
 
 const Users: React.FC = () => {

@@ -8,7 +8,7 @@ import { Detail } from "../components/CustomInputField";
 import { validatePasswords } from "../services/functions";
 import { Edit, Key, Save, Ban, User, Mail, Phone, Building, Shield, Camera, ArrowLeft } from 'lucide-react';
 import { toast } from "sonner";
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissions } from "@/Hooks/usePermissions";
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();

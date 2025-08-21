@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../Hooks/usePermissions';
 
 const Dashboard: React.FC = () => {
   const { isParent } = usePermissions();

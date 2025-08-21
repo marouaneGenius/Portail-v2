@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { usePermissions } from "../hooks/usePermissions";
+import { usePermissions } from "../Hooks/usePermissions";
 
 export default function ParentProtectedRoute() {
   const { isParent } = usePermissions();

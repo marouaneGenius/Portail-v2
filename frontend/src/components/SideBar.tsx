@@ -24,7 +24,7 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar';
 import { useAuth } from '../Hooks/auth';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermissions } from '@/Hooks/usePermissions';
 
 // Définir les items de menu avec leurs permissions requises
 const menuItems = [

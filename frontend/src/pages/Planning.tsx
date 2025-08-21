@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Users, BookOpen } from 'lucide-react';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../Hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 import WeeklySchedule from '../components/WeeklySchedule';
 import { SessionData } from '../components/SessionCard';
