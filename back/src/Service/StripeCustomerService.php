@@ -18,57 +18,48 @@ class StripeCustomerService
 
     public function getOrCreateCustomer(Student $student): string
     {
+        // Si l'étudiant a déjà un ID Stripe, on le vérifie OBLIGATOIREMENT
         if ($student->getIdStripe()) {
             try {
                 $customer = $this->stripe->customers->retrieve($student->getIdStripe());
                 if (!$customer->deleted) {
+                    $this->logger->info('Using existing Stripe customer', [
+                        'student_id' => $student->getId(),
+                        'stripe_customer_id' => $customer->id
+                    ]);
                     return $customer->id;
                 }
-            } catch (\Exception $e) {
-                $this->logger->warning('Stripe customer not found, creating new one', [
+                
+                // Customer supprimé côté Stripe mais l'ID existe encore en BDD
+                $this->logger->error('Stripe customer deleted but ID still in database', [
                     'student_id' => $student->getId(),
-                    'old_stripe_customer_id' => $student->getIdStripe(),
+                    'deleted_stripe_customer_id' => $student->getIdStripe()
+                ]);
+                throw new \RuntimeException('Le compte Stripe de cet étudiant a été supprimé. Veuillez contacter l\'administration.');
+                
+            } catch (\Stripe\Exception\InvalidRequestException $e) {
+                // Customer n'existe pas côté Stripe
+                $this->logger->error('Stripe customer ID invalid or not found', [
+                    'student_id' => $student->getId(),
+                    'invalid_stripe_customer_id' => $student->getIdStripe(),
                     'error' => $e->getMessage()
                 ]);
+                throw new \RuntimeException('L\'ID Stripe de cet étudiant est invalide. Veuillez contacter l\'administration.');
             }
         }
 
-        $parent = $student->getIdParent()->first();
-        if (!$parent) {
-            throw new \RuntimeException('Aucun parent trouvé pour l\'étudiant ID: ' . $student->getId());
-        }
-
-        try {
-            $customer = $this->stripe->customers->create([
-                'email' => $parent->getEmail(),
-                'name' => $parent->getFirstname() . ' ' . $parent->getLastname(),
-                'phone' => $parent->getPhone(),
-                'metadata' => [
-                    'student_id' => $student->getId(),
-                    'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
-                    'parent_id' => $parent->getId(),
-                    'center_id' => $student->getIdCenter()?->getId(),
-                ]
-            ]);
-
-            $student->setIdStripe($customer->id);
-            $this->em->persist($student);
-            $this->em->flush();
-
-            $this->logger->info('Stripe customer created', [
-                'student_id' => $student->getId(),
-                'stripe_customer_id' => $customer->id
-            ]);
-
-            return $customer->id;
-
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to create Stripe customer', [
-                'student_id' => $student->getId(),
-                'error' => $e->getMessage()
-            ]);
-            throw new \RuntimeException('Erreur lors de la création du customer Stripe: ' . $e->getMessage());
-        }
+        // Si pas d'ID Stripe, on refuse de créer pour éviter les doublons
+        // L'ID Stripe doit être créé via Zapier lors de la création du student
+        $this->logger->error('Student has no Stripe customer ID - refusing to create new one', [
+            'student_id' => $student->getId(),
+            'student_name' => $student->getFirstname() . ' ' . $student->getLastname()
+        ]);
+        
+        throw new \RuntimeException(
+            'Aucun compte Stripe trouvé pour cet étudiant. ' . 
+            'Le compte Stripe doit être créé automatiquement lors de l\'inscription. ' .
+            'Veuillez contacter l\'administration.'
+        );
     }
 
     public function updateCustomerMetadata(Student $student, array $additionalMetadata = []): void
