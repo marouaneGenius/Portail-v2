@@ -605,6 +605,50 @@ class SessionController extends AbstractController
         }
     }
 
+    #[Route('/tutor/{id}/count', name: 'tutor_student_count', methods: ['GET'])]
+    public function getTutorStudentCount(int $id, Request $request): JsonResponse
+    {
+        try {
+            $scheduledAt = $request->query->get('scheduled_at');
+            if (!$scheduledAt) {
+                return new JsonResponse([
+                    'error' => 'Le paramètre scheduled_at est requis'
+                ], JsonResponse::HTTP_BAD_REQUEST);
+            }
+
+            // Convertir la date/heure en objet DateTime
+            $scheduledDateTime = new \DateTimeImmutable($scheduledAt);
+            
+            // Récupérer toutes les sessions du tuteur pour ce créneau exact
+            $sessions = $this->sessionRepo->createQueryBuilder('s')
+                ->where('s.tutor_id = :tutorId')
+                ->andWhere('s.scheduled_at = :scheduledAt')
+                ->andWhere('s.is_canceled = false') // Ne pas compter les sessions annulées
+                ->setParameter('tutorId', $id)
+                ->setParameter('scheduledAt', $scheduledDateTime)
+                ->getQuery()
+                ->getResult();
+
+            // Compter le nombre total d'étudiants
+            $totalStudents = 0;
+            foreach ($sessions as $session) {
+                $totalStudents += $session->getIdStudent()->count();
+            }
+
+            return new JsonResponse([
+                'tutor_id' => $id,
+                'scheduled_at' => $scheduledAt,
+                'student_count' => $totalStudents,
+                'sessions_count' => count($sessions)
+            ]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors du calcul du nombre d\'étudiants: ' . $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     #[Route('/tutor/{id}', name: 'sessions_by_tutor', methods: ['GET'])]
     public function forTutor(int $id, UserRepository $userRepo): JsonResponse
     {

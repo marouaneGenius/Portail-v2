@@ -35,6 +35,30 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   const [error, setError] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState<number | null>(null);
   const [studentSchoolSubjects, setStudentSchoolSubjects] = useState<any[]>([]);
+  const [tutorStudentCount, setTutorStudentCount] = useState<{[key: string]: number}>({});
+
+  // Fonction pour vérifier le nombre d'étudiants d'un tuteur à un créneau donné
+  const checkTutorStudentCount = async (tutorId: number, scheduledAt: string): Promise<number> => {
+    try {
+      // Appel API pour récupérer le nombre d'étudiants du tuteur à ce créneau
+      const response = await api.get(`/api/sessions/tutor/${tutorId}/count`, {
+        params: {
+          scheduled_at: scheduledAt
+        }
+      });
+      return response.data.student_count || 0;
+    } catch (error) {
+      console.error('Erreur lors de la vérification du nombre d\'étudiants:', error);
+      return 0;
+    }
+  };
+
+  // Fonction pour vérifier si un tuteur peut être sélectionné (moins de 5 étudiants)
+  const canSelectTutor = (tutorId: number): boolean => {
+    const key = `${tutorId}-${values.scheduled_at}`;
+    const count = tutorStudentCount[key] || 0;
+    return count < 5;
+  };
 
   useEffect(() => {
     api.get(`/api/user/tutors`).then((response) => {
@@ -76,8 +100,25 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
       const subjectsOfTutor = filterTutorBySchoolSubject(tutors);
 
       if(subjectsOfTutor) {
-        const dateFilteredTutors = filterAvailableTutors(subjectsOfTutor)
-        setAvailableTutors(dateFilteredTutors)
+        const dateFilteredTutors = filterAvailableTutors(subjectsOfTutor);
+        
+        // Vérifier le nombre d'étudiants pour chaque tuteur
+        const studentCountPromises = dateFilteredTutors.map(async (tutor) => {
+          const count = values.scheduled_at ? await checkTutorStudentCount(tutor.id, values.scheduled_at) : 0;
+          return { tutorId: tutor.id, count };
+        });
+        
+        const studentCounts = await Promise.all(studentCountPromises);
+        
+        // Mettre à jour l'état avec les nombres d'étudiants
+        const newTutorStudentCount: {[key: string]: number} = {};
+        studentCounts.forEach(({ tutorId, count }) => {
+          const key = `${tutorId}-${values.scheduled_at}`;
+          newTutorStudentCount[key] = count;
+        });
+        setTutorStudentCount(newTutorStudentCount);
+        
+        setAvailableTutors(dateFilteredTutors);
       }
       setError(null);
     } catch (err) {
@@ -129,6 +170,10 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   };
   
   const handleSelectTutor = (tutorId: number) => {
+    if (!canSelectTutor(tutorId)) {
+      alert('Ce tuteur a déjà atteint sa capacité maximale de 5 étudiants pour ce créneau.');
+      return;
+    }
     setSelectedTutor(tutorId);
     onSelect(tutorId);
   };
@@ -168,19 +213,41 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
       <h3 className="font-medium text-lg">Tuteurs disponibles</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-1 gap-1 ">
-        {availableTutors.map(tutor => (
-          <div 
-            key={tutor.id}
-            className={`border rounded-lg p-2 w-full cursor-pointer transition-all bg-gray-100 ${
-              selectedTutor === tutor.id 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-blue-300'
-            }`}
-            onClick={() => handleSelectTutor(tutor.id)}
-          >
+        {availableTutors.map(tutor => {
+          const canSelect = canSelectTutor(tutor.id);
+          const studentCount = tutorStudentCount[`${tutor.id}-${values.scheduled_at}`] || 0;
+          
+          return (
+            <div 
+              key={tutor.id}
+              className={`border rounded-lg p-2 w-full transition-all ${
+                !canSelect 
+                  ? 'bg-red-50 border-red-200 opacity-70 cursor-not-allowed' 
+                  : selectedTutor === tutor.id 
+                    ? 'border-blue-500 bg-blue-50 cursor-pointer' 
+                    : 'border-gray-200 hover:border-blue-300 bg-gray-100 cursor-pointer'
+              }`}
+              onClick={() => handleSelectTutor(tutor.id)}
+            >
             <div className="flex  gap-0">
               <div className="flex-1  w-2/4">
-                <h4 className="font-medium">{tutor.firstname} {tutor.lastname}</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">{tutor.firstname} {tutor.lastname}</h4>
+                  <div className={`text-xs px-2 py-1 rounded-full ${
+                    studentCount >= 5 
+                      ? 'bg-red-200 text-red-800' 
+                      : studentCount >= 3 
+                        ? 'bg-orange-200 text-orange-800'
+                        : 'bg-green-200 text-green-800'
+                  }`}>
+                    {studentCount}/5 élèves
+                  </div>
+                </div>
+                {!canSelect && (
+                  <div className="text-xs text-red-600 font-medium mt-1">
+                    ⚠️ Capacité maximale atteinte
+                  </div>
+                )}
                 <p className="text-sm text-gray-600 mt-1">
                   {
                     tutor.school_subjects.map((s, index) => (
@@ -206,7 +273,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

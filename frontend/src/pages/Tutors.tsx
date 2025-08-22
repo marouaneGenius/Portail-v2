@@ -4,7 +4,7 @@ import api from '@/api/aixos';
 import { getCenters } from '@/api/api';
 import { Building, BookOpen, Calendar, Users, MapPin, Phone, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { SchoolSubjects, Days } from '@/mocks/mocks';
+import { SchoolSubjects, Days, ClassesOptions, ClassesOptionsLevel } from '@/mocks/mocks';
 import { useNavigate } from 'react-router-dom';
 import { getLevelOfClass } from '@/components/subscriptions/SubscriptionFunctions';
 
@@ -29,14 +29,21 @@ type Tutor = {
   }>;
 };
 
+// Fonction pour convertir le nom de classe en niveau numérique
+const getNumericLevel = (className: string): number => {
+  const classLevel = ClassesOptionsLevel.find(c => c.value === className);
+  return classLevel ? parseInt(classLevel.level) : 0;
+};
+
 export default function Tutors() {
   const { user } = useAuth();
   const [centers, setCenters] = useState<{ id: number; name: string }[]>([]);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [filteredTutors, setFilteredTutors] = useState<Tutor[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<number | ''>('');
-  const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>('');
+  const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [loading, setLoading] = useState(true);
   
 
@@ -53,6 +60,11 @@ export default function Tutors() {
     api.get('/api/user/tutors/complete')
       .then(({ data }) => {
         console.log('Tutors data:', data);
+        // Examiner la structure des données de niveau
+        if (data.length > 0) {
+          console.log('Premier tuteur - structure class:', data[0].class);
+          console.log('Tous les niveaux trouvés:', data.map((t: any) => t.class).flat().map((c: any) => c.level));
+        }
         // Par défaut, ne récupérer que les tuteurs avec des disponibilités
         const tutorsWithSchedules = data.filter((tutor:any) => 
           tutor.tutor_schedules && tutor.tutor_schedules.length > 0
@@ -75,11 +87,50 @@ export default function Tutors() {
       );
     }
 
-    // Filtre par matière
-    if (selectedSubject) {
-      filtered = filtered.filter(tutor => 
-        (tutor.school_subjects || []).includes(selectedSubject)
-      );
+    // Filtre par matières et niveau (combiné)
+    if (selectedSubjects.length > 0 || selectedLevel) {
+      const requiredNumericLevel = selectedLevel ? getNumericLevel(selectedLevel) : 0;
+      console.log('Filtrage par matières et niveau:', selectedSubjects, selectedLevel, 'niveau numérique:', requiredNumericLevel);
+      
+      filtered = filtered.filter(tutor => {
+        // Si des matières sont sélectionnées, vérifier que le tuteur les enseigne
+        if (selectedSubjects.length > 0) {
+          const hasAllSubjects = selectedSubjects.every(subject => 
+            (tutor.school_subjects || []).includes(subject)
+          );
+          if (!hasAllSubjects) return false;
+        }
+
+        // Si un niveau est sélectionné, vérifier que le tuteur peut enseigner ce niveau
+        if (selectedLevel) {
+          // Si des matières spécifiques sont sélectionnées, vérifier le niveau pour ces matières
+          if (selectedSubjects.length > 0) {
+            const canTeachSelectedSubjectsAtLevel = selectedSubjects.every(selectedSubject => {
+              // Trouver la classe du tuteur pour cette matière spécifique
+              const tutorClassForSubject = (tutor.class || []).find(tc => tc.subject === selectedSubject);
+              if (!tutorClassForSubject) {
+                console.log(`Tuteur ${tutor.firstname} n'enseigne pas ${selectedSubject}`);
+                return false;
+              }
+              
+              const tutorNumericLevel = parseInt(tutorClassForSubject.level) || 0;
+              const canTeach = tutorNumericLevel >= requiredNumericLevel;
+              console.log(`Tuteur ${tutor.firstname} - ${selectedSubject}: niveau ${tutorNumericLevel}, requis: ${requiredNumericLevel}, peut enseigner: ${canTeach}`);
+              return canTeach;
+            });
+            return canTeachSelectedSubjectsAtLevel;
+          } else {
+            // Si aucune matière spécifique, vérifier si le tuteur peut enseigner au niveau général
+            const canTeachLevel = (tutor.class || []).some(tutorClass => {
+              const tutorNumericLevel = parseInt(tutorClass.level) || 0;
+              return tutorNumericLevel >= requiredNumericLevel;
+            });
+            return canTeachLevel;
+          }
+        }
+
+        return true;
+      });
     }
 
     // Filtre par jour
@@ -90,13 +141,23 @@ export default function Tutors() {
     }
 
     setFilteredTutors(filtered);
-  }, [tutors, selectedCenter, selectedSubject, selectedDay]);
+  }, [tutors, selectedCenter, selectedSubjects, selectedDay, selectedLevel]);
+
+  // Gérer la sélection/désélection des matières
+  const toggleSubject = (subject: string) => {
+    setSelectedSubjects(prev => 
+      prev.includes(subject) 
+        ? prev.filter(s => s !== subject)
+        : [...prev, subject]
+    );
+  };
 
   // Réinitialiser les filtres
   const resetFilters = () => {
     setSelectedCenter('');
-    setSelectedSubject('');
+    setSelectedSubjects([]);
     setSelectedDay('');
+    setSelectedLevel('');
   };
 
   if (!user) return null;
@@ -115,7 +176,7 @@ export default function Tutors() {
           Filtres
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Filtre Centre */}
           <div className="flex flex-col">
             <label className="mb-2 font-semibold text-mister-anthracite flex items-center gap-2">
@@ -134,22 +195,30 @@ export default function Tutors() {
             </select>
           </div>
 
-          {/* Filtre Matière */}
+          {/* Filtre Matières (Multiple) */}
           <div className="flex flex-col">
             <label className="mb-2 font-semibold text-mister-anthracite flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-hello-yellow" />
-              Matière
+              Matières ({selectedSubjects.length} sélectionnée{selectedSubjects.length !== 1 ? 's' : ''})
             </label>
-            <select
-              className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm"
-              value={selectedSubject}
-              onChange={e => setSelectedSubject(e.target.value)}
-            >
-              <option value="">Toutes les matières</option>
+            <div className="max-h-48 overflow-y-auto border-2 border-fading-grey rounded-xl bg-white p-2 space-y-1">
               {SchoolSubjects.map(subject => (
-                <option key={subject.value} value={subject.value}>{subject.label}</option>
+                <label 
+                  key={subject.value} 
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedSubjects.includes(subject.value)}
+                    onChange={() => toggleSubject(subject.value)}
+                    className="w-4 h-4 text-hello-yellow border-2 border-fading-grey rounded focus:ring-2 focus:ring-hello-yellow"
+                  />
+                  <span className="text-sm text-mister-anthracite font-medium">
+                    {subject.label}
+                  </span>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
 
           {/* Filtre Jour */}
@@ -170,6 +239,24 @@ export default function Tutors() {
             </select>
           </div>
 
+          {/* Filtre Niveau */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-mister-anthracite flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-purple-500" />
+              Niveau
+            </label>
+            <select
+              className="w-full rounded-xl border-2 border-fading-grey px-4 py-3 outline-none focus:ring-2 focus:ring-hello-yellow focus:border-hello-yellow bg-white text-mister-anthracite transition shadow-sm"
+              value={selectedLevel}
+              onChange={e => setSelectedLevel(e.target.value)}
+            >
+              <option value="">Tous les niveaux</option>
+              {ClassesOptions.map(classe => (
+                <option key={classe.value} value={classe.value}>{classe.label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Bouton Reset */}
           <div className="flex flex-col justify-end">
             <button
@@ -182,7 +269,7 @@ export default function Tutors() {
         </div>
 
         {/* Résumé des filtres actifs */}
-        {(selectedCenter || selectedSubject || selectedDay) && (
+        {(selectedCenter || selectedSubjects.length > 0 || selectedDay || selectedLevel) && (
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="text-sm text-mister-anthracite font-medium">Filtres actifs :</span>
             {selectedCenter && (
@@ -190,14 +277,24 @@ export default function Tutors() {
                 Centre: {centers.find(c => c.id === selectedCenter)?.name}
               </Badge>
             )}
-            {selectedSubject && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Matière: {SchoolSubjects.find(s => s.value === selectedSubject)?.label}
+            {selectedSubjects.map(subject => (
+              <Badge 
+                key={subject} 
+                variant="outline" 
+                className="bg-green-50 text-green-700 border-green-200 cursor-pointer hover:bg-green-100"
+                onClick={() => toggleSubject(subject)}
+              >
+                {SchoolSubjects.find(s => s.value === subject)?.label} ✕
               </Badge>
-            )}
+            ))}
             {selectedDay && (
               <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
                 Jour: {Days.find(d => d.value === selectedDay)?.label}
+              </Badge>
+            )}
+            {selectedLevel && (
+              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                Niveau: {ClassesOptions.find(c => c.value === selectedLevel)?.label}
               </Badge>
             )}
           </div>
