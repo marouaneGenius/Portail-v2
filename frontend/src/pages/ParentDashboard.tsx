@@ -57,6 +57,7 @@ const ParentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [contractsLoading, setContractsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'sessions' | 'contracts'>('sessions');
+  const [showUpcoming, setShowUpcoming] = useState<boolean>(true);
   const [showRescheduleModal, setShowRescheduleModal] = useState<number | null>(null);
   const [rescheduleValues, setRescheduleValues] = useState<any>({
     scheduled_at: '',
@@ -429,6 +430,23 @@ const ParentDashboard: React.FC = () => {
         </Card>
 
         {/* Alertes */}
+        <Card className=" bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium text-blue-900 mb-1">
+                  Règles d'annulation
+                </h3>
+                <ul className="text-blue-700 text-sm space-y-1">
+                  <li>• Vous pouvez annuler le cours de votre enfant jusqu'à 48h avant</li>
+                  <li>• Les annulations de dernière minute (moins de 48h) ne sont pas autorisées</li>
+                  <li>• Pour toute urgence, contactez directement le centre</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -483,13 +501,40 @@ const ParentDashboard: React.FC = () => {
       {/* Contenu selon l'onglet actif */}
       {activeTab === 'sessions' && (
         <div className="space-y-6">
-          {/* Séances à venir */}
+          {/* Card unique avec switch pour à venir/passées */}
           <Card>
             <CardHeader>
-              <CardTitle>Séances à venir</CardTitle>
-              <CardDescription>
-                Vous pouvez annuler les cours de vos enfants jusqu'à 48h avant
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>
+                    {showUpcoming ? 'Séances à venir' : 'Séances passées'}
+                  </CardTitle>
+                  <CardDescription>
+                    {showUpcoming 
+                      ? 'Vous pouvez annuler les cours de vos enfants jusqu\'à 48h avant'
+                      : 'Historique des sessions de vos enfants'
+                    }
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm ${!showUpcoming ? 'font-semibold text-blue-600' : 'text-gray-600'}`}>
+                    Passées
+                  </span>
+                  <button
+                    onClick={() => setShowUpcoming(!showUpcoming)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                      showUpcoming ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
+                      showUpcoming ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                  <span className={`text-sm ${showUpcoming ? 'font-semibold text-blue-600' : 'text-gray-600'}`}>
+                    À venir
+                  </span>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
           {loading ? (
@@ -497,14 +542,16 @@ const ParentDashboard: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des sessions...</p>
             </div>
-          ) : upcomingSessions.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-600">Aucune session à venir pour vos enfants</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {upcomingSessions.map((session) => {
+          ) : showUpcoming ? (
+            // Séances à venir
+            upcomingSessions.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-600">Aucune session à venir pour vos enfants</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {upcomingSessions.map((session) => {
                 const { date, time } = formatDateTime(session.scheduled_at);
                 const isPast = new Date(session.scheduled_at) < new Date();
                 
@@ -631,77 +678,68 @@ const ParentDashboard: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
-          )}
-            </CardContent>
-          </Card>
-
-          {/* Séances passées */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Séances passées</CardTitle>
-              <CardDescription>
-                Historique des sessions de vos enfants
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {pastSessions.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-600">Aucune session passée trouvée</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {pastSessions.map((session) => {
-                    const { date, time } = formatDateTime(session.scheduled_at);
-                    
-                    return (
-                      <div
-                        key={`${session.id}-${session.child_id}`}
-                        className="border rounded-lg p-4 bg-gray-50 opacity-75"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-lg">{session.child_name}</h3>
-                              <span className="text-sm text-gray-600">• {session.subject}</span>
-                            </div>
-                            
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <p><Calendar className="inline h-4 w-4 mr-1" />{date} à {time}</p>
-                              <p><User className="inline h-4 w-4 mr-1" />Tuteur: {session.tutor_name}</p>
-                              {session.center_name && (
-                                <p>📍 {session.center_name}</p>
-                              )}
-                            </div>
+              </div>
+            )
+          ) : (
+            // Séances passées
+            pastSessions.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-600">Aucune session passée trouvée</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pastSessions.map((session) => {
+                  const { date, time } = formatDateTime(session.scheduled_at);
+                  
+                  return (
+                    <div
+                      key={`${session.id}-${session.child_id}`}
+                      className="border rounded-lg p-4 bg-gray-50 opacity-75"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{session.child_name}</h3>
+                            <span className="text-sm text-gray-600">• {session.subject}</span>
                           </div>
-
-                          <div className="flex flex-col items-end gap-1">
-                            {session.is_canceled ? (
-                              <div className="flex flex-col items-end gap-1">
-                                <span className="flex items-center gap-1 text-red-600 text-sm font-medium">
-                                  <XCircle className="h-4 w-4" />
-                                  Annulé
-                                </span>
-                                {session.canceled_by && (
-                                  <span className="text-xs text-gray-500">
-                                    Annulé par Vous
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                                <CheckCircle className="h-4 w-4" />
-                                Terminé
-                              </span>
+                          
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p><Calendar className="inline h-4 w-4 mr-1" />{date} à {time}</p>
+                            <p><User className="inline h-4 w-4 mr-1" />Tuteur: {session.tutor_name}</p>
+                            {session.center_name && (
+                              <p>📍 {session.center_name}</p>
                             )}
                           </div>
                         </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                          {session.is_canceled ? (
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="flex items-center gap-1 text-red-600 text-sm font-medium">
+                                <XCircle className="h-4 w-4" />
+                                Annulé
+                              </span>
+                              {session.canceled_by && (
+                                <span className="text-xs text-gray-500">
+                                  Annulé par Vous
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
+                              <CheckCircle className="h-4 w-4" />
+                              Terminé
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          )}
             </CardContent>
           </Card>
         </div>
@@ -812,23 +850,7 @@ const ParentDashboard: React.FC = () => {
       )}
 
       {/* Informations importantes */}
-      <Card className="mt-6 bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium text-blue-900 mb-1">
-                Règles d'annulation
-              </h3>
-              <ul className="text-blue-700 text-sm space-y-1">
-                <li>• Vous pouvez annuler le cours de votre enfant jusqu'à 48h avant</li>
-                <li>• Les annulations de dernière minute (moins de 48h) ne sont pas autorisées</li>
-                <li>• Pour toute urgence, contactez directement le centre</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Modal de reprogrammation */}
       {showRescheduleModal && (
