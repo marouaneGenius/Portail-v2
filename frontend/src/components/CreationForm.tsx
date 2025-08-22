@@ -21,7 +21,7 @@ const schemaMap: Record<string, FormField[] > = {
 };
 
 export default function CreationForm() {
-  const { resource } = useParams<{ resource: string }>();
+  const { resource, id } = useParams<{ resource: string, id:any }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -86,11 +86,13 @@ export default function CreationForm() {
 
   const handleSubmit = async (values: Record<string, any>) => {
     try{
-     await postData(values);
+      const created = await postData(values);
+
       if(resource === "tutorschedule") {
-        navigate(`/users`);
-      } else {
-        navigate(`/${resource}s`);
+        navigate(`/user/${id}`);
+      } else if(created && resource) { 
+        navigate(`/${resource}/${created.id}`);
+
       }
     }catch(err: any){
       alert('error')

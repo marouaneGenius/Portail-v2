@@ -582,34 +582,35 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
            }}
          />
        </div>
-      <div className="mt-0 bg-gray-100  p-2 rounded">
-
-      <TutorListComponent
-        values={values}
-        student={student}
-        onSelect={(tutorId) => {
-          setValues({
-            ...values,
-            tutor_id: tutorId,
-          })
-        }}
-      />
-    </div>
+      {values.scheduled_at && (
+        <div className="mt-0 bg-gray-100  p-2 rounded">
+          <TutorListComponent
+            values={values}
+            student={student}
+            onSelect={(tutorId) => {
+              setValues({
+                ...values,
+                tutor_id: tutorId,
+              })
+            }}
+          />
+        </div>
+      )}
     </>
 
     );
   }
 
-  return (
-    <input
-      id={f.name}
-      name={f.name}
-      type={f.type}
-      value={values[f.name] || ""}
-      onChange={handleChange}
-      className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
-      required={!!f.required}
-    /> 
-  );
+  // return (
+  //   <input
+  //     id={f.name}
+  //     name={f.name}
+  //     type={f.type}
+  //     value={values[f.name] || ""}
+  //     onChange={handleChange}
+  //     className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
+  //     required={!!f.required}
+  //   /> 
+  // );
 };
 

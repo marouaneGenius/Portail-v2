@@ -57,8 +57,9 @@ export default function EditionForm() {
 
 
     await api.put(`/api/${resource}/${id}`, payload);
-    navigate(`/${resource}s`);
-  };
+    console.log(resource)
+    navigate(`/${resource}/${id}`);
+    };
 
   if (loading) {
     return <p>Chargement des données…</p>;

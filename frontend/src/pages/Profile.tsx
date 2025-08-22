@@ -78,9 +78,6 @@ const Profile: React.FC = () => {
     }
   }
 
-  console.log()
-
-
   if (!user) return <Navigate to="/login" replace />;
 
   return (

@@ -34,7 +34,6 @@ export interface FormGeneratorProps {
 }
 
 const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {}, onSubmit, endpoint }) => {
-
   const defaultValues = endpoint === "user" ? {
     centers: [],
     school_subjects: [],
@@ -52,13 +51,14 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
   const [scheduleUpdateFunction, setScheduleUpdateFunction] = useState<((updatedSchedule: any) => void) | null>(null);
 
   const [parentValues, setParentValues] = useState<Record<string, any>>(defaultValues);
-  const { id } = useParams<{ id: any }>();
+  const {resource, id } = useParams<{ id: any, resource:any }>();
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const optionalFields = ['siret', 'max_session', 'price_per_hour', 'centers', 'school_subjects', 'class'];
   const { isOpen, open, close } = useModal();
   const isEmpty = (obj: any) => Object.keys(obj).length === 0;
 
   useEffect(() => {
+    console.log(resource)
     const hasRoleField = fields.find((item: any) => item.name === 'role');
     const hasClassField = fields.find((item: any) => item.name === 'class');
 
@@ -272,18 +272,17 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    console.log('Values before submit:', values);
+    console.log('Values before submit:', values, endpoint);
 
     // Validation côté client pour les téléphones
-    if (values.phone && !PhoneValidator.isValidPhone(values.phone)) {
+    if (values.phone && !PhoneValidator.isValidPhone(values.phone)&& resource !== 'student') {
       const validation = PhoneValidator.validateAndFormat(values.phone);
       alert(`Numéro de téléphone invalide: ${values.phone}\n\nSuggestions: ${validation.suggestions.join(', ') || 'Aucune'}\n\nExemple: 06 12 34 56 78`);
       return;
     }
 
     // Validation pour les parents si présents
-    if (values.parent && values.parent.phone && !PhoneValidator.isValidPhone(values.parent.phone)) {
+    if (values.parent && values.parent.phone && !PhoneValidator.isValidPhone(values.parent.phone) ) {
       const validation = PhoneValidator.validateAndFormat(values.parent.phone);
       alert(`Numéro de téléphone parent invalide: ${values.parent.phone}\n\nSuggestions: ${validation.suggestions.join(', ') || 'Aucune'}\n\nExemple: 06 12 34 56 78`);
       return;

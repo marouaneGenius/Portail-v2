@@ -4,10 +4,12 @@ import axios from "axios";
 import { useAuth } from "../../../Hooks/auth";
 import { urlToBlob } from "../SubscriptionFunctions";
 import { LoaderOverlay } from "@/components/LoaderOverlay";
+import { useNavigate } from "react-router-dom";
 
 const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGenerate, previewId}) => {
   const [pdfUrl, setPdfUrl] = useState<string | any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
 
   const pdfOptions = {
@@ -46,7 +48,7 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
         if(!r) {
           setTimeout(() => {
             setLoading(false);
-            generatePdf()
+            generatePdf();
           } , 4000);
         } else {
           console.log('file exist')
@@ -98,6 +100,7 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
             'Authorization': `Bearer ${authToken}`,
           },
         });
+        navigate(`/student/${student.id}`)
       }
 
     } catch (error) {
