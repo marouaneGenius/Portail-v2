@@ -34,7 +34,7 @@ export default function CustomDataTable({
   const [centerMap, setCenterMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {

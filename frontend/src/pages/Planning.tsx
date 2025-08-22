@@ -188,7 +188,7 @@ const Planning: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-purple-600" />
-                  Cette semaine
+                  Cette année
                 </CardTitle>
                 <CardDescription>
                   Votre charge de travail
