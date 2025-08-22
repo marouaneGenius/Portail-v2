@@ -429,7 +429,7 @@ const ParentDashboard: React.FC = () => {
         </Card>
 
         {/* Alertes */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
@@ -447,7 +447,7 @@ const ParentDashboard: React.FC = () => {
               Cours où vous pouvez signaler une annulation
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Navigation par onglets */}
