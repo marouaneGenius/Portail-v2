@@ -204,7 +204,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       
       {/* Jour */}
       <div>
-        <label className="block mb-1 font-medium">Jour</label>
+        <label className="block mb-1 font-medium">Quel Jour ?</label>
         <select
           value={day}
           onChange={(e) => setDay(e.target.value)}
@@ -221,12 +221,12 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
       {/* Durée */}
       <div>
-        <label className="block mb-1 font-medium">Durée de cours par semaine</label>
+        <label className="block mb-1 font-medium">Quel Heure ?</label>
         <select
           onChange={(e) => handleSessionChange(e.target.value)}
           className="w-full border px-3 py-2 rounded"
         >
-          <option value="">Choisir une durée</option>
+          <option value="">Sélectionner une Heure</option>
           {hoursList.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
@@ -261,7 +261,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
         {availabilitys.map((slot, index) => (
           <div key={index} className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
             <span>
-              📅 {slot.day} à 🕒 {slot.hour},  Matières: {slot.matieres.join()}
+              🗓️ {slot.day} <br/>🕒 {slot.hour}<br/>  📕 {slot.matieres.join()}
             </span>
             <button
               onClick={() =>

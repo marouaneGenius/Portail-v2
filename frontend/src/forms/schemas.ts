@@ -107,10 +107,10 @@ export const AnnuelFields: FormField[] = [
       { value: 'anuelle', label: 'Anuelle' }, 
     ], required: true
   },
-  { name: 'subscription_end_date', label: 'Finis le', type: 'date'},
-  { name: 'first_debit_date', label: 'Date du premier prélèvement', type: 'date'},
+  { name: 'subscription_end_date', label: '', type: 'date'},
+  { name: 'first_debit_date', label: '', type: 'date'},
   { name: 'membership_fee', label: '', type: 'text', value:'90'},
-  { name: 'offer_amount', label: 'Offre', type: 'text'},
+  { name: 'offer_amount', label: '', type: 'text'},
 ];
 
 export const TrialSession: FormField[] = [

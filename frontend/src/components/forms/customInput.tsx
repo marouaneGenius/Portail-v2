@@ -294,7 +294,6 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               name: 'subscription_end_date',
               label: 'Finis le',
               type: 'date',
-              
               value: values.subscription_end_date,
               onChange: handleChange,
               defaultValue: FIXED_END_DATE, // default value for annual subscription
@@ -310,7 +309,17 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       return (
         <GroupedInputs
           fields={[
-            {  name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',    
+            { name: 'first_debit_date', label: 'Date du premier prélèvement',
+              type: 'date',
+              value: values.first_debit_date,
+              description:'Choisissez ici la date à laquelle vous souhaitez que le premier prélèvement soit effectué. Cette date doit être ultérieure à aujourd’hui et cohérente avec votre choix de paiement.',
+              onChange: handleChange,
+              defaultValue: todayISO,
+              min: todayISO,
+            },
+            {  name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',  
+              description: 'Choisissez un jour fixe pour chaque mois/trimestre (5, 15 ou 28).',
+                
               options: [
                 { value: '5', label: '5 du mois' },
                 { value: '15', label: '15 du mois' },
@@ -319,14 +328,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
               required: true,
               value: values.recurrent_debit_date,
               onChange: handleChange,
-            },
-            { name: 'first_debit_date', label: 'Date du premier prélèvement',
-              type: 'date',
-              value: values.first_debit_date,
-              onChange: handleChange,
-              defaultValue: todayISO,
-              min: todayISO,
-            },
+            }
           ]}
         />
       );

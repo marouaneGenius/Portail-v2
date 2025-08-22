@@ -56,8 +56,20 @@ const SubscriptionsFormView: React.FC<any> = () => {
     author   : string | undefined,
     combined? : string 
   ) {
+    // Convertir les champs numériques
+    const processedRaw = { ...raw };
+    if (processedRaw.offer_amount !== undefined && processedRaw.offer_amount !== '') {
+      processedRaw.offer_amount = parseInt(processedRaw.offer_amount) || 0;
+    }
+    if (processedRaw.discount !== undefined && processedRaw.discount !== '') {
+      processedRaw.discount = parseInt(processedRaw.discount) || 0;
+    }
+    if (processedRaw.membership_fee !== undefined && processedRaw.membership_fee !== '') {
+      processedRaw.membership_fee = parseInt(processedRaw.membership_fee) || 0;
+    }
+
     const common = {
-      ...raw,
+      ...processedRaw,
       subscription_type: type,
       student_id      : studentId,
       created_by      : author,

@@ -46,6 +46,10 @@ export default function CreationForm() {
         '/api/user',
         payload
       );
+
+      if(createdUser) {
+        navigate(`/${resource}/${createdUser.id}`);
+      }
   
       // mise à jour locale, navigation, etc.
       console.log('Utilisateur créé', createdUser);
@@ -92,8 +96,9 @@ export default function CreationForm() {
         navigate(`/user/${id}`);
       } else if(created && resource) { 
         navigate(`/${resource}/${created.id}`);
-
       }
+
+      console.log('Création réussie', created);
     }catch(err: any){
       alert('error')
       setError(err.response?.data?.error || 'Erreur lors de la Validation du formulaire');

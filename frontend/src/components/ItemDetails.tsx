@@ -417,7 +417,7 @@ const ItemDetails: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
                   <TooltipProvider>
                     {/* Exemple générique pour tous les boutons */}
                     {[

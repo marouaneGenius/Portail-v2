@@ -10,6 +10,7 @@ interface Option {
 
 interface FieldConfig {
   name     : string;
+  description?: string;
   label    : string;
   type     : 'text' | 'date' | 'number' | 'select' | 'email';
   value    : any;
@@ -73,6 +74,7 @@ const GroupedInputs: React.FC<GroupedInputsProps> = ({ fields, defaultOpen }) =>
             >
               {field.label}{field.required && <span className="text-crazy-magenta">*</span>}
             </label>
+            <p className='text-xs text-gray-400'>{field.description}</p>
             {field.type === 'select' ? (
               <select
                 id={field.name}
