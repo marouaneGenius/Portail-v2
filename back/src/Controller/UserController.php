@@ -191,8 +191,8 @@ class UserController extends AbstractController
             'is_active'  => $u->isIsActive(),
             'roles'     => $u->getRoles(),
             'google_id' => $u->getGoogleId(),
-            'can_edit'  => $this->isGranted(UserVoter::EDIT, $u),
-            'can_delete' => $this->isGranted(UserVoter::DELETE, $u),
+            // 'can_edit'  => $this->isGranted(UserVoter::EDIT, $u),
+            // 'can_delete' => $this->isGranted(UserVoter::DELETE, $u),
         ], array_filter($users, fn($u) => $this->isGranted(UserVoter::VIEW, $u)));
 
         return $this->json($data);
