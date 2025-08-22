@@ -227,32 +227,20 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                 }
             }
 
-            // Choisir la stratégie selon le nombre d'étudiants
-            if (sessionsToCreate.length === 1) {
-                // Un seul étudiant : utiliser l'ancienne route
-                console.log('Un seul étudiant - utilisation de la route individuelle');
-                const singleSession = {
-                    ...sessionsToCreate[0],
-                    student_ids: [sessionsToCreate[0].student_id]
-                };
-                delete singleSession.student_id; // Supprimer student_id et utiliser student_ids
-                
-                await api.post('/api/sessions/trial-session', singleSession);
-                alert(`Session d'essai créée avec succès pour ${sessionsCreated[0]} - Total: ${totalPrice}€`);
-            } else {
-                // Plusieurs étudiants : utiliser la nouvelle route groupée
-                console.log('Plusieurs étudiants - utilisation de la route groupée');
-                const groupedRequest = {
-                    sessions: sessionsToCreate,
-                    total_price: totalPrice,
-                    parent_email: student.email || user.email,
-                    family_name: `${student.lastname}`
-                };
-
-                console.log('Envoi groupé des sessions:', groupedRequest);
-                await api.post('/api/sessions/trial-session-group', groupedRequest);
-                alert(`Sessions d'essai créées avec succès pour:\n${sessionsCreated.join('\n')}\n\nTotal: ${totalPrice}€\n\nUn seul lien de paiement sera envoyé au parent.`);
-            }
+            // Utiliser la nouvelle route groupée pour éviter les SMS multiples
+            console.log('Utilisation de la route groupée pour éviter les SMS multiples');
+            
+            const groupedSessionData = {
+                sessions: sessionsToCreate,
+                total_price: totalPrice,
+                parent_email: user.email,
+                family_name: `Famille ${student.lastname}`
+            };
+            
+            console.log('Création sessions groupées:', groupedSessionData);
+            const response = await api.post('/api/sessions/trial-session-group', groupedSessionData);
+            
+            alert(`✅ Sessions créées avec succès pour:\n${sessionsCreated.join('\n')}\n\nTotal: ${totalPrice}€\n\n✅ Le parent recevra UN SEUL SMS avec le lien de paiement groupé!`);
             
             navigate(`/student/${student.id}`);
 

@@ -253,6 +253,126 @@ class SessionController extends AbstractController
         }
     }
 
+    #[Route('/trial-session-group', name: 'create_trial_session_group', methods: ['POST'])]
+    public function createTrialSessionGroup(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            throw new BadRequestHttpException('Corps invalide, JSON attendu.');
+        }
+
+        // 1) Validation des champs requis pour sessions groupées
+        if (empty($data['sessions']) || !is_array($data['sessions'])) {
+            throw new BadRequestHttpException('Le champ "sessions" est requis et doit être un tableau.');
+        }
+
+        if (empty($data['total_price']) || !is_numeric($data['total_price'])) {
+            throw new BadRequestHttpException('Le champ "total_price" est requis et doit être numérique.');
+        }
+
+        $parentEmail = $data['parent_email'] ?? null;
+        $familyName = $data['family_name'] ?? 'Famille';
+
+        // 2) Créer toutes les sessions individuellement
+        $createdSessions = [];
+        $allStudents = [];
+
+        foreach ($data['sessions'] as $sessionData) {
+            // Validation des champs requis pour chaque session
+            $requiredFields = ['student_id', 'scheduled_at', 'school_subjects'];
+            foreach ($requiredFields as $field) {
+                if (empty($sessionData[$field])) {
+                    throw new BadRequestHttpException("Le champ '$field' est requis pour chaque session.");
+                }
+            }
+
+            // Récupération de l'étudiant
+            $student = $this->studentRepo->find($sessionData['student_id']);
+            if (!$student) {
+                throw new BadRequestHttpException("Étudiant avec ID {$sessionData['student_id']} introuvable.");
+            }
+            $allStudents[] = $student;
+
+            // Récupération du centre
+            $center = $student->getIdCenter();
+            if (!$center) {
+                throw new BadRequestHttpException("L'étudiant {$student->getFirstname()} {$student->getLastname()} n'a pas de centre assigné.");
+            }
+
+            // Création de la session
+            $session = new Session();
+            $session->setSessionType('trial_session');
+            $session->setScheduledAt(new \DateTimeImmutable($sessionData['scheduled_at']));
+            $session->setSchoolSubjects($sessionData['school_subjects']);
+            $session->setScheduledBy($sessionData['scheduled_by'] ?? 'system');
+            $session->setCenter($center);
+            
+            // Dates par défaut
+            $session->setPaymentDate(new \DateTime());
+            $session->setDateSlot(new \DateTime($sessionData['scheduled_at']));
+            
+            // États par défaut
+            $session->setIsCanceled(false);
+            $session->setIsPaid(false);
+            $session->setIsAbsent(false);
+            $session->setCreatedAt(new \DateTimeImmutable());
+            $session->setCreatedBy($sessionData['scheduled_by'] ?? 'system');
+            $session->setUpdatedBy($sessionData['scheduled_by'] ?? 'system');
+
+            // Tuteur si fourni
+            if (!empty($sessionData['tutor_id'])) {
+                $tutor = $this->userRepo->find($sessionData['tutor_id']);
+                if (!$tutor) {
+                    throw new BadRequestHttpException("Tuteur avec ID {$sessionData['tutor_id']} introuvable.");
+                }
+                $session->setIdTutor($tutor);
+            }
+
+            // Ajouter l'étudiant à cette session
+            $session->addIdStudent($student);
+            $this->em->persist($student);
+            $this->em->persist($session);
+
+            $createdSessions[] = $session;
+        }
+
+        // 3) Flush toutes les sessions
+        $this->em->flush();
+
+        // 4) Récupérer le parent du premier étudiant
+        $mainStudent = $allStudents[0];
+        $parents = $mainStudent->getIdParent();
+        $mainParent = $parents->first();
+        
+        if (!$mainParent) {
+            return new JsonResponse([
+                'error' => 'Aucun parent trouvé pour l\'étudiant principal'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 5) Créer UN SEUL lien de paiement pour toutes les sessions
+        try {
+            return $this->createGroupTrialSessionPayment($createdSessions, $allStudents, $data['total_price'], [
+                'phone' => $mainParent->getPhone(),
+                'email' => $parentEmail,
+                'family_name' => $familyName
+            ]);
+        } catch (\Exception $e) {
+            error_log("Erreur dans createGroupTrialSessionPayment: " . $e->getMessage());
+            
+            return new JsonResponse([
+                'success' => true,
+                'sessions_created' => count($createdSessions),
+                'error' => 'Sessions créées mais erreur lors du paiement: ' . $e->getMessage(),
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $allStudents)
+            ], JsonResponse::HTTP_CREATED);
+        }
+    }
+
     private function createTrialSessionPayment(Session $session): JsonResponse
     {
         $students = $session->getIdStudent();
@@ -369,6 +489,118 @@ class SessionController extends AbstractController
                     'name' => $session->getCenter()->getName(),
                     'city' => $session->getCenter()->getCity()
                 ]
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function createGroupTrialSessionPayment(array $sessions, array $allStudents, float $totalPrice, array $parentInfo): JsonResponse
+    {
+        try {
+            // 1) Validation des données d'entrée
+            if (empty($sessions) || empty($allStudents)) {
+                return new JsonResponse([
+                    'error' => 'Données insuffisantes pour créer le paiement groupé'
+                ], JsonResponse::HTTP_BAD_REQUEST);
+            }
+
+            // 2) Calcul du prix total en centimes
+            $totalAmountCentimes = $totalPrice * 100;
+            $studentCount = count($allStudents);
+            
+            $description = sprintf('Séances d\'essai groupées – %d étudiants (30€ × %d)', $studentCount, $studentCount);
+
+            // 3) Récupérer le premier étudiant pour les données du parent
+            $mainStudent = $allStudents[0];
+
+            // 4) Création du lien de paiement via le service Stripe
+            $stripeSessionId = $this->stripeCustomerService->createCheckoutSession(
+                $mainStudent,
+                $totalAmountCentimes,
+                $description,
+                [
+                    'session_type' => 'trial_session_group',
+                    'student_count' => $studentCount,
+                    'student_ids' => implode(',', array_map(fn($s) => $s->getId(), $allStudents)),
+                    'session_ids' => implode(',', array_map(fn($s) => $s->getId(), $sessions)),
+                ]
+            );
+
+            // 5) Mise à jour de toutes les sessions avec le même ID Stripe
+            foreach ($sessions as $session) {
+                $session->setStripeNumber($stripeSessionId);
+            }
+            $this->em->flush();
+
+            // 6) Récupération de l'URL de paiement
+            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($stripeSessionId);
+
+            // 7) Préparation des données pour le SMS
+            $phone = $parentInfo['phone'];
+            $centre = $mainStudent->getIdCenter()->getName();
+            $ville = $mainStudent->getIdCenter()->getCity();
+            $adresse = $mainStudent->getIdCenter()->getAddress() ?? '';
+            
+            // Utiliser la date de la première session
+            $firstSession = $sessions[0];
+            $dateCours = $firstSession->getScheduledAt();
+            $heureDebut = $firstSession->getScheduledAt()->format('H:i');
+            
+            // Construire les prénoms de tous les étudiants
+            $studentNames = array_map(fn($s) => $s->getFirstname(), $allStudents);
+            $prenom = count($studentNames) > 1 
+                ? implode(', ', array_slice($studentNames, 0, -1)) . ' et ' . end($studentNames)
+                : $studentNames[0];
+
+            // 8) Envoi d'UN SEUL SMS pour tous les étudiants
+            $this->smsSender->sendSessionPaymentLink(
+                $phone,
+                $centre,
+                $dateCours,
+                $heureDebut,
+                $ville,
+                $adresse,
+                $prenom,
+                $paymentUrl
+            );
+
+            // 9) Réponse avec toutes les informations
+            return new JsonResponse([
+                'success' => true,
+                'payment_link' => $paymentUrl,
+                'stripe_session_id' => $stripeSessionId,
+                'student_count' => $studentCount,
+                'session_count' => count($sessions),
+                'total_amount' => $totalPrice, // En euros
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname()
+                ], $allStudents),
+                'sessions' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'scheduled_at' => $s->getScheduledAt()->format(\DateTime::ATOM),
+                    'subjects' => $s->getSchoolSubjects()
+                ], $sessions),
+                'center' => [
+                    'id' => $mainStudent->getIdCenter()->getId(),
+                    'name' => $centre,
+                    'city' => $ville
+                ],
+                'sms_sent' => true,
+                'parent_phone' => $phone,
+                'message' => sprintf('Séances d\'essai groupées créées pour %d étudiant%s - UN SEUL lien de paiement envoyé par SMS (%d€)', 
+                    $studentCount, $studentCount > 1 ? 's' : '', $totalPrice)
+            ], JsonResponse::HTTP_CREATED);
+
+        } catch (\Exception $e) {
+            error_log("Erreur dans createGroupTrialSessionPayment: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Erreur lors de la création du paiement groupé: ' . $e->getMessage(),
+                'student_count' => count($allStudents ?? []),
+                'session_count' => count($sessions ?? [])
             ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -827,24 +1059,22 @@ class SessionController extends AbstractController
                 ]);
             }
 
-            // Vérifier si la session a un stripe_number (payment_link_id) pour vérifier sur Stripe
-            $paymentLinkId = $session->getStripeNumber();
-            if (!$paymentLinkId) {
+            // Vérifier si la session a un stripe_number (checkout session ID) pour vérifier sur Stripe
+            $stripeSessionId = $session->getStripeNumber();
+            if (!$stripeSessionId) {
                 return new JsonResponse([
                     'is_paid' => false,
-                    'message' => 'Aucun lien de paiement associé à cette session'
+                    'message' => 'Aucune session de paiement associée'
                 ]);
             }
 
-            // Vérifier le statut sur Stripe
+            // Vérifier le statut directement sur Stripe avec l'ID de la session
             $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
-            $checkoutSessions = $stripe->checkout->sessions->all([
-                'payment_link' => $paymentLinkId,
-                'limit' => 10,
-            ]);
-
-            // Chercher une session payée
-            foreach ($checkoutSessions->data as $checkoutSession) {
+            
+            try {
+                // Récupérer directement la checkout session par son ID
+                $checkoutSession = $stripe->checkout->sessions->retrieve($stripeSessionId);
+                
                 if ($checkoutSession->payment_status === 'paid') {
                     // Marquer la session comme payée en base de données
                     $session->setIsPaid(true);
@@ -857,19 +1087,30 @@ class SessionController extends AbstractController
                         'payment_details' => [
                             'amount_paid' => $checkoutSession->amount_total / 100, // Convertir centimes en euros
                             'payment_date' => date('Y-m-d H:i:s', $checkoutSession->created),
-                            'stripe_payment_intent' => $checkoutSession->payment_intent
+                            'stripe_payment_intent' => $checkoutSession->payment_intent,
+                            'stripe_session_id' => $stripeSessionId
                         ],
                         'message' => 'Paiement confirmé sur Stripe et mis à jour en base'
                     ]);
                 }
-            }
 
-            // Aucun paiement trouvé
-            return new JsonResponse([
-                'is_paid' => false,
-                'payment_link_url' => "https://buy.stripe.com/test_" . substr($paymentLinkId, 3), // Approximation de l'URL
-                'message' => 'Paiement en attente'
-            ]);
+                // Session trouvée mais pas encore payée
+                return new JsonResponse([
+                    'is_paid' => false,
+                    'payment_status' => $checkoutSession->payment_status,
+                    'session_url' => $checkoutSession->url,
+                    'expires_at' => $checkoutSession->expires_at ? date('Y-m-d H:i:s', $checkoutSession->expires_at) : null,
+                    'message' => 'Paiement en attente'
+                ]);
+                
+            } catch (\Stripe\Exception\InvalidRequestException $e) {
+                // Session Stripe non trouvée
+                return new JsonResponse([
+                    'is_paid' => false,
+                    'error' => 'Session de paiement Stripe introuvable: ' . $e->getMessage(),
+                    'message' => 'Session de paiement expirée ou invalide'
+                ]);
+            }
 
         } catch (\Exception $e) {
             return new JsonResponse(
