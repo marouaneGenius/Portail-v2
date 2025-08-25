@@ -20,7 +20,7 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, any>>(initialValues);
   const [touched, setTouched] = useState(false);
-  const current = fields[index];
+  const current:any = fields[index];
   const isFirst = index === 0;
   const isFinalField = index === fields.length - 1;
   const value = values[current.name];
@@ -83,11 +83,18 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   }, [values]);
 
   useEffect(() => {
-    // title OU fields si c’est plus fiable
+    // Réinitialiser quand on change d'étape (title)
     setValues(initialValues ?? {});
     setIndex(0);
     setTouched(false);
   }, [title]);
+
+  // Mettre à jour les valeurs quand les initialValues changent (retour en arrière)
+  useEffect(() => {
+    if (Object.keys(initialValues ?? {}).length > 0) {
+      setValues(initialValues);
+    }
+  }, [JSON.stringify(initialValues)]);
 
 
   const next = () => {
@@ -96,7 +103,7 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     // console.log(values)
     if (isFinalField) {
       onNext(title, structuredClone(values));
-      setValues({});
+      // Ne pas vider les values ici, elles seront réinitialisées par le useEffect ci-dessous
     } else {
       setIndex(i => i + 1);
       setTouched(false);
@@ -118,16 +125,50 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   }
 
   return (
-    <div className="p-6 bg-white/80 rounded-2xl shadow-lg w-full border border-fading-grey max-w-xl mx-auto">
+    <div className="p-8 bg-white rounded-3xl shadow-2xl w-full border-2 border-hello-yellow/20 max-w-2xl mx-auto relative overflow-hidden">
+      {/* Gradient de fond décoratif */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-hello-yellow/10 to-crazy-magenta/10 rounded-full -translate-y-16 translate-x-16"></div>
+      
       {showError && <AlertMessage message={'Un problème est survenu lors du chargement des créneaux !'} />}
-      <h2 className="text-2xl font-bold mb-2 text-mister-anthracite">{title}</h2>
-      <p className="text-sm text-mister-anthracite/60 mb-4">
-        Champ <span className="font-semibold">{index + 1}</span> sur <span className="font-semibold">{fields.length}</span>
-      </p>
+      
+      {/* Header amélioré */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-3 h-3 bg-crazy-magenta rounded-full"></div>
+          <h2 className="text-3xl font-bold text-mister-anthracite capitalize">{title}</h2>
+        </div>
+        
+        {/* Indicateur de progression du champ */}
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-sm font-medium text-mister-anthracite/70">
+            Question {index + 1} sur {fields.length}
+          </span>
+          <div className="flex-1 bg-gray-200 rounded-full h-1">
+            <div 
+              className="bg-gradient-to-r from-hello-yellow to-crazy-magenta h-1 rounded-full transition-all duration-300"
+              style={{ width: `${((index + 1) / fields.length) * 100}%` }}
+            ></div>
+          </div>
+          <span className="text-xs text-mister-anthracite/50">
+            {Math.round(((index + 1) / fields.length) * 100)}%
+          </span>
+        </div>
+      </div>
 
-      <label className="block text-base font-semibold mb-1 text-mister-anthracite">
-        {current.label} {current.required && <span className="text-crazy-magenta">*</span>}
-      </label>
+      {/* Label amélioré */}
+      <div className="mb-6">
+        <label className="block text-lg font-semibold mb-2 text-mister-anthracite">
+          {current.label} 
+          {current.required && <span className="text-crazy-magenta ml-1">*</span>}
+        </label>
+        
+        {/* Description du champ si disponible */}
+        {current.description && (
+          <p className="text-sm text-mister-anthracite/60 bg-gray-50 p-3 rounded-xl border-l-4 border-hello-yellow">
+            {current.description}
+          </p>
+        )}
+      </div>
 
       <RenderField
         f={current}
@@ -139,28 +180,42 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
         title={title}
       />
 
+      {/* Message d'erreur amélioré */}
       {isRequiredAndEmpty && touched && (
-        <p className="text-crazy-magenta text-sm mt-1">Ce champ est requis.</p>
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+          <p className="text-red-600 text-sm font-medium">Ce champ est requis pour continuer.</p>
+        </div>
       )}
 
-      <div className="flex justify-between mt-6">
+      {/* Boutons améliorés */}
+      <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
         <button
           onClick={isFirst ? onBack : prev}
-          className="px-6 py-2 rounded-xl bg-fading-grey text-mister-anthracite font-semibold hover:bg-hello-yellow/40 transition"
+          className="px-6 py-3 rounded-2xl bg-gray-100 text-mister-anthracite font-semibold hover:bg-gray-200 transition-all duration-200 flex items-center gap-2"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           {isFirst ? 'Retour' : 'Précédent'}
         </button>
 
         <button
-          onClick={next}
+          onClick={() => {
+            setTouched(true);
+            next();
+          }}
           disabled={isRequiredAndEmpty}
-          className={`px-8 py-2 rounded-xl font-bold transition text-lg flex items-center gap-2 shadow
-            ${isRequiredAndEmpty
-              ? 'bg-gray-300 text-gray-400 cursor-not-allowed'
-              : 'bg-hello-yellow text-mister-anthracite hover:bg-crazy-magenta hover:text-white'}
-          `}
+          className={`px-8 py-3 rounded-2xl font-bold transition-all duration-200 text-lg flex items-center gap-2 shadow-lg transform hover:scale-105 ${
+            isRequiredAndEmpty
+              ? 'bg-gray-300 text-gray-400 cursor-not-allowed hover:scale-100'
+              : 'bg-gradient-to-r from-hello-yellow to-crazy-magenta text-white hover:shadow-xl'
+          }`}
         >
           {isFinalField ? (isLast ? 'Terminer' : 'Suivant abonnement') : 'Suivant'}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

@@ -311,10 +311,9 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
           fields={[
             { name: 'first_debit_date', label: 'Date du premier prélèvement',
               type: 'date',
-              value: values.first_debit_date,
-              description:'Choisissez ici la date à laquelle vous souhaitez que le premier prélèvement soit effectué. Cette date doit être ultérieure à aujourd’hui et cohérente avec votre choix de paiement.',
+              value: values.first_debit_date || todayISO,
+              description: "Choisissez ici la date à laquelle vous souhaitez que le premier prélèvement soit effectué. Cette date doit être ultérieure à aujourd'hui et cohérente avec votre choix de paiement.",
               onChange: handleChange,
-              defaultValue: todayISO,
               min: todayISO,
             },
             {  name: 'recurrent_debit_date', label: 'Prélevé tous les ', type: 'select',  
@@ -326,7 +325,7 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
                 { value: '28', label: '28 du mois' },
               ],
               required: true,
-              value: values.recurrent_debit_date,
+              value: values.recurrent_debit_date || '',
               onChange: handleChange,
             }
           ]}
@@ -341,20 +340,18 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
 
           fields={[
             {  name: 'offer_amount', label: 'Offre', type: 'text',
-              value: values.offer_amount,
+              value: values.offer_amount || '0',
               onChange: handleChange,
-              defaultValue: '0',   
             },
             { name: 'offer_type', label: 'Type d\'Offre',
               type: 'text',
-              value: values.offer_type,
+              value: values.offer_type || '',
               onChange: handleChange,
             },
             { name: 'discount', label: 'Reduction',
               type: 'text',
-              value: values.discount,
+              value: values.discount || '0',
               onChange: handleChange,
-              defaultValue: '0',   
             }
           ]}
         />
@@ -366,9 +363,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
         <GroupedInputs
           fields={[
             {  name: 'membership_fee', label: 'Frais d\'inscription', type: 'text',
-              value: values.membership_fee,
+              value: values.membership_fee || '90',
               onChange: handleChange,
-              defaultValue: '90',   
             },
        
           ]}

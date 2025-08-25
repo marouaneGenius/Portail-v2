@@ -221,7 +221,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
       {/* Durée */}
       <div>
-        <label className="block mb-1 font-medium">Quel Heure ?</label>
+        <label className="block mb-1 font-medium">Quelle Heure ?</label>
         <select
           onChange={(e) => handleSessionChange(e.target.value)}
           className="w-full border px-3 py-2 rounded"

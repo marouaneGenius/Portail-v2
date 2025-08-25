@@ -31,20 +31,42 @@ interface GroupedInputsProps {
 }
 
 const GroupedInputs: React.FC<GroupedInputsProps> = ({ fields, defaultOpen }) => {
-  const [open, setOpen] = useState<boolean>(true);
   const hasOffreField = fields.some(field => field.name === 'offer_amount');
+  
+  // Vérifier si il y a des données significatives dans les champs
+  const hasSignificantValues = () => {
+    if (!hasOffreField) return false;
+    
+    return fields.some(field => {
+      const value = field.value;
+      const defaultVal = field.name === 'offer_amount' ? '0' : field.name === 'discount' ? '0' : '';
+      return value !== undefined && 
+             value !== '' && 
+             value !== defaultVal &&
+             !(value === '0' && (field.name === 'offer_amount' || field.name === 'discount'));
+    });
+  };
+
+  const [open, setOpen] = useState<boolean>(() => {
+    // État initial : ouvert si des données existent, sinon fermé par défaut pour les offres
+    if (hasOffreField && defaultOpen) {
+      return hasSignificantValues();
+    }
+    return defaultOpen ?? true;
+  });
 
   const toggle = () => setOpen(o => !o);
 
-  useEffect(() => { 
-    if (hasOffreField) {
-      setOpen(false);
+  // Ouvrir automatiquement le switch seulement si il y a des données ET qu'il est fermé
+  useEffect(() => {
+    if (hasOffreField && defaultOpen && !open && hasSignificantValues()) {
+      setOpen(true);
     }
-  }, [defaultOpen]);
+  }, [fields.map(f => f.value).join(','), hasOffreField, defaultOpen, open]);
 
   return (
     <div className="space-y-4 bg-white/80 rounded-xl shadow-lg p-6 border border-fading-grey">
-      {hasOffreField && defaultOpen && (
+      {/* {hasOffreField && defaultOpen && (
         <div className="bg-hello-yellow/10 flex items-center px-4 py-2 rounded-xl mb-2">
           <p className="text-mister-anthracite font-medium flex-1">
             Est-ce qu'une offre a été effectuée ?
@@ -63,7 +85,7 @@ const GroupedInputs: React.FC<GroupedInputsProps> = ({ fields, defaultOpen }) =>
             }}
           />
         </div>
-      )}
+      )} */}
       {open && fields
         .filter(f => !f.hidden)
         .map((field) => (
