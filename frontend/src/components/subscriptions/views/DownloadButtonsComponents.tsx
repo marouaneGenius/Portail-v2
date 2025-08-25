@@ -61,6 +61,7 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   useEffect(() => {
     if(pdfUrl) {
       saveContract();
+      navigate(`/student/${student.id}`);
     }
   }, [pdfUrl])
 
@@ -100,7 +101,6 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
             'Authorization': `Bearer ${authToken}`,
           },
         });
-        navigate(`/student/${student.id}`)
       }
 
     } catch (error) {
