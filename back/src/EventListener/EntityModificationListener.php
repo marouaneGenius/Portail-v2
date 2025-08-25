@@ -7,6 +7,7 @@ use App\Entity\Student;
 use App\Entity\StudentParent;
 use App\Entity\Center;
 use App\Entity\User;
+use App\Entity\Session;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
@@ -34,6 +35,7 @@ class EntityModificationListener
      * Entités à tracer automatiquement
      */
     private const TRACKED_ENTITIES = [
+        Session::class,
         Student::class,
         StudentParent::class,
         Center::class,

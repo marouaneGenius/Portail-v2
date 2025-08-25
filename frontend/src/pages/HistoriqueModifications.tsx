@@ -199,7 +199,7 @@ const HistoriqueModifications: React.FC = () => {
                   Historique des modifications
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Consultez toutes les modifications apportées aux équipes, élèves, parents et centres
+                  Consultez toutes les modifications apportées aux sessions, élèves, parents, centres et équipes
                 </p>
               </div>
             </div>

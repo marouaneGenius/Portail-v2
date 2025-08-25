@@ -348,10 +348,14 @@ class HistoriqueController extends AbstractController
      */
     private function formatModificationForDisplay($modification, bool $detailed = false): array
     {
+        // Convertir l'heure UTC en heure locale française (Europe/Paris)
+        $createdAt = $modification->getCreatedAt();
+        $localDateTime = $createdAt->setTimezone(new \DateTimeZone('Europe/Paris'));
+        
         $data = [
             'id' => $modification->getId(),
-            'created_at' => $modification->getCreatedAt()->format('Y-m-d H:i:s'),
-            'created_at_human' => $modification->getCreatedAt()->format('d/m/Y à H:i'),
+            'created_at' => $localDateTime->format('Y-m-d H:i:s'),
+            'created_at_human' => $localDateTime->format('d/m/Y à H:i'),
             'user' => $modification->getUser() ? [
                 'id' => $modification->getUser()->getId(),
                 'name' => $modification->getUser()->getFirstname() . ' ' . $modification->getUser()->getLastname(),
@@ -402,8 +406,11 @@ class HistoriqueController extends AbstractController
 
         // Données
         foreach ($modifications as $modification) {
+            // Convertir en heure locale pour le CSV aussi
+            $localDateTime = $modification->getCreatedAt()->setTimezone(new \DateTimeZone('Europe/Paris'));
+            
             fputcsv($output, [
-                $modification->getCreatedAt()->format('d/m/Y H:i:s'),
+                $localDateTime->format('d/m/Y H:i:s'),
                 $modification->getUser() ? 
                     $modification->getUser()->getFirstname() . ' ' . $modification->getUser()->getLastname() : 
                     'Système',
@@ -431,6 +438,7 @@ class HistoriqueController extends AbstractController
     private function getEntityTypeLabel(string $entityType): string
     {
         $labels = [
+            'session' => 'Séance',
             'student' => 'Élève',
             'parent' => 'Parent',
             'center' => 'Centre',

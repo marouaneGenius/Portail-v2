@@ -57,7 +57,6 @@ export default function EditionForm() {
 
 
     await api.put(`/api/${resource}/${id}`, payload);
-    console.log(resource)
     navigate(`/${resource}/${id}`);
     };
 

@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Entity\Student;
 use App\Entity\StudentParent;
 use App\Entity\Center;
+use App\Entity\Session;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -40,6 +41,7 @@ class HistoryTracker
      * Mapping des types d'entités
      */
     private const ENTITY_TYPE_MAPPING = [
+        Session::class => 'session',
         Student::class => 'student',
         StudentParent::class => 'parent',
         Center::class => 'center',
@@ -80,7 +82,8 @@ class HistoryTracker
                    ->setNewValue(['type' => 'entity', 'value' => 'Entité créée'])
                    ->setIpAddress($this->getClientIp())
                    ->setUserAgent($this->getUserAgent())
-                   ->setMetadata($this->getEntityMetadata($entity));
+                   ->setMetadata($this->getEntityMetadata($entity))
+                   ->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('Europe/Paris')));
 
             $this->entityManager->persist($history);
             $this->entityManager->flush();
@@ -123,7 +126,8 @@ class HistoryTracker
                        ->setNewValue($this->formatValue($fieldName, $newValue))
                        ->setIpAddress($this->getClientIp())
                        ->setUserAgent($this->getUserAgent())
-                       ->setMetadata($this->getEntityMetadata($entity));
+                       ->setMetadata($this->getEntityMetadata($entity))
+                       ->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('Europe/Paris')));
 
                 $this->entityManager->persist($history);
             }
@@ -160,7 +164,8 @@ class HistoryTracker
                    ->setNewValue(['type' => 'entity', 'value' => 'Entité supprimée'])
                    ->setIpAddress($this->getClientIp())
                    ->setUserAgent($this->getUserAgent())
-                   ->setMetadata($this->getEntityMetadata($entity));
+                   ->setMetadata($this->getEntityMetadata($entity))
+                   ->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('Europe/Paris')));
 
             $this->entityManager->persist($history);
             $this->entityManager->flush();
@@ -194,7 +199,8 @@ class HistoryTracker
                    ->setNewValue(['type' => 'action', 'value' => $description])
                    ->setIpAddress($this->getClientIp())
                    ->setUserAgent($this->getUserAgent())
-                   ->setMetadata($metadata);
+                   ->setMetadata($metadata)
+                   ->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('Europe/Paris')));
 
             $this->entityManager->persist($history);
             $this->entityManager->flush();
@@ -233,6 +239,9 @@ class HistoryTracker
     private function getEntityName(object $entity): ?string
     {
         switch (get_class($entity)) {
+            case Session::class:
+                return $this->getSessionDisplayName($entity);
+            
             case Student::class:
                 return $entity->getFirstname() . ' ' . $entity->getLastname();
             
@@ -248,6 +257,38 @@ class HistoryTracker
             default:
                 return null;
         }
+    }
+
+    /**
+     * Génère un nom d'affichage pour une session
+     */
+    private function getSessionDisplayName(Session $session): string
+    {
+        $displayName = 'Session #' . $session->getId();
+        
+        if ($session->getScheduledAt()) {
+            $displayName .= ' - ' . $session->getScheduledAt()->format('d/m/Y H:i');
+        }
+        
+        if ($session->getIdTutor()) {
+            $tutor = $session->getIdTutor();
+            $displayName .= ' - ' . $tutor->getFirstname() . ' ' . $tutor->getLastname();
+        }
+
+        $students = $session->getIdStudent();
+        if (!$students->isEmpty()) {
+            $studentNames = [];
+            foreach ($students as $student) {
+                $studentNames[] = $student->getFirstname() . ' ' . $student->getLastname();
+            }
+            if (count($studentNames) <= 2) {
+                $displayName .= ' - ' . implode(', ', $studentNames);
+            } else {
+                $displayName .= ' - ' . $studentNames[0] . ' et ' . (count($studentNames) - 1) . ' autres';
+            }
+        }
+        
+        return $displayName;
     }
 
     /**
@@ -372,6 +413,20 @@ class HistoryTracker
 
         // Ajouter des métadonnées spécifiques selon le type d'entité
         switch (get_class($entity)) {
+            case Session::class:
+                if ($entity->getIdTutor()) {
+                    $metadata['tutor_id'] = $entity->getIdTutor()->getId();
+                    $metadata['tutor_name'] = $entity->getIdTutor()->getFirstname() . ' ' . $entity->getIdTutor()->getLastname();
+                }
+                if ($entity->getCenter()) {
+                    $metadata['center_id'] = $entity->getCenter()->getId();
+                    $metadata['center_name'] = $entity->getCenter()->getName();
+                }
+                $metadata['session_type'] = $entity->getSessionType();
+                $metadata['subjects'] = $entity->getSchoolSubjects();
+                $metadata['student_count'] = $entity->getIdStudent()->count();
+                break;
+            
             case Student::class:
                 $metadata['student_class'] = $entity->getClass();
                 if ($entity->getIdCenter()) {
