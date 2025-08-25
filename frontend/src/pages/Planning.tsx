@@ -6,6 +6,7 @@ import { Navigate } from 'react-router-dom';
 import WeeklySchedule from '../components/WeeklySchedule';
 import { SessionData } from '../components/SessionCard';
 import api from '@/api/aixos';
+import { formatDateTimeParent } from '../services/functions';
 
 const Planning: React.FC = () => {
   const { hasPermission, isTutor, isAdmin, isUser, user } = usePermissions();
@@ -33,14 +34,27 @@ const Planning: React.FC = () => {
             return (session.students || []).map((student: any) => ({
               id: session.id,
               date: new Date(session.scheduled_at).toISOString().split('T')[0],
-              startTime: new Date(session.scheduled_at).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              }),
-              endTime: new Date(new Date(session.scheduled_at).getTime() + 90 * 60 * 1000).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              }),
+              startTime: (() => {
+                // Utiliser la fonction formatDateTimeParent pour éviter le décalage de fuseau horaire
+                const { time } = formatDateTimeParent(session.scheduled_at);
+                return time;
+              })(),
+              endTime: (() => {
+                // Calculer l'heure de fin en ajoutant 90 minutes
+                const dateStr = session.scheduled_at;
+                if (dateStr.includes('T')) {
+                  const timeStr = dateStr.split('T')[1].split(/[Z+\-]/)[0];
+                  const [hours, minutes] = timeStr.split(':').map(Number);
+                  const totalMinutes = hours * 60 + minutes + 90;
+                  const endHours = Math.floor(totalMinutes / 60);
+                  const endMinutes = totalMinutes % 60;
+                  return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+                }
+                // Fallback si le format n'est pas ISO
+                const endTime = new Date(new Date(session.scheduled_at).getTime() + 90 * 60 * 1000);
+                const { time } = formatDateTimeParent(endTime.toISOString());
+                return time;
+              })(),
               subject: session.school_subjects?.[0] || 'Non spécifié',
               student: {
                 id: student.id,

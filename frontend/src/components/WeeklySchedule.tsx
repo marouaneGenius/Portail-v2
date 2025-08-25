@@ -21,16 +21,17 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
   // Calculer le début et la fin de la semaine courante
   const getWeekBounds = (date: Date) => {
-    const start = new Date(date);
+    const inputDate = new Date(date.getTime()); // Copie complète
+    
+    const start = new Date(inputDate);
     const day = start.getDay();
-    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Lundi comme premier jour
-    start.setDate(diff);
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + mondayOffset);
     start.setHours(0, 0, 0, 0);
-
+  
     const end = new Date(start);
-    end.setDate(start.getDate() + 6);
+    end.setDate(end.getDate() + 6);
     end.setHours(23, 59, 59, 999);
-
     return { start, end };
   };
 

@@ -47,7 +47,6 @@ const SessionCard: React.FC<SessionCardProps> = ({
   isTutor = false
 }) => {
 
-  console.log(session)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -109,9 +108,9 @@ const SessionCard: React.FC<SessionCardProps> = ({
                 {getStatusText(session.status)}
               </Badge>
               {/* Informations sur qui a annulé ou marqué absent */}
-              {session.status === 'cancelled' && session.is_canceled && (
+              {session.status === 'cancelled' && (
                 <span className="text-xs text-gray-500">
-                  Annulé par : {session.markedByParent ? 'Parent' : session.is_canceled}
+                  Annulé par : {session.canceled_by}
                 </span>
               )}
               {session.is_absent  && (
@@ -136,7 +135,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
           </div>
           
           {/* Bouton toggle de présence pour les tuteurs en mode compact */}
-          {isTutor && onAttendanceChange && (
+          {isTutor && onAttendanceChange && session.status !== 'cancelled'&&  (
             <div className="flex mt-2">
               <Button
                 size="sm"

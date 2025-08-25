@@ -10,6 +10,7 @@ import api from '@/api/aixos';
 import Modal from '../components/Modal';
 import { UpdateSlotForm } from '@/forms/schemas';
 import { RenderTrialField } from '../components/forms/customInput';
+import { formatDateTimeParent } from '@/services/functions';
 
 interface ChildSession {
   id: number;
@@ -308,32 +309,7 @@ const ParentDashboard: React.FC = () => {
     }));
   };
 
-  const formatDateTime = (dateStr: string) => {
-    // Approche simple : remplacer le 'T' par un espace et enlever les infos de fuseau horaire
-    // pour forcer JavaScript à traiter la date comme locale
-    let cleanDateStr = dateStr;
-    
-    // Si c'est une date ISO (YYYY-MM-DDTHH:MM:SS), la nettoyer
-    if (dateStr.includes('T')) {
-      // Enlever les infos de fuseau horaire (Z, +XX:XX, etc.)
-      cleanDateStr = dateStr.split('T')[0] + ' ' + dateStr.split('T')[1].split(/[Z+\-]/)[0];
-    }
-    
-    const date = new Date(cleanDateStr);
-    
-    return {
-      date: date.toLocaleDateString('fr-FR', { 
-        weekday: 'long',
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric'
-      }),
-      time: date.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit'
-      })
-    };
-  };
+
 
   const getUpcomingSessions = () => {
     const now = new Date();
@@ -401,7 +377,7 @@ const ParentDashboard: React.FC = () => {
             </div>
             <p className="text-sm text-gray-600">
               {upcomingSessions.length > 0 
-                ? `Prochain cours le ${formatDateTime(upcomingSessions[0].scheduled_at).date}`
+                ? `Prochain cours le ${formatDateTimeParent(upcomingSessions[0].scheduled_at).date}`
                 : 'Aucun cours planifié'
               }
             </p>
@@ -552,7 +528,7 @@ const ParentDashboard: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {upcomingSessions.map((session) => {
-                const { date, time } = formatDateTime(session.scheduled_at);
+                const { date, time } = formatDateTimeParent(session.scheduled_at);
                 const isPast = new Date(session.scheduled_at) < new Date();
                 
                 return (
@@ -690,7 +666,7 @@ const ParentDashboard: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {pastSessions.map((session) => {
-                  const { date, time } = formatDateTime(session.scheduled_at);
+                  const { date, time } = formatDateTimeParent(session.scheduled_at);
                   
                   return (
                     <div

@@ -22,6 +22,34 @@ export function renameFields<T extends { name?: string }>(fields: T[]): T[] {
 }
 
 
+export const formatDateTimeParent = (dateStr: string) => {
+  // Approche simple : remplacer le 'T' par un espace et enlever les infos de fuseau horaire
+  // pour forcer JavaScript à traiter la date comme locale
+  let cleanDateStr = dateStr;
+  
+  // Si c'est une date ISO (YYYY-MM-DDTHH:MM:SS), la nettoyer
+  if (dateStr.includes('T')) {
+    // Enlever les infos de fuseau horaire (Z, +XX:XX, etc.)
+    cleanDateStr = dateStr.split('T')[0] + ' ' + dateStr.split('T')[1].split(/[Z+\-]/)[0];
+  }
+  
+  const date = new Date(cleanDateStr);
+  
+  return {
+    date: date.toLocaleDateString('fr-FR', { 
+      weekday: 'long',
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric'
+    }),
+    time: date.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    })
+  };
+};
+
+
 export function splitParentKeys(values: Record<string, any>, resource:any) {
 
   if(resource === "tutorschedule") {
