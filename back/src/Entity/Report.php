@@ -35,7 +35,7 @@ class Report
     private ?\DateTimeImmutable $updated_at = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $updated_by = null;
+    private ?string $updated_by = null;
 
     public function getId(): ?int
     {
@@ -126,12 +126,12 @@ class Report
         return $this;
     }
 
-    public function getUpdatedBy(): ?int
+    public function getUpdatedBy(): ?string
     {
         return $this->updated_by;
     }
 
-    public function setUpdatedBy(?int $updated_by): static
+    public function setUpdatedBy(?string $updated_by): static
     {
         $this->updated_by = $updated_by;
 
