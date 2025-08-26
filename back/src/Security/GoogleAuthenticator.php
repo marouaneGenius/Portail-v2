@@ -40,10 +40,10 @@ final class GoogleAuthenticator extends OAuth2Authenticator
 
 
 
-                if($gUser->getHostedDomain() !== 'geniusclass.fr'){
-                     return new JsonResponse(['error' => "Cette adresse n'est pas valide, veuillez contacter Genius"], 401);
-                } else {
-                    // dd($gUser);
+                // Vérifier le domaine email au lieu du hosted domain
+                $email = $gUser->getEmail();
+                if (!str_ends_with($email, '@geniusclass.fr')) {
+                    throw new AuthenticationException("Cette adresse n'est pas valide, veuillez contacter Genius");
                 }
 
                 // 1) déjà lié
@@ -100,6 +100,18 @@ final class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
     {
-        return new JsonResponse(['error' => $exception->getMessageKey()], 401);
+        // Envoyer l'erreur à la popup parent comme pour le succès
+        $error = $exception->getMessage();
+        
+        $html = <<<HTML
+        <!DOCTYPE html><meta charset="utf-8">
+        <script>
+        window.opener?.postMessage({ error: '$error' }, '*');
+        window.close();
+        </script>
+        <body>Erreur d'authentification: $error</body>
+        HTML;
+        
+        return new Response($html);
     }
 }
