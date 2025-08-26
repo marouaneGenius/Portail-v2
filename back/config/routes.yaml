@@ -1,7 +1,3 @@
 controllers:
     resource: ../src/Controller/
     type: attribute
-    
-login_check:
-    path:     /login
-    methods:  [POST]
