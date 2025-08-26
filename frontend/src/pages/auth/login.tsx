@@ -6,7 +6,7 @@ import { useAuth, User } from '../../Hooks/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL_PROD?.trim() || import.meta.env.VITE_API_URL_DEV?.trim();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
