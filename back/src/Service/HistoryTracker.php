@@ -325,7 +325,8 @@ class HistoryTracker
                     'type' => 'relation',
                     'value' => $value->getId(),
                     'display' => $this->getEntityName($value) ?? 'ID: ' . $value->getId(),
-                    'class' => get_class($value)
+                    'class' => get_class($value),
+                    'field' => $fieldName // Utiliser le nom du champ pour contexte
                 ];
             }
         }
