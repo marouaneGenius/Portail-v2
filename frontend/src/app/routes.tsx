@@ -1,8 +1,9 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoute from "./protectedRoutes";
 import Dashboard from "../pages/Dashboard";
 import Home from "../pages/Home";
 import Login from "../pages/auth/login";
+import DefaultRedirect from "../components/DefaultRedirect";
 import App from "../App";
 import Profile from "../pages/Profile";
 import Centers from "../pages/Centers";
@@ -32,13 +33,14 @@ export const router = createBrowserRouter([
     {
       element: <App />,
       children: [
-        { path: "/", element: <Home /> },
+        { path: "/", element: <DefaultRedirect /> },
         { path: "/login", element: <Login /> },
         { path: "/payment/success", element: <PaymentSuccess /> },
         { path: "/payment/cancel", element: <PaymentCancel /> },
         {
           element: <ProtectedRoute />,  
           children: [
+            { path: "/home", element: <Home /> },
             {
               element: <ParentProtectedRoute />,
               children: [
