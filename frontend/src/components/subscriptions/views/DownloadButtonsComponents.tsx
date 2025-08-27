@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGenerate, previewId}) => {
   const [pdfUrl, setPdfUrl] = useState<string | any>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
 
@@ -59,11 +61,16 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   }, [student.id, subscription.id, subscription, student]);
 
   useEffect(() => {
-    if(pdfUrl) {
+    if(pdfUrl && !uploadSuccess) {
       saveContract();
-      navigate(`/student/${student.id}`);
     }
   }, [pdfUrl])
+
+  useEffect(() => {
+    if(uploadSuccess) {
+      navigate(`/student/${student.id}`);
+    }
+  }, [uploadSuccess])
 
   const saveContract = async() => {
     try {
@@ -93,17 +100,30 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
         formData.append('subscription_id', String(subscriptionId));
         formData.append('url', `${student.id}-${subscriptionId}-${Date.now()}.pdf`);
 
-        const apiUrl = `${import.meta.env.VITE_API_URL_DEV}api/subscription-url`;
+        const baseUrl = import.meta.env.VITE_API_URL_PROD || import.meta.env.VITE_API_URL_DEV;
+        const apiUrl = `${baseUrl}/api/subscription-url`;
         const authToken = useAuth.getState().accessToken;
-        await axios.post(apiUrl, formData, {
+        
+        console.log('Upload URL:', apiUrl);
+        console.log('FormData size:', pdfBlob.size, 'bytes');
+        
+        const response = await axios.post(apiUrl, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${authToken}`,
           },
         });
+        
+        console.log('Upload successful:', response.data);
+        setUploadSuccess(true);
       }
 
     } catch (error) {
+      const errorMessage = axios.isAxiosError(error) 
+        ? `Erreur ${error.response?.status}: ${error.response?.data?.error || error.message}`
+        : 'Erreur lors de l\'upload du contrat';
+      
+      setError(errorMessage);
       console.error('Erreur complète:', {
         message: error instanceof Error ? error.message : 'Erreur inconnue',
         stack: error instanceof Error ? error.stack : undefined,
@@ -116,7 +136,17 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
     <nav className="bg-gray-100 print:hidden mx-auto w-5/6 rounded">
       <div className="container mx-auto px-4 flex flex-wrap items-center justify-between py-2">
         <span className="font-semibold text-lg">Devis</span>
-          <LoaderOverlay isLoading={loading} />
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <strong>Erreur:</strong> {error}
+          </div>
+        )}
+        {uploadSuccess && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            Contrat sauvegardé avec succès!
+          </div>
+        )}
+        <LoaderOverlay isLoading={loading} />
       </div>
     </nav>
   );
