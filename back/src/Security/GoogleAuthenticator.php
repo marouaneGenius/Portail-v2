@@ -83,15 +83,39 @@ final class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewall): Response
     {
-        $jwt = $this->jwt->create($token->getUser());
+        // $jwt = $this->jwt->create($token->getUser());
 
+        // $html = <<<HTML
+        // <!DOCTYPE html><meta charset="utf-8">
+        // <script>
+        // window.opener?.postMessage({ token: '$jwt' }, '*');
+        // window.close();
+        // </script>
+        // <body>Authentification réussie…</body>
+        // HTML;
+        
+        // return new Response($html);
+
+        $jwt = $this->jwt->create($token->getUser());
+        error_log("JWT généré pour user: " . $token->getUser()->getEmail());
+    
         $html = <<<HTML
         <!DOCTYPE html><meta charset="utf-8">
         <script>
-        window.opener?.postMessage({ token: '$jwt' }, '*');
-        window.close();
+        console.log('Page callback chargée');
+        console.log('Token à envoyer:', '$jwt'.substring(0, 20));
+        
+        // Envoyer vers tous les domaines possibles
+        if (window.opener) {
+            window.opener.postMessage({ token: '$jwt' }, 'https://portailv2.geniusclass.fr');
+            window.opener.postMessage({ token: '$jwt' }, '*');
+            console.log('Messages envoyés');
+        }
+        
+        // Auto-fermeture après 2 secondes
+        setTimeout(() => window.close(), 2000);
         </script>
-        <body>Authentification réussie…</body>
+        <body><h3>Connexion réussie, fermeture...</h3><p>Token: $jwt</p></body>
         HTML;
         
         return new Response($html);
