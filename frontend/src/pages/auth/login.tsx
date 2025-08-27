@@ -37,68 +37,125 @@ const Login: React.FC = () => {
   };
 
 
+  // const handleGoogleLogin = () => {
+  //   const popup = window.open(
+  //     `${API_URL}/connect/google`,
+  //     'google-auth',
+  //     'width=500,height=650'
+  //   );
+  //   if (!popup) return; 
+  
+  //   const receive = async (e: MessageEvent) => {
+  //     // Vérifier que le message vient de la popup Google
+  //     if (e.source !== popup) return;
+      
+  //     if (e.data?.token) {
+  //       try {
+  //         popup.close();
+  //       } catch (error) {
+  //         // La popup peut déjà être fermée par le backend
+  //       }
+  //       localStorage.setItem('jwt', e.data.token);
+  //       const me :any = await getCurrentUser(API_URL, e.data.token)
+
+  //       if(me) {
+  //         useAuth.getState().setUser(me, e.data.token);
+          
+  //         // Rediriger selon le rôle de l'utilisateur
+  //         if (me.roles?.includes('ROLE_TUTOR')) {
+  //           navigate('/planning');
+  //         } else if (me.roles?.includes('ROLE_PARENT')) { 
+  //           navigate('/parent-dashboard');
+  //         } else if (me.roles?.includes('ROLE_ADMIN') || me.roles?.includes('ROLE_USER')) {
+  //           navigate('/dashboard');
+  //         } else {
+  //           navigate('/dashboard'); // fallback
+  //         }
+  //       } else {
+  //         console.error('ERROR => Un problème est survenu lors de la recuperatin du compte')
+  //       }
+  //       window.removeEventListener('message', receive);
+  //     } else if (e.data?.error) {
+  //       try {
+  //         popup.close();
+  //       } catch (error) {
+  //         // La popup peut déjà être fermée par le backend
+  //       }
+  //       setError(e.data.error);
+  //       window.removeEventListener('message', receive);
+  //     }
+  //   };
+    
+  //   window.addEventListener('message', receive);
+    
+  //   // Vérifier si la popup est fermée manuellement
+  //   const checkClosed = setInterval(() => {
+  //     if (popup.closed) {
+  //       clearInterval(checkClosed);
+  //       window.removeEventListener('message', receive);
+  //     }
+  //   }, 1000);
+  // };
+
+
   const handleGoogleLogin = () => {
     const popup = window.open(
       `${API_URL}/connect/google`,
       'google-auth',
-      'width=500,height=650'
+      'width=500,height=650,scrollbars=yes,resizable=yes'
     );
-    if (!popup) return; 
+    
+    if (!popup) return;
   
     const receive = async (e: MessageEvent) => {
-      // Vérifier que le message vient de la popup Google
-      if (e.source !== popup) return;
+      console.log('Message reçu:', e.data, 'Origin:', e.origin);
       
+      // Accepter tous les messages pour debug
       if (e.data?.token) {
+        console.log('Token reçu:', e.data.token.substring(0, 20) + '...');
+        
+        // Fermer la popup sans vérifier l'origine
         try {
           popup.close();
         } catch (error) {
-          // La popup peut déjà être fermée par le backend
+          console.log('Erreur fermeture popup (ignorée):', error);
         }
+        
         localStorage.setItem('jwt', e.data.token);
-        const me :any = await getCurrentUser(API_URL, e.data.token)
-
+        const me = await getCurrentUser(API_URL, e.data.token);
+        
         if(me) {
+          console.log('Utilisateur récupéré:', me);
           useAuth.getState().setUser(me, e.data.token);
           
-          // Rediriger selon le rôle de l'utilisateur
           if (me.roles?.includes('ROLE_TUTOR')) {
             navigate('/planning');
           } else if (me.roles?.includes('ROLE_PARENT')) { 
             navigate('/parent-dashboard');
-          } else if (me.roles?.includes('ROLE_ADMIN') || me.roles?.includes('ROLE_USER')) {
-            navigate('/dashboard');
           } else {
-            navigate('/dashboard'); // fallback
+            navigate('/dashboard');
           }
-        } else {
-          console.error('ERROR => Un problème est survenu lors de la recuperatin du compte')
         }
         window.removeEventListener('message', receive);
       } else if (e.data?.error) {
-        try {
-          popup.close();
-        } catch (error) {
-          // La popup peut déjà être fermée par le backend
-        }
+        console.error('Erreur OAuth:', e.data.error);
         setError(e.data.error);
+        popup.close();
         window.removeEventListener('message', receive);
       }
     };
     
     window.addEventListener('message', receive);
     
-    // Vérifier si la popup est fermée manuellement
-    const checkClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkClosed);
-        window.removeEventListener('message', receive);
+    // Timeout de sécurité
+    setTimeout(() => {
+      if (!popup.closed) {
+        console.log('Timeout OAuth, fermeture popup');
+        popup.close();
       }
-    }, 1000);
+      window.removeEventListener('message', receive);
+    }, 60000); // 1 minute
   };
-
-
-  
   return (
     <div className="flex w-full h-screen">
       <div className="
