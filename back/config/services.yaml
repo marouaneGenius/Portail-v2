@@ -6,6 +6,7 @@
 parameters:
     stripe.public_key: '%env(TEST_STRIPE_PUBLIC_KEY)%'
     stripe.secret_key: '%env(TEST_STRIPE_PRIVATE_KEY)%'
+    app.frontend_url: '%env(FRONTEND_URL)%'
 
 
 services:

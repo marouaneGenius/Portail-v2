@@ -4,6 +4,8 @@ namespace App\Security;
 use KnpU\OAuth2ClientBundle\Security\Authenticator\OAuth2Authenticator;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use League\OAuth2\Client\Provider\GoogleUser;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\{Request, JsonResponse, Response};
 use Symfony\Component\Security\Http\Authenticator\Passport\{Passport, SelfValidatingPassport};
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
@@ -20,6 +22,8 @@ final class GoogleAuthenticator extends OAuth2Authenticator
         private UserRepository           $users,
         private JWTTokenManagerInterface $jwt,
         private EntityManagerInterface   $em,
+        private LoggerInterface         $logger,
+        private ParameterBagInterface   $params,
     ) {}
 
     public function supports(Request $request): bool
@@ -81,10 +85,83 @@ final class GoogleAuthenticator extends OAuth2Authenticator
     //     ]);
     // }
 
+    // public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewall): Response
+    // {
+    //     $jwt = $this->jwt->create($token->getUser());
+    
+    //     $html = <<<HTML
+    //     <!DOCTYPE html><meta charset="utf-8">
+    //     <script>
+        
+    //     // Essayer plusieurs méthodes de communication
+    //     function sendTokenToParent(token) {
+    //         console.log('Tentative envoi token...');
+            
+    //         // Méthode 1: PostMessage standard
+    //         try {
+    //             if (window.opener && !window.opener.closed) {
+    //                 window.opener.postMessage({ token: token }, '*');
+    //                 console.log('PostMessage envoyé avec *');
+                    
+    //                 // Aussi avec le domaine spécifique
+    //                 window.opener.postMessage({ token: token }, 'https://portailv2.geniusclass.fr');
+    //                 console.log('PostMessage envoyé avec domaine');
+                    
+    //                 // Attendre un peu puis fermer
+    //                 setTimeout(() => {
+    //                     try {
+    //                         window.close();
+    //                     } catch(e) {
+    //                         console.log('Erreur fermeture:', e);
+    //                         document.body.innerHTML += '<p><button onclick="window.close()">Fermer cette fenêtre</button></p>';
+    //                     }
+    //                 }, 500);
+                    
+    //                 return true;
+    //             }
+    //         } catch (e) {
+    //             console.error('Erreur postMessage:', e);
+    //         }
+            
+    //         // Méthode 2: Stockage local partagé (fallback)
+    //         try {
+    //             localStorage.setItem('oauth_token_temp', token);
+    //             localStorage.setItem('oauth_timestamp', Date.now().toString());
+    //             console.log('Token stocké en localStorage');
+                
+    //             // Notifier via un événement de stockage
+    //             if (window.opener) {
+    //                 window.opener.postMessage({ type: 'oauth_storage', token: token }, '*');
+    //             }
+                
+    //             setTimeout(() => window.close(), 200);
+    //         } catch (e) {
+    //             console.error('Erreur localStorage:', e);
+    //         }
+    //     }
+        
+    //     // Lancer immédiatement
+    //     sendTokenToParent('$jwt');
+    //     </script>
+    //     <body>
+    //         <h3>Connexion réussie</h3>
+    //         <p>Fermeture automatique en cours...</p>
+    //         <p style="font-size: 12px; color: #666;">Token: $jwt</p>
+    //         <button onclick="window.close()" style="margin-top: 10px;">Fermer manuellement</button>
+    //     </body>
+    //     HTML;
+        
+    //     return new Response($html);
+    // }
+
+
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewall): Response
     {
         $jwt = $this->jwt->create($token->getUser());
-    
+        
+        // Récupérer l'URL frontend depuis les paramètres
+        $frontendUrl = $this->params->get('app.frontend_url');
+
         $html = <<<HTML
         <!DOCTYPE html><meta charset="utf-8">
         <script>
@@ -101,7 +178,7 @@ final class GoogleAuthenticator extends OAuth2Authenticator
                     console.log('PostMessage envoyé avec *');
                     
                     // Aussi avec le domaine spécifique
-                    window.opener.postMessage({ token: token }, 'https://portailv2.geniusclass.fr');
+                    window.opener.postMessage({ token: token }, '$frontendUrl');
                     console.log('PostMessage envoyé avec domaine');
                     
                     // Attendre un peu puis fermer
@@ -112,7 +189,7 @@ final class GoogleAuthenticator extends OAuth2Authenticator
                             console.log('Erreur fermeture:', e);
                             document.body.innerHTML += '<p><button onclick="window.close()">Fermer cette fenêtre</button></p>';
                         }
-                    }, 1500);
+                    }, 500);
                     
                     return true;
                 }
@@ -131,7 +208,7 @@ final class GoogleAuthenticator extends OAuth2Authenticator
                     window.opener.postMessage({ type: 'oauth_storage', token: token }, '*');
                 }
                 
-                setTimeout(() => window.close(), 2000);
+                setTimeout(() => window.close(), 200);
             } catch (e) {
                 console.error('Erreur localStorage:', e);
             }
