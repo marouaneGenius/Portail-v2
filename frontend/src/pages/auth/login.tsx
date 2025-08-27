@@ -102,60 +102,86 @@ const Login: React.FC = () => {
     const popup = window.open(
       `${API_URL}/connect/google`,
       'google-auth',
-      'width=500,height=650,scrollbars=yes,resizable=yes'
+      'width=500,height=650'
     );
     
     if (!popup) return;
   
+    let tokenReceived = false;
+  
     const receive = async (e: MessageEvent) => {
-      console.log('Message reçu:', e.data, 'Origin:', e.origin);
+      if (tokenReceived) return; // Éviter les doublons
       
-      // Accepter tous les messages pour debug
+      console.log('Message reçu:', e.data);
+      
       if (e.data?.token) {
-        console.log('Token reçu:', e.data.token.substring(0, 20) + '...');
-        
-        // Fermer la popup sans vérifier l'origine
-        try {
-          popup.close();
-        } catch (error) {
-          console.log('Erreur fermeture popup (ignorée):', error);
-        }
-        
-        localStorage.setItem('jwt', e.data.token);
-        const me = await getCurrentUser(API_URL, e.data.token);
-        
-        if(me) {
-          console.log('Utilisateur récupéré:', me);
-          useAuth.getState().setUser(me, e.data.token);
-          
-          if (me.roles?.includes('ROLE_TUTOR')) {
-            navigate('/planning');
-          } else if (me.roles?.includes('ROLE_PARENT')) { 
-            navigate('/parent-dashboard');
-          } else {
-            navigate('/dashboard');
-          }
-        }
-        window.removeEventListener('message', receive);
-      } else if (e.data?.error) {
-        console.error('Erreur OAuth:', e.data.error);
-        setError(e.data.error);
-        popup.close();
-        window.removeEventListener('message', receive);
+        tokenReceived = true;
+        console.log('Token reçu via postMessage');
+        await processToken(e.data.token);
+      } else if (e.data?.type === 'oauth_storage') {
+        tokenReceived = true;
+        console.log('Token reçu via storage');
+        await processToken(e.data.token);
       }
     };
-    
+  
+    // Fonction pour traiter le token
+    const processToken = async (token: string) => {
+      try {
+        popup.close();
+      } catch (error) {
+        console.log('Popup fermée');
+      }
+      
+      localStorage.setItem('jwt', token);
+      const me = await getCurrentUser(API_URL, token);
+      
+      if(me) {
+        useAuth.getState().setUser(me, token);
+        
+        if (me.roles?.includes('ROLE_TUTOR')) {
+          navigate('/planning');
+        } else if (me.roles?.includes('ROLE_PARENT')) { 
+          navigate('/parent-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+      
+      window.removeEventListener('message', receive);
+      clearInterval(checkStorage);
+    };
+  
     window.addEventListener('message', receive);
     
-    // Timeout de sécurité
-    setTimeout(() => {
-      if (!popup.closed) {
-        console.log('Timeout OAuth, fermeture popup');
-        popup.close();
+    // Méthode de fallback : vérifier le localStorage
+    const checkStorage = setInterval(() => {
+      if (tokenReceived) return;
+      
+      const token = localStorage.getItem('oauth_token_temp');
+      const timestamp = localStorage.getItem('oauth_timestamp');
+      
+      if (token && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < 10000) { // Token de moins de 10 secondes
+          tokenReceived = true;
+          console.log('Token trouvé via localStorage');
+          localStorage.removeItem('oauth_token_temp');
+          localStorage.removeItem('oauth_timestamp');
+          processToken(token);
+        }
       }
+    }, 500);
+  
+    // Nettoyage après timeout
+    setTimeout(() => {
+      clearInterval(checkStorage);
       window.removeEventListener('message', receive);
-    }, 60000); // 1 minute
+    }, 60000);
   };
+
+
+
   return (
     <div className="flex w-full h-screen">
       <div className="
