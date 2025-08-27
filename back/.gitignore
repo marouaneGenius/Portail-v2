@@ -1,4 +1,4 @@
-
+.env
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -36,7 +36,10 @@ yarn-error.log
 .env
 
 /.env
-/.env
-/config/packages/debug.yaml
-/config/packages/web_profiler.yaml
-/config/routes/web_profiler.yaml
+
+/config/packages/dev/web_profiler.yaml
+/config/routes/dev/web_profiler.yaml
+/config/routes/dev/debug.yaml
+/config/packages/dev/web_profiler.yaml
+/config/routes/dev/web_profiler.yaml
+/config/routes/dev/debug.yaml
