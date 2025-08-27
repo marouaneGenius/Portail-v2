@@ -101,7 +101,8 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
         formData.append('url', `${student.id}-${subscriptionId}-${Date.now()}.pdf`);
 
         const baseUrl = import.meta.env.VITE_API_URL_PROD || import.meta.env.VITE_API_URL_DEV;
-        const apiUrl = `${baseUrl}/api/subscription-url`;
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const apiUrl = `${cleanBaseUrl}/api/subscription-url`;
         const authToken = useAuth.getState().accessToken;
         
         console.log('Upload URL:', apiUrl);
