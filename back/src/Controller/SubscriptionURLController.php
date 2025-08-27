@@ -38,7 +38,16 @@ class SubscriptionURLController extends AbstractController
             throw new BadRequestHttpException('Le fichier PDF est requis.');
         }
 
-        // 2) Récupérer les autres champs
+        // 2) Validation de la taille du fichier (10MB max)
+        $maxSize = 10 * 1024 * 1024; // 10 MB
+        if ($file->getSize() > $maxSize) {
+            return $this->json([
+                'error' => 'Le fichier est trop volumineux. Taille maximale autorisée : 10 MB.',
+                'file_size' => round($file->getSize() / 1024 / 1024, 2) . ' MB'
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // 3) Récupérer les autres champs
         $studentId      = $request->request->getInt('user_id');
         $subscriptionId = $request->request->getInt('subscription_id');
         $is_combined = $request->request->getBoolean('is_combined');
