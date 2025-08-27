@@ -83,39 +83,69 @@ final class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewall): Response
     {
-        // $jwt = $this->jwt->create($token->getUser());
-
-        // $html = <<<HTML
-        // <!DOCTYPE html><meta charset="utf-8">
-        // <script>
-        // window.opener?.postMessage({ token: '$jwt' }, '*');
-        // window.close();
-        // </script>
-        // <body>Authentification réussie…</body>
-        // HTML;
-        
-        // return new Response($html);
-
         $jwt = $this->jwt->create($token->getUser());
-        error_log("JWT généré pour user: " . $token->getUser()->getEmail());
     
         $html = <<<HTML
         <!DOCTYPE html><meta charset="utf-8">
         <script>
         console.log('Page callback chargée');
-        console.log('Token à envoyer:', '$jwt'.substring(0, 20));
         
-        // Envoyer vers tous les domaines possibles
-        if (window.opener) {
-            window.opener.postMessage({ token: '$jwt' }, 'https://portailv2.geniusclass.fr');
-            window.opener.postMessage({ token: '$jwt' }, '*');
-            console.log('Messages envoyés');
+        // Essayer plusieurs méthodes de communication
+        function sendTokenToParent(token) {
+            console.log('Tentative envoi token...');
+            
+            // Méthode 1: PostMessage standard
+            try {
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({ token: token }, '*');
+                    console.log('PostMessage envoyé avec *');
+                    
+                    // Aussi avec le domaine spécifique
+                    window.opener.postMessage({ token: token }, 'https://portailv2.geniusclass.fr');
+                    console.log('PostMessage envoyé avec domaine');
+                    
+                    // Attendre un peu puis fermer
+                    setTimeout(() => {
+                        try {
+                            window.close();
+                        } catch(e) {
+                            console.log('Erreur fermeture:', e);
+                            document.body.innerHTML += '<p><button onclick="window.close()">Fermer cette fenêtre</button></p>';
+                        }
+                    }, 1500);
+                    
+                    return true;
+                }
+            } catch (e) {
+                console.error('Erreur postMessage:', e);
+            }
+            
+            // Méthode 2: Stockage local partagé (fallback)
+            try {
+                localStorage.setItem('oauth_token_temp', token);
+                localStorage.setItem('oauth_timestamp', Date.now().toString());
+                console.log('Token stocké en localStorage');
+                
+                // Notifier via un événement de stockage
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'oauth_storage', token: token }, '*');
+                }
+                
+                setTimeout(() => window.close(), 2000);
+            } catch (e) {
+                console.error('Erreur localStorage:', e);
+            }
         }
         
-        // Auto-fermeture après 2 secondes
-        setTimeout(() => window.close(), 2000);
+        // Lancer immédiatement
+        sendTokenToParent('$jwt');
         </script>
-        <body><h3>Connexion réussie, fermeture...</h3><p>Token: $jwt</p></body>
+        <body>
+            <h3>Connexion réussie</h3>
+            <p>Fermeture automatique en cours...</p>
+            <p style="font-size: 12px; color: #666;">Token: $jwt</p>
+            <button onclick="window.close()" style="margin-top: 10px;">Fermer manuellement</button>
+        </body>
         HTML;
         
         return new Response($html);
