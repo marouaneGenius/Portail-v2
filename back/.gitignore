@@ -36,3 +36,10 @@ yarn-error.log
 .env
 
 /.env
+
+/config/packages/dev/web_profiler.yaml
+/config/routes/dev/web_profiler.yaml
+/config/routes/dev/debug.yaml
+/config/packages/dev/web_profiler.yaml
+/config/routes/dev/web_profiler.yaml
+/config/routes/dev/debug.yaml
