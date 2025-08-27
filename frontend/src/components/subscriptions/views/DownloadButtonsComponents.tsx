@@ -17,8 +17,8 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
   const pdfOptions = {
     margin:      [10,0,10,10],
     filename:    'contrat-genius.pdf',
-    image:       { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
+    image:       { type: 'jpeg', quality: 0.7 },  // Réduit de 0.98 à 0.7
+    html2canvas: { scale: 1.5 },                  // Réduit de 2 à 1.5
     jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak:   { mode: ['css','legacy','avoid-all'], before: '.page-break' },
   };
@@ -77,6 +77,12 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
       const pdfBlob = await urlToBlob(pdfUrl);
       if (!pdfBlob || pdfBlob.size === 0) {
         throw new Error('Le fichier PDF est vide ou invalide');
+      }
+      
+      // Validation de la taille (2MB max pour éviter le 413)
+      const maxSize = 2 * 1024 * 1024; // 2 MB
+      if (pdfBlob.size > maxSize) {
+        throw new Error(`Le fichier PDF est trop volumineux (${Math.round(pdfBlob.size / 1024 / 1024)} MB). Taille maximale autorisée : 2 MB.`);
       }
 
       let subscriptionId ;
