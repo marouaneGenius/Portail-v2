@@ -85,8 +85,8 @@ class SubscriptionURLController extends AbstractController
         // 6) Déplacer le fichier dans public/contrats
         $file->move($uploadDir, $filename);
     
-        // 7) Construire l’URL publique
-        $publicUrl = $request->getSchemeAndHttpHost() . '/contrats/' . $filename;
+        // 7) Construire l'URL publique (relative pour compatibilité multi-environnements)
+        $publicUrl = '/contrats/' . $filename;
     
         // 8) Créer et persister l’entité SubscriptionURL
         $subscriptionUrl = new SubscriptionURL();

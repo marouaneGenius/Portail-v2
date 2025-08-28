@@ -19,6 +19,11 @@ export default function StudentSubscriptions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate(); 
+
+  // Fonction utilitaire pour construire les URLs absolues
+  const getAbsoluteUrl = (url: string) => {
+    return url.startsWith('/') ? `${window.location.origin}${url}` : url;
+  }; 
   
   useEffect(() => {
     if (!id) return;
@@ -58,7 +63,7 @@ export default function StudentSubscriptions() {
               >
                 <div className="flex-1 bg-gray-100">
                   <iframe
-                    src={c.url}
+                    src={getAbsoluteUrl(c.url)}
                     title={`Contrat ${c.id}`}
                     width="100%"
                     height="150px"
@@ -107,7 +112,7 @@ export default function StudentSubscriptions() {
             </h2>
             <div className="w-full h-[600px] border">
               <iframe
-                src={selected.url}
+                src={getAbsoluteUrl(selected.url)}
                 title={`Aperçu grand contrat ${selected.id}`}
                 width="100%"
                 height="100%"
