@@ -1113,7 +1113,7 @@ class SessionController extends AbstractController
             }
 
             // Vérifier le statut directement sur Stripe avec l'ID de la session
-            $stripe = new \Stripe\StripeClient($_ENV['TEST_STRIPE_PRIVATE_KEY']);
+            $stripe = new \Stripe\StripeClient($_ENV['STRIPE_PRIVATE_KEY']);
             
             try {
                 // Récupérer directement la checkout session par son ID
