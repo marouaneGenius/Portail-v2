@@ -417,13 +417,13 @@ const ItemDetails: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 lg:grid-cols-2 gap-2">
                   <TooltipProvider>
                     {/* Exemple générique pour tous les boutons */}
                     {[
                       { icon: <FileText className="w-6 h-6 text-orange-600" />, label: "Abonnement", href: actions[1].to(item.id), tooltip: "Ajouter un abonnement", hover: "hover:bg-orange-50" },
                       { icon: <Calendar className="w-6 h-6 text-blue-500" />, label: "Séance d'essai", href: actions[2].to(item.id), tooltip: "Créer une séance d'essai", hover: "hover:bg-hello-yellow/10" },
-                      { icon: <CalendarDays className="w-6 h-6 text-green-600" />, label: "Re-planifier", href: actions[6].to(item.id), tooltip: "Re-planifier les séances", hover: "hover:bg-green-50" },
+                      // { icon: <CalendarDays className="w-6 h-6 text-green-600" />, label: "Re-planifier", href: actions[6].to(item.id), tooltip: "Re-planifier les séances", hover: "hover:bg-green-50" },
                     ].map(({ icon, label, href, tooltip, hover }, i) => (
                       <Tooltip key={i}>
                         <TooltipTrigger asChild>
