@@ -186,7 +186,9 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
   }, [availabilitys]);
 
   return (
-    <div className="bg-white p-4 rounded shadow space-y-4 ">
+
+  <div className='flex  flex-row gap-1 w-full'>
+    <div className={!isAvailable && availableTutors.length !== 0 ? 'p-2 rounded  space-y-4 w-1/2': 'p-2 rounded  space-y-4 w-full'}>
       {
         student && 
         <StudentInfoCard student={student} />
@@ -196,13 +198,6 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
         renderMultiSelect(school_subjects_field, values, 'school_subjects', setValues, removeValueFromField)
       }
 
-      {
-       !isAvailable&& 
-       availableTutors.length !== 0 &&
-        <UnavailableTutorsListComponent tutors={availableTutors} student={student}/>
-      }
-      
-      {/* Jour */}
       <div>
         <label className="block mb-1 font-medium">Quel Jour ?</label>
         <select
@@ -278,5 +273,18 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       </div>
 
     </div>
+    
+      {
+        !isAvailable&& 
+        availableTutors.length !== 0 &&
+          <div className=" p-0 rounded  space-y-4 w-1/2">
+
+              <UnavailableTutorsListComponent tutors={availableTutors} student={student}/>
+          </div>
+
+      }
+  </div>
+
+
   );
 };

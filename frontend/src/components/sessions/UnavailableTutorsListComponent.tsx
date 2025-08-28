@@ -17,7 +17,7 @@ interface Tutor {
 
 export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
   return (
-    <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+    <div className="bg-amber-50 rounded-lg p-2 border border-amber-200">
       <div className="flex items-start gap-2 mb-3">
         <div>
           <p className="text-sm text-amber-700">
@@ -26,7 +26,7 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
         </div>
       </div>
 
-      <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+      <div className="space-y-1 max-h-64 overflow-y-auto ">
         {tutors.map((tutor:any) => (
           <div key={tutor.id} className="bg-white p-3 rounded border border-amber-100">
             <div className="flex justify-between">

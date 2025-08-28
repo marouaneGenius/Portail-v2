@@ -43,8 +43,8 @@ const GroupedInputs: React.FC<GroupedInputsProps> = ({ fields, defaultOpen }) =>
   }, [defaultOpen]);
 
   return (
-    <div className="space-y-4 bg-white/80 rounded-xl shadow-lg p-6 border border-fading-grey">
-      {hasOffreField && defaultOpen && (
+    <div className="space-y-4 bg-white/80 rounded-xl p-6 ">
+      {/* {hasOffreField && defaultOpen && (
         <div className="bg-hello-yellow/10 flex items-center px-4 py-2 rounded-xl mb-2">
           <p className="text-mister-anthracite font-medium flex-1">
             Est-ce qu'une offre a été effectuée ?
@@ -63,8 +63,8 @@ const GroupedInputs: React.FC<GroupedInputsProps> = ({ fields, defaultOpen }) =>
             }}
           />
         </div>
-      )}
-      {open && fields
+      )} */}
+      { fields
         .filter(f => !f.hidden)
         .map((field) => (
           <div key={field.name} className="flex flex-col gap-1">

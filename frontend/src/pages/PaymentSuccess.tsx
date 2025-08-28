@@ -1,44 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Home, Calendar } from 'lucide-react';
 
 const PaymentSuccess: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const sessionIdParam = searchParams.get('session_id');
-    if (sessionIdParam) {
-      setSessionId(sessionIdParam);
-      // Optionnel : vérifier le statut du paiement auprès du backend
-      verifyPaymentStatus(sessionIdParam);
-    } else {
-      setLoading(false);
-    }
-  }, [searchParams]);
-
-  const verifyPaymentStatus = async (sessionId: string) => {
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL_DEV || 'http://localhost:8080/';
-      const response = await fetch(`${apiUrl}api/payment/verify-session/${sessionId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Paiement vérifié:', data);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la vérification du paiement:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoHome = () => {
     navigate('/');
@@ -48,47 +13,46 @@ const PaymentSuccess: React.FC = () => {
     navigate('/sessions');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
-        <div className="mb-6">
-          <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-sm sm:max-w-md lg:max-w-lg w-full bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-10 text-center">
+        <div className="mb-6 sm:mb-8">
+          <CheckCircle2 className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-green-600 mx-auto mb-4" />
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
             Paiement réussi !
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Votre paiement a été traité avec succès.
           </p>
         </div>
 
-        {sessionId && (
-          <div className="mb-6 p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-green-700">
-              <strong>ID de session :</strong> {sessionId}
-            </p>
-          </div>
-        )}
-
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            {/* Prochaines étapes */}
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
+            Prochaines étapes
           </h2>
-          <ul className="text-left text-gray-600 space-y-2">
-            {/* <li>• Un reçu vous sera envoyé par email</li> */}
+          <ul className="text-left text-sm sm:text-base text-gray-600 space-y-2 sm:space-y-3">
+            <li>• Un reçu vous sera envoyé par email</li>
             <li>• Votre séance sera confirmée</li>
-            {/* <li>• Vous recevrez un SMS de rappel</li> */}
+            <li>• Vous recevrez un SMS de rappel</li>
           </ul>
         </div>
 
-    
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <button
+            onClick={handleGoHome}
+            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            <Home className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Accueil</span>
+          </button>
+          <button
+            onClick={handleGoToSessions}
+            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Mes séances</span>
+          </button>
+        </div>
       </div>
     </div>
   );

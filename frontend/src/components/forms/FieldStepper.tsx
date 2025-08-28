@@ -118,7 +118,7 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
   }
 
   return (
-    <div className="p-6 bg-white/80 rounded-2xl shadow-lg w-full border border-fading-grey max-w-xl mx-auto">
+    <div className="p-4 bg-white/80 rounded-2xl shadow-lg w-2/4 border border-fading-grey mx-auto">
       {showError && <AlertMessage message={'Un problème est survenu lors du chargement des créneaux !'} />}
       <h2 className="text-2xl font-bold mb-2 text-mister-anthracite">{title}</h2>
       <p className="text-sm text-mister-anthracite/60 mb-4">
