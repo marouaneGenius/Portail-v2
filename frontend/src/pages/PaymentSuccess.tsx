@@ -25,34 +25,6 @@ const PaymentSuccess: React.FC = () => {
             Votre paiement a été traité avec succès.
           </p>
         </div>
-
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-            Prochaines étapes
-          </h2>
-          <ul className="text-left text-sm sm:text-base text-gray-600 space-y-2 sm:space-y-3">
-            <li>• Un reçu vous sera envoyé par email</li>
-            <li>• Votre séance sera confirmée</li>
-            <li>• Vous recevrez un SMS de rappel</li>
-          </ul>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <button
-            onClick={handleGoHome}
-            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-colors duration-200"
-          >
-            <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">Accueil</span>
-          </button>
-          <button
-            onClick={handleGoToSessions}
-            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-colors duration-200"
-          >
-            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">Mes séances</span>
-          </button>
-        </div>
       </div>
     </div>
   );
