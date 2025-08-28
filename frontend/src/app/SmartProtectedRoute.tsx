@@ -33,7 +33,7 @@ const is404Route = (pathname: string): boolean => {
   ];
 
   // Routes génériques valides (resources connus seulement)
-  const validResources = ['centers', 'users', 'students', 'parents', 'sessions', 'tutors'];
+  const validResources = ['centers', 'center', 'users', 'user', 'students', 'student', 'parents', 'parent', 'sessions', 'tutors'];
   const genericRoutes = [
     new RegExp(`^\\/(${validResources.join('|')})\\/\\d+$`), // /:resource/:id (ID numérique)
     new RegExp(`^\\/(${validResources.join('|')})\\/\\d+\\/edit$`), // /:resource/:id/edit
