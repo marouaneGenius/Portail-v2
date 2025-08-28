@@ -28,17 +28,22 @@ import ParentDashboard from "../pages/ParentDashboard";
 import ParentProtectedRoute from "./ParentProtectedRoute";
 import PaymentSuccess from "../pages/PaymentSuccess";
 import PaymentCancel from "../pages/PaymentCancel";
+import Page404 from "../pages/Page404";
+import SmartProtectedRoute from "./SmartProtectedRoute";
 
 export const router = createBrowserRouter([
     {
       element: <App />,
       children: [
+        // Routes publiques (sans authentification)
         { path: "/", element: <DefaultRedirect /> },
         { path: "/login", element: <Login /> },
         { path: "/payment/success", element: <PaymentSuccess /> },
         { path: "/payment/cancel", element: <PaymentCancel /> },
+        
+        // Toutes les routes avec gestion intelligente 404
         {
-          element: <ProtectedRoute />,  
+          element: <SmartProtectedRoute />,  
           children: [
             { path: "/home", element: <Home /> },
             {
@@ -51,10 +56,8 @@ export const router = createBrowserRouter([
                 { path: "/users", element: <Users /> },
                 { path: "/students", element: <Students /> },
                 { path: "/abonnements/:id", element: <Subscriptions /> },
-                { path: '/:resource/:id', element: <ItemDetails /> },
                 { path: '/parents', element: <Parents /> },
                 { path: '/form/:resource/:id?', element: <CreationForm /> },
-                { path: '/:resource/:id/edit', element: <EditionForm /> },
                 { path: '/studentDetails/:id', element: <StudentDetails />},
                 { path: '/planing', element: <Planing/>},
                 { path: '/planning', element: <Planning/>},
@@ -65,10 +68,16 @@ export const router = createBrowserRouter([
                 { path: "/tutors", element: <Tutors /> },
                 { path: "/historique", element: <HistoriqueModifications /> },
                 { path: "/parent-dashboard", element: <ParentDashboard /> },
+                // Routes génériques à la fin
+                { path: '/:resource/:id', element: <ItemDetails /> },
+                { path: '/:resource/:id/edit', element: <EditionForm /> },
               ],
             },
           ],
         },
+        
+        // Route 404 de fallback (ne devrait jamais être atteinte avec SmartProtectedRoute)
+        { path: "*", element: <Page404 /> },
       ],
     },
   ]);

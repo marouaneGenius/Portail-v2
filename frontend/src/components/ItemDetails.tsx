@@ -1,6 +1,7 @@
-import { useParams, Navigate, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { JSX, useEffect, useState } from 'react';
 import api from '../api/aixos';
+import Page404 from '../pages/Page404';
 import { useModal } from '../Hooks/useModal';
 import Modal from './Modal';
 import ParentSelector from './ParentFinder';
@@ -68,7 +69,11 @@ const ItemDetails: React.FC = () => {
         setItem(data);
       })
       .catch((err: any) => {
-        setError(err.response?.data?.message || 'Erreur de chargement');
+        if (err.response?.status === 404) {
+          setError('404 - Élément introuvable');
+        } else {
+          setError(err.response?.data?.message || 'Erreur de chargement');
+        }
       })
       .finally(() => setLoading(false));
 
@@ -112,8 +117,13 @@ const ItemDetails: React.FC = () => {
   };
 
   if (loading) return <p>Chargement…</p>;
+  
+  // Si erreur 404 ou item non trouvé, afficher la page 404
+  if (error && (error.includes('404') || error.includes('introuvable') || error.includes('not found'))) {
+    return <Page404 />;
+  }
   if (error) return <p className="text-red-600">{error}</p>;
-  if (!item) return <Navigate to={`/${resource}`} replace />;
+  if (!item) return <Page404 />;
 
   const mainFields = ['firstname', 'lastname', 'email', 'phone', 'gender'];
   const addressFields = ['address', 'city', 'zip_code', 'country'];

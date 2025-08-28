@@ -102,3 +102,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animations personnalisées pour la page 404 */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-20px); 
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-float.delay-300 {
+    animation-delay: 0.3s;
+  }
+  
+  .animate-float.delay-500 {
+    animation-delay: 0.5s;
+  }
+  
+  .animate-float.delay-700 {
+    animation-delay: 0.7s;
+  }
+  
+  .animate-float.delay-1000 {
+    animation-delay: 1s;
+  }
+}
