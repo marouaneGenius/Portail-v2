@@ -62,12 +62,15 @@ const DownloadButtonsComponents: React.FC<any> =  ({student, subscription, onGen
 
   useEffect(() => {
     if(pdfUrl && !uploadSuccess) {
+      setLoading(true);
       saveContract();
     }
   }, [pdfUrl])
 
   useEffect(() => {
     if(uploadSuccess) {
+      console.log('testy')
+      setLoading(false);
       navigate(`/student/${student.id}`);
     }
   }, [uploadSuccess])
