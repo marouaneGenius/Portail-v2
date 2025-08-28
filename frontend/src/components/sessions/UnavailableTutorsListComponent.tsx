@@ -26,7 +26,7 @@ export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
         </div>
       </div>
 
-      <div className="space-y-1 max-h-64 overflow-y-auto ">
+      <div className="space-y-1 max-h-100 overflow-y-auto ">
         {tutors.map((tutor:any) => (
           <div key={tutor.id} className="bg-white p-3 rounded border border-amber-100">
             <div className="flex justify-between">
