@@ -147,7 +147,17 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
   useEffect(() => {
     if (selectedTutor && day && selectedHour) {
-      const newSlot = { tutorId: selectedTutor, day, hour: selectedHour, matieres: values.school_subjects };
+      // Récupérer les infos du tuteur sélectionné
+      const tutorInfo = availableTutors.find(t => t.id === selectedTutor);
+      const tutorName = tutorInfo ? `${tutorInfo.firstname} ${tutorInfo.lastname}` : '';
+      
+      const newSlot = { 
+        tutorId: selectedTutor, 
+        tutorName: tutorName,
+        day, 
+        hour: selectedHour, 
+        matieres: values.school_subjects 
+      };
       setAvailabilitys((prev) => {
         if (prev.length >= 4) {
           setErrorMessage("Vous ne pouvez pas ajouter plus de 4 créneaux.");
@@ -264,7 +274,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
         {availabilitys.map((slot, index) => (
           <div key={index} className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
             <span>
-              🗓️ {slot.day} <br/>🕒 {slot.hour}<br/>  📕 {slot.matieres.join()}
+              🗓️ {slot.day} <br/>🕒 {slot.hour}<br/>📕 {slot.matieres.join()}<br/>👨‍🏫 {slot.tutorName}
             </span>
             <button
               onClick={() =>
