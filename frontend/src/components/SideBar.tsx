@@ -43,7 +43,7 @@ const menuItems = [
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
   },
   { 
-    title: 'Étudiants', 
+    title: 'Élèves', 
     url: '/students', 
     icon: GraduationCap,
     permission: 'student:view',

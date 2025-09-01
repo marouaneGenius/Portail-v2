@@ -54,7 +54,6 @@ export const ClassesOptions = [
     { value: 'aide-aux-devoirs', label: 'Aide aux devoirs' },
     { value: 'hggsp', label: 'HGGSP' },
     { value: 'management', label: 'Management' },
-    { value: 'mathematiques', label: 'Mathématiques' },
   ];
   
 

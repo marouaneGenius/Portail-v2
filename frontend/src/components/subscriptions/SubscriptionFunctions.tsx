@@ -231,58 +231,92 @@ import api from "../../api/aixos";
        return computePreInscription(data, data.student.class, price);
     }
   
-    if (payment_mode === "annuel") {
-      // Ajustement date début lundi et fin dimanche
-      let debut = new Date(subscription_start_date);
-      while (debut.getDay() !== 1) debut.setDate(debut.getDate() + 1);
-      let fin = new Date(subscription_end_date);
-      while (fin.getDay() !== 0) fin.setDate(fin.getDate() - 1);
-  
-      const nbWeeks = debut <= fin ? weeksBetween(debut, fin) : 0;
-      const nbSeances = seancesParSemaine * nbWeeks;
-      const tarifMoitie = price / 2;
-  
-      lignes.push({
-        description: "Annuel",
-        datePrelevement: fmtFR(prelevementDate),
-        nbSeances,
-        tarifAvant: price * 2,
-        tarifApres: price,
-      });
-  
-      totalApresReduction += tarifMoitie;
-      totalHeures += nbSeances * dureeSeance;
-  
-    } else if (payment_mode === "trimestriel") {
+    if (payment_mode === "anuelle") {
+      // Calculer le nombre total de mois pour l'année
       const debut = new Date(subscription_start_date);
       const fin = new Date(subscription_end_date);
-      const moisTotal = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth());
-      const nbTrimestres = Math.ceil((moisTotal + 1) / 3);
+      const moisTotal = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth()) + 1;
+      
+      // Prix annuel = prix mensuel × nombre total de mois
+      const prixAnnuel = price * moisTotal;
+      
+      // Ajustement date début lundi et fin dimanche pour le calcul des séances
+      let debutAjuste = new Date(subscription_start_date);
+      while (debutAjuste.getDay() !== 1) debutAjuste.setDate(debutAjuste.getDate() + 1);
+      let finAjuste = new Date(subscription_end_date);
+      while (finAjuste.getDay() !== 0) finAjuste.setDate(finAjuste.getDate() - 1);
   
-      for (let t = 0; t < nbTrimestres; t++) {
+      const nbWeeks = debutAjuste <= finAjuste ? weeksBetween(debutAjuste, finAjuste) : 0;
+      const nbSeances = seancesParSemaine * nbWeeks;
+  
+      lignes.push({
+        description: "Paiement annuel",
+        datePrelevement: fmtFR(prelevementDate),
+        nbSeances,
+        tarifAvant: prixAnnuel * 2,
+        tarifApres: prixAnnuel,
+      });
+  
+      totalApresReduction += prixAnnuel;
+      totalHeures += nbSeances * dureeSeance;
+  
+    } else if (payment_mode === "trimestrielle") {
+      const debut = new Date(subscription_start_date);
+      const fin = new Date(subscription_end_date);
+      const moisTotal = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth()) + 1;
+      const nbTrimestresComplets = Math.floor(moisTotal / 3);
+      const moisRestants = moisTotal % 3;
+      
+      // 1. Trimestres complets
+      for (let t = 0; t < nbTrimestresComplets; t++) {
         const qStart = new Date(debut);
         qStart.setMonth(debut.getMonth() + t * 3);
         const qEnd = new Date(qStart);
         qEnd.setMonth(qStart.getMonth() + 3, 0);
   
+        // Date de prélèvement pour ce trimestre
+        const datePrelevementTrimestre = new Date(first_debit_date || debut);
+        datePrelevementTrimestre.setMonth(datePrelevementTrimestre.getMonth() + t * 3);
+
         // Ramener aux bornes liturgiques
         while (qStart.getDay() !== 1) qStart.setDate(qStart.getDate() + 1);
         while (qEnd.getDay() !== 0) qEnd.setDate(qEnd.getDate() - 1);
   
         const nbWeeks = qStart <= qEnd ? weeksBetween(qStart, qEnd) : 0;
         const nbSeances = seancesParSemaine * nbWeeks;
-        const tarifMoitie = price / 2;
-
+        const tarifTrimestre = (price * 3) *2; // 3 mois × prix mensuel
   
         lignes.push({
-          description: `${t + 1}ᵉ – trimestriel`,
-          datePrelevement: fmtFR(prelevementDate),
+          description: `${t + 1}ᵉ trimestre`,
+          datePrelevement: fmtFR(datePrelevementTrimestre),
           nbSeances,
-          tarifAvant: price,
-          tarifApres: tarifMoitie,
+          tarifAvant: tarifTrimestre,
+          tarifApres: tarifTrimestre /2,
         });
   
-        totalApresReduction += tarifMoitie;
+        totalApresReduction += tarifTrimestre;
+        totalHeures += nbSeances * dureeSeance;
+      }
+
+      // 2. Mois restants
+      if (moisRestants > 0) {
+        const dateMoisRestants = new Date(first_debit_date || debut);
+        dateMoisRestants.setMonth(dateMoisRestants.getMonth() + nbTrimestresComplets * 3);
+
+        // Calcul simplifié des séances pour les mois restants
+        // Nombre de séances = mois restants × séances par semaine × 4 semaines par mois
+        const nbSeances = moisRestants * seancesParSemaine * 4;
+        const tarifMoisRestants = price * moisRestants;
+
+        lignes.push({
+          description: `${moisRestants} mois restant${moisRestants > 1 ? 's' : ''}`,
+          datePrelevement: fmtFR(dateMoisRestants),
+          nbSeances,
+          tarifAvant: tarifMoisRestants,
+          tarifApres: tarifMoisRestants,
+        });
+
+        totalApresReduction += tarifMoisRestants;
         totalHeures += nbSeances * dureeSeance;
       }
   
@@ -293,14 +327,15 @@ import api from "../../api/aixos";
       const debut = new Date(subscription_start_date);
       const fin = new Date(subscription_end_date);
 
-      // console.log(debut, fin)
-
       const diffDays = Math.ceil((fin.getTime() - debut.getTime() + 1) / (1000*60*60*24));
       const nbSemaines = diffDays > 8
         ? Math.ceil(diffDays / 7)
         : Math.ceil(Math.max(0, diffDays - 1) / 7);
       const totalSeances = seancesParSemaine * nbSemaines;
       const nbMois = Math.ceil(totalSeances / (seancesParSemaine * 4));
+      
+      // Prix mensuel = prix total divisé par le nombre de mois
+      const prixMensuel = price / nbMois;
   
       for (let i = 0; i < nbMois; i++) {
         // Nombre de séances ce mois
@@ -312,19 +347,16 @@ import api from "../../api/aixos";
         const dp = new Date(first_debit_date);
         dp.setMonth(dp.getMonth() + i);
         const dpStd = getClosestStandardDate(dp);
-
-        // Calcul des prix
-        const tarifReduit = price * (1 - remise / 100);
   
         lignes.push({
-          description: `${i + 1}ᵉ – \nmensualité`,
+          description: `${i + 1}ᵉ mensualité`,
           datePrelevement: fmtFR(dpStd),
           nbSeances: seancesCeMois,
-          tarifAvant: price * 2,
-          tarifApres: price,
+          tarifAvant: prixMensuel,
+          tarifApres: prixMensuel,
         });
   
-        totalApresReduction += price;
+        totalApresReduction += prixMensuel;
         totalHeures += seancesCeMois * dureeSeance;
       }
     }

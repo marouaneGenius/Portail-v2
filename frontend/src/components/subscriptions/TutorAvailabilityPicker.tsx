@@ -36,6 +36,13 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
   const [student, setStudent] = useState<any>(null);
   const { id } = useParams();
 
+  // Initialiser availabilitys avec les valeurs existantes
+  useEffect(() => {
+    if (values?.favorite_slots_annuel && Array.isArray(values.favorite_slots_annuel)) {
+      setAvailabilitys(values.favorite_slots_annuel);
+    }
+  }, []);
+
 
   //get all tutors by school subjects
   useEffect(() => {
@@ -218,6 +225,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
       <div>
         <label className="block mb-1 font-medium">Quel Heure ?</label>
         <select
+          value={selectedHour || ''}
           onChange={(e) => handleSessionChange(e.target.value)}
           className="w-full border px-3 py-2 rounded"
         >
