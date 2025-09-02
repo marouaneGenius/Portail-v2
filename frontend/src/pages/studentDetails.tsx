@@ -14,6 +14,7 @@ interface StudentItem {
     firstname:String;
     lastname:String;
     class:String;
+    bio:String;
     created_at:string;
     center:{
         id:String;
@@ -111,6 +112,25 @@ interface StudentItem {
                                 )}
                             </div>
                         </div>
+                        
+                        {student.bio && (
+                            <div className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-800">Note Pédagogique</h3>
+                                </div>
+                                <div className="bg-white rounded-lg p-4 border border-blue-100">
+                                    <p className="text-gray-700 text-base leading-relaxed whitespace-pre-wrap font-medium">
+                                        {student.bio}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        
                         <div className={trialSessions && trialSessions.length > 0 &&`"bg-gray-100 p-3 rounded w-full"`}>
                         {trialSessions && trialSessions.length > 0 && (
                             <div className="space-y-3">

@@ -18,7 +18,7 @@ import AddressAutocomplete from './AddressAutocomplete';
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array' | 'datetime-local';
+  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array' | 'datetime-local' | 'textarea';
   options?: { value: any; label: string }[]; // pour les select
   required?: boolean;
   className?: String;
@@ -130,6 +130,44 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
         })
         .catch((err) => console.error('Erreur fetch centres', err))
         .finally(() => setLoading(false));
+    } else if (endpoint === 'report') {
+      // Charger les options pour les rapports
+      const studentId = initialValues.id_student;
+      
+      const promises = [api.get('/api/student')];
+      
+      // Si on a un student_id, charger seulement ses séances disponibles
+      if (studentId) {
+        promises.push(api.get(`/api/report/available-sessions/${studentId}`));
+      }
+      
+      Promise.all(promises)
+        .then((responses) => {
+          const [studentsRes, sessionsRes] = responses;
+          
+          const studentOptions = studentsRes.data.map((s: any) => ({
+            value: String(s.id),
+            label: `${s.firstname} ${s.lastname}`,
+          }));
+          
+          const sessionOptions = sessionsRes ? sessionsRes.data.map((s: any) => ({
+            value: String(s.id),
+            label: s.label,
+          })) : [];
+
+          const updatedFields: FormField[] = currentFields.map((f: any) => {
+            if (f.name === 'id_student') {
+              return { ...f, options: studentOptions };
+            }
+            if (f.name === 'id_session') {
+              return { ...f, options: sessionOptions };
+            }
+            return f as FormField;
+          });
+          setFields(updatedFields);
+        })
+        .catch((err) => console.error('Erreur fetch données rapport', err))
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -153,9 +191,9 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
     }));
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, type, value, checked, options }: any = e.target;
-    const multiple = e.target.multiple;
+    const multiple = 'multiple' in e.target ? e.target.multiple : false;
 
     let processedValue = value;
 
@@ -206,6 +244,28 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
       } else {
         useRoleFieldValue(false);
       }
+    }
+
+    // Recharger les séances disponibles quand l'élève change (pour les rapports)
+    if (endpoint === 'report' && name === 'id_student' && value) {
+      api.get(`/api/report/available-sessions/${value}`)
+        .then((res) => {
+          const sessionOptions = res.data.map((s: any) => ({
+            value: String(s.id),
+            label: s.label,
+          }));
+
+          setFields(prev => prev.map((f: any) => {
+            if (f.name === 'id_session') {
+              return { ...f, options: sessionOptions };
+            }
+            return f;
+          }));
+
+          // Reset la session sélectionnée
+          setValues(prev => ({ ...prev, id_session: '' }));
+        })
+        .catch((err) => console.error('Erreur fetch séances', err));
     }
   };
 
@@ -505,6 +565,16 @@ const FormGenerator: React.FC<FormGeneratorProps> = ({ fields, initialValues = {
                       onAddressSelect={handleAddressSelect}
                       placeholder="Tapez votre adresse..."
                       required={!!f.required}
+                    />
+                  ) : f.type === 'textarea' ? (
+                    <textarea
+                      id={f.name}
+                      name={f.name}
+                      value={values[f.name] || ''}
+                      onChange={handleChange}
+                      className="w-full rounded border border-[#FFB800] px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFB800] bg-[#FFFFFF] text-[#333333] min-h-[100px] resize-vertical"
+                      required={!!f.required}
+                      placeholder="Étudiant très motivé, excellentes notes en mathématiques. Objectif : obtenir mention très bien au bac."
                     />
                   ) : (
                     <input

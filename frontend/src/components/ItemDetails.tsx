@@ -6,6 +6,7 @@ import { useModal } from '../Hooks/useModal';
 import Modal from './Modal';
 import ParentSelector from './ParentFinder';
 import { showDataDetails, TranslateHeaderNames } from '../services/functions';
+import { useAuth } from '../Hooks/auth';
 import {
   CustomAlert,
   CustomBrothersComponent,
@@ -59,6 +60,7 @@ const ItemDetails: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
+  const { user }: any = useAuth();
 
   useEffect(() => {
     if (!resource || !id) return;
@@ -131,7 +133,7 @@ const ItemDetails: React.FC = () => {
     (key) =>
       !mainFields.includes(key) &&
       !addressFields.includes(key) &&
-      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active'].includes(key)
+      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active', 'bio'].includes(key)
   );
 
   // Pour le badge statut
@@ -243,6 +245,31 @@ const ItemDetails: React.FC = () => {
                   </div>
                 </div>
               )}
+              
+              {/* Section Note Pédagogique pour les étudiants */}
+              {resource === 'student' && (
+                <>
+                  <Separator />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-blue-500" />
+                      <h3 className="text-lg font-semibold text-mister-anthracite">Note Pédagogique</h3>
+                    </div>
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                      {item.bio ? (
+                        <p className="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">
+                          {item.bio}
+                        </p>
+                      ) : (
+                        <p className="text-gray-400 text-sm italic">
+                          Aucune note pédagogique renseignée pour cet élève.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+              
               {/* Autres infos */}
               {otherFields.length > 0 && (
                 <>

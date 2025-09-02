@@ -25,6 +25,21 @@ class Report
     #[ORM\Column]
     private array $skills_assessment = [];
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $content = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $points_worked = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $observations = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $homework_recommendations = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $session_duration = null;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $created_at = null;
 
@@ -134,6 +149,66 @@ class Report
     public function setUpdatedBy(?string $updated_by): static
     {
         $this->updated_by = $updated_by;
+
+        return $this;
+    }
+
+    public function getContent(): ?string
+    {
+        return $this->content;
+    }
+
+    public function setContent(?string $content): static
+    {
+        $this->content = $content;
+
+        return $this;
+    }
+
+    public function getPointsWorked(): ?string
+    {
+        return $this->points_worked;
+    }
+
+    public function setPointsWorked(?string $points_worked): static
+    {
+        $this->points_worked = $points_worked;
+
+        return $this;
+    }
+
+    public function getObservations(): ?string
+    {
+        return $this->observations;
+    }
+
+    public function setObservations(?string $observations): static
+    {
+        $this->observations = $observations;
+
+        return $this;
+    }
+
+    public function getHomeworkRecommendations(): ?string
+    {
+        return $this->homework_recommendations;
+    }
+
+    public function setHomeworkRecommendations(?string $homework_recommendations): static
+    {
+        $this->homework_recommendations = $homework_recommendations;
+
+        return $this;
+    }
+
+    public function getSessionDuration(): ?int
+    {
+        return $this->session_duration;
+    }
+
+    public function setSessionDuration(?int $session_duration): static
+    {
+        $this->session_duration = $session_duration;
 
         return $this;
     }

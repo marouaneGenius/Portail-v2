@@ -102,6 +102,7 @@ class StudentController extends AbstractController
             ->setClass($data['class'])
             // ->setEmail($data['email'])
             ->setPhone($data['phone'] ?? null)
+            ->setBio($data['bio'] ?? null)
             ->setIsActive(true)
             ->setIsDeleted(false)
             ->setCreatedAt(new \DateTimeImmutable())
@@ -262,6 +263,7 @@ class StudentController extends AbstractController
                 'class'     => $student->getClass(),
                 // 'email'     => $student->getEmail(),
                 'phone'     => $student->getPhone(),
+                'bio'       => $student->getBio(),
                 'is_active' => $student->isIsActive(),
                 'is_deleted' => $student->isIsDeleted(),
                 'id_center' => $student->getIdCenter()->getId(),
@@ -292,6 +294,7 @@ class StudentController extends AbstractController
             'class'      => $s->getClass(),
             // 'email'      => $s->getEmail(),
             'phone'      => $s->getPhone(),
+            'bio'        => $s->getBio(),
             'is_active'  => $s->isIsActive(),
             'is_deleted' => $s->isIsDeleted(),
             'id_center'  => $s->getIdCenter()?->getId(),
@@ -346,6 +349,7 @@ class StudentController extends AbstractController
             'firstname'         => $user->getFirstname(),
             'lastname'          => $user->getLastname(),
             'phone'             => $user->getPhone(),
+            'bio'               => $user->getBio(),
             'gender'           => $user->getGender(),
             'is_active'         => $user->isIsActive(),
             'is_deleted'        => $user->isIsDeleted(),
@@ -394,7 +398,7 @@ class StudentController extends AbstractController
         }
 
         // 3. Hydrater les champs simples
-        foreach (['firstname', 'lastname', 'gender', 'class',  'phone'] as $field) {
+        foreach (['firstname', 'lastname', 'gender', 'class',  'phone', 'bio'] as $field) {
             if (array_key_exists($field, $data)) {
                 $setter = 'set' . ucfirst($field);
                 $student->$setter($data[$field]);
@@ -470,6 +474,7 @@ class StudentController extends AbstractController
             'class'      => $student->getClass(),
             // 'email'      => $student->getEmail(),
             'phone'      => $student->getPhone(),
+            'bio'        => $student->getBio(),
             'is_active'  => $student->isIsActive(),
             'is_deleted' => $student->isIsDeleted(),
             'id_center'  => $student->getIdCenter()?->getId(),

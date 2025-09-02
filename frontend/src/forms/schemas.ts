@@ -54,6 +54,7 @@ export const studentFields: FormField[] = [
   },
   { name: 'class', label: 'Classe', type: 'select', required: true },
   // { name: 'email', label: 'E‑mail', type: 'email', required: true },
+  { name: 'bio', label: 'Note Pédagogique', type: 'textarea', required: false, className: 'col-span-2' },
   { name: 'id_center', label: 'Centre', type: 'select', required: true },
 ];
 
@@ -170,4 +171,14 @@ export const PreinscriptionFields: FormField[] = [
 export const UpdateSlotForm: FormField[] = [
   { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'datetime-local'},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
+]
+
+export const reportFields: FormField[] = [
+  { name: 'id_student', label: 'Élève', type: 'select', required: true },
+  { name: 'id_session', label: 'Séance', type: 'select', required: true },
+  { name: 'session_duration', label: 'Durée de la séance (minutes)', type: 'text', required: false },
+  { name: 'points_worked', label: 'Points travaillés', type: 'text', required: false, className: 'col-span-2' },
+  { name: 'content', label: 'Contenu détaillé de la séance', type: 'textarea', required: false, className: 'col-span-2' },
+  { name: 'observations', label: 'Observations sur les progrès/difficultés', type: 'textarea', required: false, className: 'col-span-2' },
+  { name: 'homework_recommendations', label: 'Devoirs et recommandations', type: 'textarea', required: false, className: 'col-span-2' },
 ]

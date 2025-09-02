@@ -251,6 +251,18 @@ export default function CustomDataTable({
 
                               if (key === 'id_center') return centerMap[value] || '—';
 
+                              if (key === 'bio') {
+                                return value ? (
+                                  <div className="max-w-xs">
+                                    <p className="text-xs text-mister-anthracite/70 truncate" title={value}>
+                                      {value.length > 50 ? `${value.substring(0, 50)}...` : value}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-mister-anthracite/50">Non renseigné</span>
+                                );
+                              }
+
                               if (key === 'gender') {
                                 if (value === 'male' || value === 'homme' || value === 'M') {
                                   return (

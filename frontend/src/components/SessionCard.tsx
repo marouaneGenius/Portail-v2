@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, BookOpen, MapPin, Calendar, XCircle } from 'lucide-react';
+import { Clock, User, BookOpen, MapPin, Calendar, XCircle, FileText } from 'lucide-react';
 
 export interface SessionData {
   id: number;
@@ -134,13 +134,13 @@ const SessionCard: React.FC<SessionCardProps> = ({
             </Badge>
           </div>
           
-          {/* Bouton toggle de présence pour les tuteurs en mode compact */}
-          {isTutor && onAttendanceChange && session.status !== 'cancelled'&&  (
-            <div className="flex mt-2">
+          {/* Boutons pour les tuteurs en mode compact */}
+          {isTutor && onAttendanceChange && session.status !== 'cancelled' && (
+            <div className="flex mt-2 gap-1">
               <Button
                 size="sm"
                 variant={session.student.attendance === 'absent' ? 'destructive' : 'outline'}
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-xs flex-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   const newAttendance = session.student.attendance === 'absent' ? 'present' : 'absent';
@@ -148,8 +148,24 @@ const SessionCard: React.FC<SessionCardProps> = ({
                 }}
               >
                 <XCircle className="h-3 w-3 mr-1" />
-                {session.student.attendance === 'absent' ? 'Marquer présent' : 'Marquer absent'}
+                {session.student.attendance === 'absent' ? 'Présent' : 'Absent'}
               </Button>
+              
+              {/* Bouton compte-rendu pour les séances terminées */}
+              {session.status === 'completed' && (
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.href = `/form/report?student_id=${session.student.id}&session_id=${session.id}`;
+                  }}
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  Rapport
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
@@ -252,7 +268,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
 
         {/* Section de gestion de la présence pour les tuteurs */}
         {isTutor && onAttendanceChange && (
-          <div className="border-t pt-4">
+          <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-700 mb-2">Présence de l'élève :</p>
               {session.student.attendance && (
@@ -266,7 +282,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
                 </Badge>
               )}
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-2">
               <Button
                 variant={session.student.attendance === 'absent' ? 'destructive' : 'outline'}
                 size="sm"
@@ -275,11 +291,27 @@ const SessionCard: React.FC<SessionCardProps> = ({
                   const newAttendance = session.student.attendance === 'absent' ? 'present' : 'absent';
                   onAttendanceChange(session.id, session.student.id, newAttendance);
                 }}
-                className="w-48"
+                className="flex-1"
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 {session.student.attendance === 'absent' ? 'Marquer présent' : 'Marquer absent'}
               </Button>
+              
+              {/* Bouton compte-rendu pour les séances terminées */}
+              {session.status === 'completed' && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.href = `/form/report?student_id=${session.student.id}&session_id=${session.id}`;
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Compte-rendu
+                </Button>
+              )}
             </div>
           </div>
         )}

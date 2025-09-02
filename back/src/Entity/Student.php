@@ -84,6 +84,9 @@ class Student
     #[ORM\OneToMany(mappedBy: 'student', targetEntity: SubscriptionURL::class)]
     private Collection $subscriptionURLs;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $bio = null;
+
     public function __construct()
     {
         $this->id_parent = new ArrayCollection();
@@ -582,6 +585,18 @@ class Student
                 $subscriptionURL->setStudent(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
 
         return $this;
     }

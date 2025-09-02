@@ -263,28 +263,97 @@ export function CustomStudentsComponent({
 }
 
 export const CustomReportsComponent: React.FC<CustomComponentProps> = ({ value, currentkey }) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <>
       {currentkey === 'reports' && Array.isArray(value) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {value.map((report: Record<string, any>, idx: number) => (
-            <div
-              key={idx}
-              className="bg-white border border-fading-grey rounded-xl shadow p-4 flex flex-col gap-2"
-            >
-              {Object.entries(report).map(([k, v]) => (
-                <div key={k}>
-                  <span className="font-medium capitalize">{k.replace('_', ' ')}:</span>{' '}
-                  <span>{String(v)}</span>
-                </div>
-              ))}
+        <div className="space-y-4">
+          {value.length === 0 ? (
+            <div className="text-center py-8 text-mister-anthracite/50">
+              <p>Aucun compte-rendu de séance pour cet élève.</p>
+              <p className="text-xs mt-1">Les tuteurs peuvent ajouter des comptes-rendus après chaque séance.</p>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            value.map((report: Record<string, any>, idx: number) => (
+              <div
+                key={report.id || idx}
+                className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 space-y-4"
+              >
+                {/* En-tête du rapport */}
+                <div className="flex justify-between items-start border-b border-green-200 pb-3">
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      Compte-rendu de séance
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(report.created_at)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {report.tutor_name && (
+                      <p className="text-sm font-medium text-gray-700">
+                        Par {report.tutor_name}
+                      </p>
+                    )}
+                    {report.session_duration && (
+                      <p className="text-xs text-gray-500">
+                        Durée: {report.session_duration} min
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-      {currentkey === 'reports' && value.length === 0 && (
-        <CustomAlert title="Message !" message="Vous n'avez pas de Comptes rendu pour l'instant" />
+                {/* Contenu du rapport */}
+                <div className="space-y-3">
+                  {report.points_worked && (
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1">Points travaillés</h5>
+                      <p className="text-gray-600 text-sm bg-white p-3 rounded border border-green-100">
+                        {report.points_worked}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {report.content && (
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1">Contenu de la séance</h5>
+                      <p className="text-gray-600 text-sm bg-white p-3 rounded border border-green-100 whitespace-pre-wrap">
+                        {report.content}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {report.observations && (
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1">Observations</h5>
+                      <p className="text-gray-600 text-sm bg-white p-3 rounded border border-green-100 whitespace-pre-wrap">
+                        {report.observations}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {report.homework_recommendations && (
+                    <div>
+                      <h5 className="font-medium text-gray-700 mb-1">Devoirs et recommandations</h5>
+                      <p className="text-gray-600 text-sm bg-white p-3 rounded border border-green-100 whitespace-pre-wrap">
+                        {report.homework_recommendations}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       )}
     </>
   );

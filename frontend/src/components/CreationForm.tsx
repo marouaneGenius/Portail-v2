@@ -5,6 +5,7 @@ import { userFields ,
         studentFields,
         parentFields,
         tutorScheduleFields,
+        reportFields,
 } from '../forms/schemas';
 import api from '../api/aixos';
 import { useState } from 'react';
@@ -15,7 +16,8 @@ const schemaMap: Record<string, FormField[] > = {
   center: centerFields,
   student: studentFields,
   parent: parentFields,
-  tutorschedule: tutorScheduleFields
+  tutorschedule: tutorScheduleFields,
+  report: reportFields,
 //   sessions: sessionFields,
 //   subscriptions: subscriptionFields,
 };
@@ -26,6 +28,11 @@ export default function CreationForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState<Record<string, any>[]>([]);
+
+  // Récupérer les paramètres de query
+  const urlParams = new URLSearchParams(window.location.search);
+  const studentId = urlParams.get('student_id');
+  const sessionId = urlParams.get('session_id');
 
   const fields = schemaMap[resource ?? ''] as FormField[] | undefined;
 
@@ -105,12 +112,25 @@ export default function CreationForm() {
     }
   };
 
+  // Valeurs initiales basées sur les paramètres de query
+  const initialValues = resource === 'report' 
+    ? { 
+        ...(studentId && { id_student: studentId }),
+        ...(sessionId && { id_session: sessionId })
+      } 
+    : {};
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">
-        Créer un {resource}
+        Créer un {resource === 'report' ? 'compte-rendu' : resource}
       </h1>
-      <FormGenerator fields={fields} onSubmit={handleSubmit} endpoint={resource} />
+      <FormGenerator 
+        fields={fields} 
+        onSubmit={handleSubmit} 
+        endpoint={resource}
+        initialValues={initialValues}
+      />
     </div>
   );
 }
