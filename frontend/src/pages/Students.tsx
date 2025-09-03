@@ -15,7 +15,7 @@ const Students: React.FC = () => {
     <div className="mx-auto py-2 px-4">
       {/* <h1 className="text-3xl font-bold mb-0">Liste des étudiants</h1> */}
       {/* <div className='flex w-1/6'>       */}
-        <CustomDataTable endpoint="student" title="Liste des étudiants" addLabel="Ajouter un étudiant" />
+        <CustomDataTable endpoint="student" title="Liste des élèves" addLabel="Ajouter un élève" />
 
       {/* </div> */}
     </div>
