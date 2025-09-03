@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, AlertTriangle, CheckCircle, XCircle, LogOut, Settings, FileText, Download, Ban, Euro, Clock } from 'lucide-react';
+import { Calendar, User, AlertTriangle, CheckCircle, XCircle, LogOut, Settings, FileText, Download, Ban, Euro, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePermissions } from '../Hooks/usePermissions';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../Hooks/auth';
@@ -58,11 +58,13 @@ const ParentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [contractsLoading, setContractsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'sessions' | 'contracts'>('sessions');
-  const [showUpcoming, setShowUpcoming] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<'upcoming' | 'past' | 'monthly'>('upcoming');
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [showRescheduleModal, setShowRescheduleModal] = useState<number | null>(null);
   const [rescheduleValues, setRescheduleValues] = useState<any>({
     scheduled_at: '',
-    school_subjects: []
+    school_subjects: [],
+    tutor_id: ''
   });
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
 
@@ -232,6 +234,7 @@ const ParentDashboard: React.FC = () => {
       await api.put(`/api/sessions/move-future-slots/${showRescheduleModal}`, {
         scheduled_at: rescheduleValues.scheduled_at,
         school_subjects: rescheduleValues.school_subjects,
+        tutor_id: rescheduleValues.tutor_id,
         update_all: false,
         updated_by: user?.email + ' (Parent)',
         rescheduled_by_parent: true
@@ -247,6 +250,7 @@ const ParentDashboard: React.FC = () => {
                 subject: Array.isArray(rescheduleValues.school_subjects) 
                   ? rescheduleValues.school_subjects.join(', ')
                   : rescheduleValues.school_subjects || session.subject,
+                tutor_name: rescheduleValues.tutor_id ? 'Nouveau tuteur' : session.tutor_name, // Sera mis à jour lors du rechargement
                 is_canceled: false, // Réactiver la séance
                 canceled_by: null   // Supprimer l'info d'annulation
               }
@@ -255,7 +259,7 @@ const ParentDashboard: React.FC = () => {
       );
 
       setShowRescheduleModal(null);
-      setRescheduleValues({ scheduled_at: '', school_subjects: [] });
+      setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
       setConflictWarning(null);
       toast.success('Séance reprogrammée avec succès');
       
@@ -323,8 +327,76 @@ const ParentDashboard: React.FC = () => {
                    .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
 
+  const getMonthSessions = () => {
+    const monthStart = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+    const monthEnd = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+    
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate >= monthStart && sessionDate <= monthEnd;
+    }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  const generateCalendarDays = () => {
+    const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth();
+    
+    // Premier jour du mois
+    const firstDay = new Date(year, month, 1);
+    // Dernier jour du mois
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Premier jour de la semaine (lundi = 1, dimanche = 0)
+    const startDate = new Date(firstDay);
+    const firstDayOfWeek = firstDay.getDay();
+    const mondayOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    startDate.setDate(firstDay.getDate() - mondayOffset);
+    
+    // Générer 42 jours (6 semaines)
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() + i);
+      days.push(day);
+    }
+    
+    return days;
+  };
+
+  const getSessionsForDay = (day: Date) => {
+    const dayStart = new Date(day);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(23, 59, 59, 999);
+    
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate >= dayStart && sessionDate <= dayEnd;
+    });
+  };
+
   const upcomingSessions = getUpcomingSessions();
   const pastSessions = getPastSessions();
+  const monthSessions = getMonthSessions();
   const activeContracts = contracts.filter(contract => contract.is_valide && !contract.is_canceled);
 
   return (
@@ -477,39 +549,84 @@ const ParentDashboard: React.FC = () => {
       {/* Contenu selon l'onglet actif */}
       {activeTab === 'sessions' && (
         <div className="space-y-6">
-          {/* Card unique avec switch pour à venir/passées */}
+          {/* Navigation entre les vues */}
+          <div className="flex justify-center">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('upcoming')}
+                className={`py-2 px-4 rounded-md transition-colors duration-200 ${
+                  viewMode === 'upcoming'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-blue-600'
+                }`}
+              >
+                À venir
+              </button>
+              <button
+                onClick={() => setViewMode('past')}
+                className={`py-2 px-4 rounded-md transition-colors duration-200 ${
+                  viewMode === 'past'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-blue-600'
+                }`}
+              >
+                Passées
+              </button>
+              <button
+                onClick={() => setViewMode('monthly')}
+                className={`py-2 px-4 rounded-md transition-colors duration-200 ${
+                  viewMode === 'monthly'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-blue-600'
+                }`}
+              >
+                Vue mensuelle
+              </button>
+            </div>
+          </div>
+
+          {/* Card selon la vue sélectionnée */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>
-                    {showUpcoming ? 'Séances à venir' : 'Séances passées'}
+                    {viewMode === 'upcoming' ? 'Séances à venir' : 
+                     viewMode === 'past' ? 'Séances passées' : 
+                     `Séances de ${formatMonthYear(selectedMonth)}`}
                   </CardTitle>
                   <CardDescription>
-                    {showUpcoming 
+                    {viewMode === 'upcoming' 
                       ? 'Vous pouvez annuler les cours de vos enfants jusqu\'à 48h avant'
-                      : 'Historique des sessions de vos enfants'
+                      : viewMode === 'past'
+                      ? 'Historique des sessions de vos enfants'
+                      : 'Toutes les séances du mois sélectionné'
                     }
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm ${!showUpcoming ? 'font-semibold text-blue-600' : 'text-gray-600'}`}>
-                    Passées
-                  </span>
-                  <button
-                    onClick={() => setShowUpcoming(!showUpcoming)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${
-                      showUpcoming ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
-                      showUpcoming ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                  <span className={`text-sm ${showUpcoming ? 'font-semibold text-blue-600' : 'text-gray-600'}`}>
-                    À venir
-                  </span>
-                </div>
+                
+                {/* Navigation pour la vue mensuelle */}
+                {viewMode === 'monthly' && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigateMonth('prev')}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium min-w-[120px] text-center">
+                      {formatMonthYear(selectedMonth)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigateMonth('next')}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -518,7 +635,7 @@ const ParentDashboard: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des sessions...</p>
             </div>
-          ) : showUpcoming ? (
+          ) : viewMode === 'upcoming' ? (
             // Séances à venir
             upcomingSessions.length === 0 ? (
               <div className="text-center py-8">
@@ -635,7 +752,8 @@ const ParentDashboard: React.FC = () => {
                                 getStundent(session.child_id, session.id);
                                 setRescheduleValues({
                                   scheduled_at: new Date(session.scheduled_at).toISOString().slice(0, 16),
-                                  school_subjects: session.subject
+                                  school_subjects: session.subject,
+                                  tutor_id: ''
                                 });
                                 setShowRescheduleModal(session.id);
                               }}
@@ -656,7 +774,7 @@ const ParentDashboard: React.FC = () => {
               })}
               </div>
             )
-          ) : (
+          ) : viewMode === 'past' ? (
             // Séances passées
             pastSessions.length === 0 ? (
               <div className="text-center py-8">
@@ -715,6 +833,77 @@ const ParentDashboard: React.FC = () => {
                 })}
               </div>
             )
+          ) : (
+            // Vue calendrier mensuelle
+            <div className="space-y-4">
+              {/* En-têtes des jours de la semaine */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+                  <div key={day} className="text-center text-sm font-medium text-gray-600 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Grille du calendrier */}
+              <div className="grid grid-cols-7 gap-2">
+                {generateCalendarDays().map((day, index) => {
+                  const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
+                  const isToday = day.toDateString() === new Date().toDateString();
+                  const daySessions = getSessionsForDay(day);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`min-h-[120px] border rounded-lg p-2 ${
+                        isCurrentMonth 
+                          ? 'bg-white border-gray-200' 
+                          : 'bg-gray-50 border-gray-100'
+                      } ${isToday ? 'ring-2 ring-blue-400' : ''}`}
+                    >
+                      {/* Numéro du jour */}
+                      <div className={`text-sm font-medium mb-2 ${
+                        isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                      } ${isToday ? 'text-blue-600 font-bold' : ''}`}>
+                        {day.getDate()}
+                      </div>
+                      
+                      {/* Séances du jour */}
+                      <div className="space-y-1">
+                        {daySessions.map((session) => {
+                          const { time } = formatDateTimeParent(session.scheduled_at);
+                          const isPast = new Date(session.scheduled_at) < new Date();
+                          
+                          return (
+                            <div
+                              key={`${session.id}-${session.child_id}`}
+                              className={`text-xs p-1 rounded cursor-pointer ${
+                                session.is_canceled 
+                                  ? 'bg-red-100 text-red-700 border border-red-200' 
+                                  : isPast
+                                  ? 'bg-gray-100 text-gray-600'
+                                  : 'bg-blue-100 text-blue-700 border border-blue-200'
+                              }`}
+                              title={`${session.child_name} - ${session.subject} avec ${session.tutor_name}`}
+                            >
+                              <div className="font-medium">{time}</div>
+                              <div className="truncate">{session.child_name}</div>
+                              <div className="truncate text-gray-500">{session.subject}</div>
+                              {session.is_canceled && (
+                                <div className="text-red-600 font-medium">Annulé</div>
+                              )}
+                              {session.is_absent && (
+                                <div className="text-red-600 font-medium">Absent</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
             </CardContent>
           </Card>
@@ -804,7 +993,7 @@ const ParentDashboard: React.FC = () => {
                         </Button>
 
                         {/* Bouton annulation (seulement pour contrats actifs) */}
-                        {contract.is_valide && !contract.is_canceled && (
+                        {/* {contract.is_valide && !contract.is_canceled && (
                           <Button
                             size="sm"
                             variant="destructive"
@@ -814,7 +1003,7 @@ const ParentDashboard: React.FC = () => {
                             <Ban className="h-3 w-3" />
                             Annuler
                           </Button>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>
@@ -834,7 +1023,7 @@ const ParentDashboard: React.FC = () => {
           isOpen={true} 
           onClose={() => {
             setShowRescheduleModal(null);
-            setRescheduleValues({ scheduled_at: '', school_subjects: [] });
+            setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
             setConflictWarning(null);
           }} 
           title="Reprogrammer la séance"
@@ -875,7 +1064,7 @@ const ParentDashboard: React.FC = () => {
                 variant="outline"
                 onClick={() => {
                   setShowRescheduleModal(null);
-                  setRescheduleValues({ scheduled_at: '', school_subjects: [] });
+                  setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
                   setConflictWarning(null);
                 }}
                 className="flex-1"

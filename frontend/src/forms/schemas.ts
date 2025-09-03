@@ -170,4 +170,5 @@ export const PreinscriptionFields: FormField[] = [
 export const UpdateSlotForm: FormField[] = [
   { name: 'scheduled_at', label: 'Date et Heure de Cours', type: 'datetime-local'},
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
+  { name: 'tutor_id', label: 'Tuteur', type: 'select', required: true },
 ]
