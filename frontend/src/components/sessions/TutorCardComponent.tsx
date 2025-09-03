@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StudentCard } from './StudentCardComponent';
 import { useDroppable } from '@dnd-kit/core';
-import { User} from "lucide-react";
+import { User, UserCheck} from "lucide-react";
 
 type Tutor = { 
   id: number; 
@@ -33,6 +33,7 @@ interface TutorCardProps {
   droppableId?: any;
   hourSlot: string;
   session:any;
+  onExceptionalChange?: (sessionIds: number[], studentIds: number[], tutorId: number, description: string, tutorName: string) => void;
   // day: string;
 }
 
@@ -42,9 +43,14 @@ export const TutorCard: React.FC<TutorCardProps> = ({
   students,
   droppableId,
   hourSlot,
-  session
+  session,
+  onExceptionalChange
   // day
 }) => {
+  // Debug: vérifier si la fonction arrive
+  useEffect(() => {
+    console.log('TutorCard - onExceptionalChange function:', onExceptionalChange ? 'Available' : 'Not available');
+  }, [onExceptionalChange]);
 
   const { setNodeRef, isOver } = useDroppable({
     id: droppableId,
@@ -78,6 +84,45 @@ export const TutorCard: React.FC<TutorCardProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Bouton Changement exceptionnel pour TOUS les étudiants du tuteur */}
+      {onExceptionalChange && students.length > 0 && (
+        <div className="mb-2 pb-2 border-b border-gray-200">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // Récupérer toutes les séances de ce tuteur pour ce créneau
+              const tutorSessions = session.sessions.filter((s: any) => 
+                students.some((student: any) => student.session_id === s.id)
+              );
+              
+              console.log('TutorCard - Sessions:', tutorSessions);
+              console.log('TutorCard - Students:', students);
+              
+              const sessionIds = tutorSessions.map((s: any) => s.id);
+              const studentIds = students.map((s: any) => s.id);
+              
+              console.log('TutorCard - SessionIds:', sessionIds);
+              console.log('TutorCard - StudentIds:', studentIds);
+              
+              if (onExceptionalChange) {
+                onExceptionalChange(
+                  sessionIds, // Toutes les sessions
+                  studentIds, // Tous les étudiants
+                  tutor.id,
+                  `${students.length} étudiant(s)`,
+                  `${tutor.firstname} ${tutor.lastname}`
+                );
+              }
+            }}
+            className="w-full px-3 py-2 text-xs bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+            title="Remplacer ce tuteur pour tous ses étudiants à ce créneau"
+          >
+            <UserCheck className="w-3 h-3" />
+            Changer tuteur ({students.length} élève{students.length > 1 ? 's' : ''})
+          </button>
+        </div>
+      )}
 
       <div className="mt-2">
         <div className="space-y-2 min-h-[60px]"> 

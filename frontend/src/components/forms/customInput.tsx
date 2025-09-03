@@ -569,11 +569,11 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
   // 3) Date et heure (scheduled_at)
   if (f.name === "scheduled_at") {
     return (
-      <>
-       <div className="space-y-1">
-         <label htmlFor="scheduled_at" className="block text-sm font-medium">
+      <div className="">
+       <div className="space-y-1 ">
+         {/* <label htmlFor="scheduled_at" className="block text-sm font-medium">
            Date et heure de cours
-         </label>
+         </label> */}
          <DateTimePicker
            value={values.scheduled_at ? new Date(values.scheduled_at) : undefined}
            onChange={(date) => {
@@ -585,7 +585,7 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
          />
        </div>
       {values.scheduled_at && (
-        <div className="mt-0 bg-gray-100  p-2 rounded">
+        <div className="mt-0 bg-gray-100   rounded">
           <TutorListComponent
             values={values}
             student={student}
@@ -598,7 +598,7 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
           />
         </div>
       )}
-    </>
+    </div>
 
     );
   }

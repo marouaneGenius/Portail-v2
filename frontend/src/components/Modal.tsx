@@ -21,11 +21,11 @@ const Modal: React.FC<ModalProps> = ({
   // Le contenu du modal
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 "
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-3xl"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl"
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
@@ -40,7 +40,7 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="p-4">{children}</div>
+        <div className="p-0">{children}</div>
 
         {footer && (
           <div className="px-4 py-2 border-t flex justify-end space-x-2">

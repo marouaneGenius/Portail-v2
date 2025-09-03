@@ -17,7 +17,7 @@ import { DaysCalendar } from '@/components/ui/days-canlendar';
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Calendar, CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Calendar, CalendarDays, ChevronLeft, ChevronRight, Clock, UserCheck } from "lucide-react";
 import Modal from '../components/Modal';
 
 import { useModal } from '@/Hooks/useModal';
@@ -67,6 +67,17 @@ export default function SessionCalendar() {
   } | null>(null);
   const [currentView, setCurrentView] = useState<'daily' | 'weekly'>('daily');
   const [hideEmptyTutors, setHideEmptyTutors] = useState(false);
+  const [showExceptionalChangeModal, setShowExceptionalChangeModal] = useState(false);
+  const [allTutors, setAllTutors] = useState<any[]>([]);
+  const [selectedReplacementTutor, setSelectedReplacementTutor] = useState<number | null>(null);
+  const [selectedSessionForChange, setSelectedSessionForChange] = useState<{
+    sessionIds: number[];
+    studentIds: number[];
+    tutorId: number;
+    description: string;
+    tutorName: string;
+  } | null>(null);
+  const [conflictCheck, setConflictCheck] = useState<{hasConflict: boolean, message: string}>({hasConflict: false, message: ''});
 
   useEffect(() => {
     getCenters().then((centersList) => {
@@ -186,6 +197,117 @@ export default function SessionCalendar() {
 
   };
 
+
+  const loadAllTutors = async () => {
+    try {
+      const response = await api.get('/api/users/tutors');
+      setAllTutors(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des tuteurs:', error);
+    }
+  };
+
+  const checkTutorConflict = async (tutorId: number, sessionIds: number[], scheduledAt: string) => {
+    try {
+      // Vérifier pour la première session (toutes ont le même créneau)
+      const response = await api.get(`/api/sessions/check-conflict/${tutorId}`, {
+        params: {
+          date: scheduledAt,
+          session_id: sessionIds[0] // Utiliser la première session comme référence
+        }
+      });
+      
+      if (response.data.hasConflict) {
+        setConflictCheck({
+          hasConflict: true, 
+          message: `Ce tuteur a déjà une séance à cette heure avec: ${response.data.conflictingSessions.map((s: any) => s.student_name).join(', ')}`
+        });
+      } else {
+        setConflictCheck({hasConflict: false, message: ''});
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification des conflits:', error);
+      setConflictCheck({hasConflict: false, message: ''});
+    }
+  };
+
+  const handleExceptionalChange = async () => {
+    if (!selectedReplacementTutor || !selectedSessionForChange || conflictCheck.hasConflict) return;
+
+    console.log('handleExceptionalChange - selectedSessionForChange:', selectedSessionForChange);
+    console.log('handleExceptionalChange - sessionIds:', selectedSessionForChange.sessionIds);
+    console.log('handleExceptionalChange - typeof sessionIds:', typeof selectedSessionForChange.sessionIds);
+
+    try {
+      // Vérifier que sessionIds est bien un tableau
+      if (!Array.isArray(selectedSessionForChange.sessionIds)) {
+        console.error('sessionIds is not an array:', selectedSessionForChange.sessionIds);
+        alert('Erreur: données de session invalides');
+        return;
+      }
+
+      // Changer toutes les sessions en une seule fois
+      const promises = selectedSessionForChange.sessionIds.map(sessionId =>
+        api.patch(`/api/sessions/exceptional-change/${sessionId}`, {
+          new_tutor_id: selectedReplacementTutor,
+          new_center_id: selectedCenter,
+          student_ids: selectedSessionForChange.studentIds,
+          changed_by: user?.email,
+          reason: `Changement exceptionnel depuis planning - ${selectedSessionForChange.description}`
+        })
+      );
+
+      await Promise.all(promises);
+      
+      setShowExceptionalChangeModal(false);
+      setSelectedSessionForChange(null);
+      setSelectedReplacementTutor(null);
+      setConflictCheck({hasConflict: false, message: ''});
+      
+      alert(`Tuteur remplacé avec succès pour ${selectedSessionForChange.sessionIds.length} séance(s)`);
+      
+      // Recharger les données
+      if (selectedCenter && selectedDate) {
+        const date = new Date(selectedDate);
+        const period = currentView === 'weekly' ? 'week' : 'day';
+        api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
+          params: { date: formatDate(date), period }
+        })
+          .then(({ data }) => {
+            const filteredTutors = data.map((item: any) => ({
+              tutor: item,
+              sessions: item.sessions
+            }));
+            setTutors(filteredTutors);
+          });
+      }
+    } catch (error) {
+      console.error('Erreur lors du changement exceptionnel:', error);
+      alert('Erreur lors du changement de tuteur');
+    }
+  };
+
+  const openExceptionalChangeModal = (sessionIds: number[], studentIds: number[], tutorId: number, description: string, tutorName: string) => {
+    console.log('openExceptionalChangeModal - Received params:', {sessionIds, studentIds, tutorId, description, tutorName});
+    
+    // S'assurer que les paramètres sont des tableaux
+    const safeSessionIds = Array.isArray(sessionIds) ? sessionIds : [sessionIds];
+    const safeStudentIds = Array.isArray(studentIds) ? studentIds : [studentIds];
+    
+    console.log('openExceptionalChangeModal - Safe arrays:', {safeSessionIds, safeStudentIds});
+    
+    setSelectedSessionForChange({
+      sessionIds: safeSessionIds,
+      studentIds: safeStudentIds, 
+      tutorId,
+      description,
+      tutorName
+    });
+    setShowExceptionalChangeModal(true);
+    if (allTutors.length === 0) {
+      loadAllTutors();
+    }
+  };
 
   const updateSession = (
     sessionId: number,
@@ -403,6 +525,7 @@ export default function SessionCalendar() {
                               droppableId={`${selectedDate}-${hourSlot.value}-${key}`}
                               hourSlot={hourSlot.value}
                               session={block}
+                              onExceptionalChange={openExceptionalChangeModal}
                             />
                           );
                         })}
@@ -506,46 +629,68 @@ export default function SessionCalendar() {
                                           return (
                                             <div
                                               key={`${student.id}-${student.session_id}`}
-                                              className={`flex items-center justify-between rounded-md hover:bg-slate-100 transition-colors px-2 py-2 mb-1 border
+                                              className={`rounded-md hover:bg-slate-100 transition-colors px-2 py-2 mb-1 border
                                                 ${currentSession?.is_canceled ? 'opacity-50 bg-red-50 border-red-200' : 
                                                   currentSession?.session_type === 'trial_session' ? 
                                                     (currentSession?.is_paid ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300') : 
                                                     'bg-slate-50 border-fading-grey'}
                                               `}
                                             >
-                                              <div className="flex flex-col gap-1 w-full">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                  <span className={`text-sm font-medium ${currentSession?.is_canceled ? 'line-through text-slate-500' : 'text-mister-anthracite'}`}>
-                                                    {student.firstname} {student.lastname}
-                                                  </span>
-                                                  {student.class && (
-                                                    <Badge
-                                                      variant="outline"
-                                                      className="text-xs px-1 py-0 bg-orange-50 text-orange-700 border-orange-200"
-                                                    >
-                                                      {student.class}
-                                                    </Badge>
-                                                  )}
-                                                  {currentSession?.is_absent && !currentSession?.is_canceled && (
-                                                    <Badge variant="destructive" className="text-xs px-2 py-0.5">Absent</Badge>
-                                                  )}
-                                                  {currentSession?.is_canceled && (
-                                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
-                                                      Annulé
+                                              <div className="flex items-center justify-between w-full">
+                                                <div className="flex flex-col gap-1 flex-1">
+                                                  <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`text-sm font-medium ${currentSession?.is_canceled ? 'line-through text-slate-500' : 'text-mister-anthracite'}`}>
+                                                      {student.firstname} {student.lastname}
                                                     </span>
-                                                  )}
+                                                    {student.class && (
+                                                      <Badge
+                                                        variant="outline"
+                                                        className="text-xs px-1 py-0 bg-orange-50 text-orange-700 border-orange-200"
+                                                      >
+                                                        {student.class}
+                                                      </Badge>
+                                                    )}
+                                                    {currentSession?.is_absent && !currentSession?.is_canceled && (
+                                                      <Badge variant="destructive" className="text-xs px-2 py-0.5">Absent</Badge>
+                                                    )}
+                                                    {currentSession?.is_canceled && (
+                                                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                                                        Annulé
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {(currentSession?.school_subjects ?? []).map((subject: string) => (
+                                                      <Badge
+                                                        key={subject}
+                                                        variant="outline"
+                                                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-2 py-0.5"
+                                                      >
+                                                        {subject}
+                                                      </Badge>
+                                                    ))}
+                                                  </div>
                                                 </div>
-                                                <div className="flex flex-wrap gap-1">
-                                                  {(currentSession?.school_subjects ?? []).map((subject: string) => (
-                                                    <Badge
-                                                      key={subject}
-                                                      variant="outline"
-                                                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-2 py-0.5"
-                                                    >
-                                                      {subject}
-                                                    </Badge>
-                                                  ))}
-                                                </div>
+                                                {/* Bouton Changement exceptionnel */}
+                                                {!currentSession?.is_canceled && (
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openExceptionalChangeModal(
+                                                        currentSession.id,
+                                                        student.id,
+                                                        block.tutor.id,
+                                                        `${student.firstname} ${student.lastname}`,
+                                                        `${block.tutor.firstname} ${block.tutor.lastname}`
+                                                      );
+                                                    }}
+                                                    className="ml-2 px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-1"
+                                                    title="Changement exceptionnel de tuteur"
+                                                  >
+                                                    <UserCheck className="w-3 h-3" />
+                                                    Changer
+                                                  </button>
+                                                )}
                                               </div>
                                             </div>
                                           );
@@ -629,6 +774,103 @@ export default function SessionCalendar() {
               />
               <span className="ml-2">Pour toutes les prochaines séances de cet étudiant à ce créneau</span>
             </label>
+          </div>
+        </Modal>
+
+        {/* Modal Changement exceptionnel */}
+        <Modal
+          isOpen={showExceptionalChangeModal}
+          onClose={() => {
+            setShowExceptionalChangeModal(false);
+            setSelectedSessionForChange(null);
+            setSelectedReplacementTutor(null);
+            setConflictCheck({hasConflict: false, message: ''});
+          }}
+          title="Changement exceptionnel de tuteur"
+        >
+          <div className='p-4 space-y-4'>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <h4 className="font-semibold text-orange-800 mb-2">⚠️ Changement exceptionnel</h4>
+              <p className="text-sm text-orange-700">
+                Ce changement remplacera le tuteur <strong>{selectedSessionForChange?.tutorName}</strong> pour <strong>{selectedSessionForChange?.description}</strong> à ce créneau.
+                Tous les étudiants de ce tuteur à cette heure seront transférés au nouveau tuteur.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sélectionner un tuteur de remplacement
+                </label>
+                <select
+                  value={selectedReplacementTutor || ''}
+                  onChange={(e) => {
+                    const tutorId = Number(e.target.value);
+                    setSelectedReplacementTutor(tutorId);
+                    if (tutorId && selectedSessionForChange) {
+                      // Trouver la session pour obtenir scheduled_at
+                      const session = tutors
+                        .flatMap(t => t.sessions)
+                        .find(s => s.id === selectedSessionForChange.sessionIds[0]);
+                      if (session) {
+                        checkTutorConflict(tutorId, selectedSessionForChange.sessionIds, session.scheduled_at);
+                      }
+                    } else {
+                      setConflictCheck({hasConflict: false, message: ''});
+                    }
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                >
+                  <option value="">-- Choisir un tuteur --</option>
+                  {allTutors
+                    .filter(tutor => tutor.id !== selectedSessionForChange?.tutorId) // Exclure le tuteur actuel
+                    .map((tutor) => (
+                    <option key={tutor.id} value={tutor.id}>
+                      {tutor.firstname} {tutor.lastname} 
+                      {tutor.school_subjects && tutor.school_subjects.length > 0 && 
+                        ` (${tutor.school_subjects.join(', ')})`
+                      }
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+
+              {conflictCheck.hasConflict && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-700 font-medium">🚫 Conflit détecté</p>
+                  <p className="text-sm text-red-600 mt-1">{conflictCheck.message}</p>
+                </div>
+              )}
+
+              {selectedReplacementTutor && !conflictCheck.hasConflict && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-700 font-medium">✅ Aucun conflit détecté</p>
+                  <p className="text-sm text-green-600 mt-1">Ce tuteur est disponible pour cette séance.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t">
+              <button
+                onClick={() => {
+                  setShowExceptionalChangeModal(false);
+                  setSelectedSessionForChange(null);
+                  setSelectedReplacementTutor(null);
+                  setConflictCheck({hasConflict: false, message: ''});
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleExceptionalChange}
+                disabled={!selectedReplacementTutor || conflictCheck.hasConflict}
+                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Confirmer le changement
+              </button>
+            </div>
           </div>
         </Modal>
       </div>

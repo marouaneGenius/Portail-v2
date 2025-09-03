@@ -539,4 +539,28 @@ class UserController extends AbstractController
             'created_at'     => $user->getCreatedAt(),
         ]);
     }
+
+    #[Route('s/tutors', name: 'get_all_tutors', methods: ['GET'])]
+    public function getAllTutors(): JsonResponse
+    {
+        $tutors = $this->userRepository->findTutors();
+        
+        $tutorsData = [];
+        foreach ($tutors as $tutor) {
+            $tutorsData[] = [
+                'id' => $tutor->getId(),
+                'firstname' => $tutor->getFirstname(),
+                'lastname' => $tutor->getLastname(),
+                'email' => $tutor->getEmail(),
+                'school_subjects' => $tutor->getSchoolSubjects(),
+                'centers' => array_map(fn($center) => [
+                    'id' => $center->getId(),
+                    'name' => $center->getName()
+                ], $tutor->getCentres()->toArray()),
+                'is_active' => $tutor->isIsActive()
+            ];
+        }
+
+        return $this->json($tutorsData);
+    }
 }

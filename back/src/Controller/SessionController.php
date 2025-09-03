@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Session;
+use App\Entity\Center;
 use App\Repository\CenterRepository;
 use App\Repository\SessionRepository;
 use App\Repository\UserRepository;
@@ -1603,6 +1604,146 @@ class SessionController extends AbstractController
         }, $sessions->toArray());
 
         return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/check-conflict/{tutorId}', name: 'session_check_conflict', methods: ['GET'])]
+    public function checkTutorConflict(int $tutorId, Request $request): JsonResponse
+    {
+        $date = $request->query->get('date');
+        $currentSessionId = $request->query->get('session_id');
+        
+        if (!$date) {
+            return new JsonResponse(['error' => 'Date manquante'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier s'il y a des sessions pour ce tuteur à cette date/heure
+        $conflictingSessions = $this->sessionRepo->createQueryBuilder('s')
+            ->leftJoin('s.id_student', 'students')
+            ->where('s.idTutor = :tutorId')
+            ->andWhere('s.scheduled_at = :scheduledAt')
+            ->andWhere('s.is_canceled = false')
+            ->andWhere('s.id != :currentSessionId')
+            ->setParameter('tutorId', $tutorId)
+            ->setParameter('scheduledAt', new \DateTimeImmutable($date))
+            ->setParameter('currentSessionId', $currentSessionId)
+            ->getQuery()
+            ->getResult();
+
+        $hasConflict = count($conflictingSessions) > 0;
+        
+        $conflictData = [];
+        foreach ($conflictingSessions as $session) {
+            $students = $session->getIdStudent();
+            foreach ($students as $student) {
+                $conflictData[] = [
+                    'session_id' => $session->getId(),
+                    'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
+                    'time' => $session->getScheduledAt()->format('H:i')
+                ];
+            }
+        }
+
+        return new JsonResponse([
+            'hasConflict' => $hasConflict,
+            'conflictingSessions' => $conflictData
+        ]);
+    }
+
+    #[Route('/exceptional-change/{sessionId}', name: 'session_exceptional_change', methods: ['PATCH'])]
+    public function exceptionalChange(int $sessionId, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return new JsonResponse(['error' => 'Corps invalide, JSON attendu'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $session = $this->sessionRepo->find($sessionId);
+        if (!$session) {
+            return new JsonResponse(['error' => 'Session introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $newTutorId = $data['new_tutor_id'] ?? null;
+        $newCenterId = $data['new_center_id'] ?? null;
+        $studentIds = $data['student_ids'] ?? [];
+        $reason = $data['reason'] ?? 'Changement exceptionnel';
+        $changedBy = $data['changed_by'] ?? 'Système';
+
+        if (!$newTutorId) {
+            return new JsonResponse(['error' => 'ID du nouveau tuteur manquant'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (!$newCenterId) {
+            return new JsonResponse(['error' => 'ID du nouveau centre manquant'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $newTutor = $this->userRepo->find($newTutorId);
+        if (!$newTutor) {
+            return new JsonResponse(['error' => 'Nouveau tuteur introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $newCenter = $this->em->getRepository(Center::class)->find($newCenterId);
+        if (!$newCenter) {
+            return new JsonResponse(['error' => 'Nouveau centre introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // Vérifier qu'il n'y a pas de conflit
+        $conflictingSessions = $this->sessionRepo->createQueryBuilder('s')
+            ->where('s.idTutor = :tutorId')
+            ->andWhere('s.scheduled_at = :scheduledAt')
+            ->andWhere('s.is_canceled = false')
+            ->andWhere('s.id != :sessionId')
+            ->setParameter('tutorId', $newTutorId)
+            ->setParameter('scheduledAt', $session->getScheduledAt())
+            ->setParameter('sessionId', $sessionId)
+            ->getQuery()
+            ->getResult();
+
+        if (count($conflictingSessions) > 0) {
+            return new JsonResponse([
+                'error' => 'Le tuteur sélectionné a déjà une séance à cette heure'
+            ], JsonResponse::HTTP_CONFLICT);
+        }
+
+        // Effectuer le changement
+        $oldTutor = $session->getIdTutor();
+        $oldCenter = $session->getCenter();
+        $session->setIdTutor($newTutor);
+        $session->setCenter($newCenter);
+        $session->setUpdatedBy($changedBy);
+        
+        // Ajouter une note courte dans la session pour tracer le changement
+        $changeNote = sprintf(
+            "T:%s→%s C:%s→%s %s",
+            $oldTutor->getFirstname()[0] . $oldTutor->getLastname()[0],
+            $newTutor->getFirstname()[0] . $newTutor->getLastname()[0], 
+            $oldCenter ? $oldCenter->getName()[0] : '?',
+            $newCenter->getName()[0],
+            date('d/m H:i')
+        );
+        
+        // S'assurer que la note ne dépasse pas 255 caractères
+        if (strlen($changeNote) <= 255) {
+            $session->setResume($changeNote);
+        }
+
+        $this->em->flush();
+
+        return new JsonResponse([
+            'message' => 'Tuteur changé avec succès',
+            'session_id' => $sessionId,
+            'old_tutor' => [
+                'id' => $oldTutor->getId(),
+                'name' => $oldTutor->getFirstname() . ' ' . $oldTutor->getLastname()
+            ],
+            'new_tutor' => [
+                'id' => $newTutor->getId(),
+                'name' => $newTutor->getFirstname() . ' ' . $newTutor->getLastname()
+            ],
+            'new_center' => [
+                'id' => $newCenter->getId(),
+                'name' => $newCenter->getName()
+            ]
+        ]);
     }
 
 }

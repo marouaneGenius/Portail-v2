@@ -78,8 +78,8 @@ class UserRepository extends ServiceEntityRepository
 
     public function findTutorsAvailableInCenter(Center $center): array
     {
-        // 1. Récupérer simplement la liste d’IDs
-        $ids = $this->createQueryBuilder('u')
+        // 1. Récupérer les IDs des tuteurs avec disponibilités configurées
+        $scheduledIds = $this->createQueryBuilder('u')
             ->select('DISTINCT u.id')
             ->innerJoin('u.tutorSchedules', 'ts')
             ->innerJoin('ts.center',        'c')
@@ -87,14 +87,26 @@ class UserRepository extends ServiceEntityRepository
             ->setParameter('center', $center)
             ->getQuery()
             ->getSingleColumnResult();   // => [3, 5, 12, …]
+        
+        // 2. Récupérer les IDs des tuteurs ayant des sessions exceptionnelles dans ce centre
+        $exceptionalIds = $this->createQueryBuilder('u')
+            ->select('DISTINCT u.id')
+            ->innerJoin('u.sessions', 's')
+            ->andWhere('s.center = :center')
+            ->setParameter('center', $center)
+            ->getQuery()
+            ->getSingleColumnResult();
     
-        if (!$ids) {
+        // 3. Fusionner les deux listes et supprimer les doublons
+        $allIds = array_unique(array_merge($scheduledIds ?: [], $exceptionalIds ?: []));
+        
+        if (empty($allIds)) {
             return [];
         }
     
         return $this->createQueryBuilder('u')
             ->where('u.id IN (:ids)')
-            ->setParameter('ids', $ids)
+            ->setParameter('ids', $allIds)
             ->getQuery()
             ->getResult();
     }

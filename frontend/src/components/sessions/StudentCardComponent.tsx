@@ -9,7 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, GraduationCap } from "lucide-react";
+import { MoreVertical, GraduationCap, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { renderMultiSelect, RenderTrialField } from '../forms/customInput';
 import api from '@/api/aixos';
@@ -24,6 +24,7 @@ interface StudentCardProps {
   tutorId: number;
   sessionHour: string;
   session: any;
+  onExceptionalChange?: (sessionId: number, studentId: number, tutorId: number, studentName: string, tutorName?: string) => void;
 }
 
 export const StudentCard: React.FC<StudentCardProps> = ({
@@ -31,8 +32,9 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   tutorId,
   sessionHour,
   session,
+  onExceptionalChange,
 }) => {
-  const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | null>(null);
+  const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | 'exceptional_change' | null>(null);
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
   const [isPaid, isIsPaid] = useState(student.session.is_paid);
   const [sessionType, setSessionType] = useState(student.session.session_type);
@@ -47,6 +49,12 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const currentSession = student.session;
   const currentStudent = student.student;
   const { user } = useAuth();
+
+  // Debug: vérifier si la fonction arrive
+  useEffect(() => {
+    console.log('StudentCard - onExceptionalChange function:', onExceptionalChange ? 'Available' : 'Not available');
+    console.log('StudentCard - Session ID:', currentSession?.id, 'Student:', currentStudent?.firstname, currentStudent?.lastname);
+  }, [onExceptionalChange, currentSession, currentStudent]);
 
   useEffect(() => {
     if (tutorId) {
@@ -123,6 +131,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
+
 
   const removeValueFromField = (field: any, value: any) => {
     setValues((prev: any) => ({
@@ -264,6 +273,8 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        
         {
            (  isPaid === false && sessionType === 'trial_session') && (
               <div className='text-red-500 text-xs mt-2'>
@@ -297,26 +308,32 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
       {showEditModal === 'tutor' && (
         <Modal isOpen onClose={() => setShowEditModal(null)} title="Modifier la séance">
-          <div className='p-2 m-2 bg-gray-100 rounded'>
-            <StudentInfoCard student={student.student} />
-            <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
+
+
+          <div className='flex flex-row'>
+
+            <div className='p-2 m-2 bg-gray-100 rounded'>
+              <StudentInfoCard student={student.student} />
+              <SessionScopeRadio value={applyAll} onChange={setApplyAll} />
+            </div>
+
+            <div className='p-2 m-2 bg-gray-100 rounded'>
+              {UpdateSlotForm.map((field:any) => (
+                <div key={field.name} className="space-y-2">
+                    <RenderTrialField
+                      f={field}
+                      values={values}
+                      setValues={setValues}
+                      handleChange={handleChange}
+                      removeValueFromField={removeValueFromField}
+                      fieldName={field.name}
+                      student={student.student}
+                    />
+                </div>
+            ))}
+            </div>
           </div>
 
-          <div className='p-2 m-2 bg-gray-100 rounded'>
-            {UpdateSlotForm.map((field:any) => (
-              <div key={field.name} className="space-y-2">
-                  <RenderTrialField
-                    f={field}
-                    values={values}
-                    setValues={setValues}
-                    handleChange={handleChange}
-                    removeValueFromField={removeValueFromField}
-                    fieldName={field.name}
-                    student={student.student}
-                  />
-              </div>
-          ))}
-          </div>
 
           <div className='p-2 m-2 bg-gray-100 rounded flex  '>
             <button onClick={updateStudentSlots} className='bg-green-500 text-white rounded p-3 w-full m-1' >Sauvegarder</button>
@@ -340,6 +357,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           </div>
         </Modal>
       )}
+
     </>
   );
 };
