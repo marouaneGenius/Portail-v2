@@ -19,8 +19,8 @@ const Sessions: React.FC = () => {
   }
 
   return (
-    <div className=" mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Sessions</h1>
+    <div className=" mx-auto py-0 px-4">
+      <h1 className="text-3xl font-bold mb-2">Sessions d'essai</h1>
 
         <TrialSessionComponent student={student} />
     </div>

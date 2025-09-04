@@ -14,7 +14,7 @@ export const StudentInfoCard: React.FC<StudentInfoCardProps> = ({ student }) => 
 
   return (
     <div className="max-w-full mx-auto mt-2 mb-2">
-      <div className="rounded-2xl shadow bg-gray-50 border border-gray-200 px-4 py-2 flex flex-col gap-1">
+      <div className="rounded-2xl shadow bg-gray-50 border border-gray-200 px-3 py-1 flex flex-col gap-1">
         <span className="text-[10px] text-gray-500 tracking-widest mb-1">POUR :</span>
         <div className="space-y-0.5 text-xs text-gray-700">
           <div className="font-medium">

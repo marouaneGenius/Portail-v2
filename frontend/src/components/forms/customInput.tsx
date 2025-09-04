@@ -536,7 +536,7 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
 
   // 1) Matières → multi-select
   if (f.name === "school_subjects" && f.type === "select" && f.multiple) {
-    return <>
+    return <div className="">
     {renderMultiSelect(
         f,
         values,
@@ -545,7 +545,7 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
         removeValueFromField
       )}
  
-    </> 
+    </div> 
   }
 
   // 2) Date de fin (date_slot)
@@ -570,22 +570,19 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
   if (f.name === "scheduled_at") {
     return (
       <div className="">
-       <div className="space-y-1 ">
-         {/* <label htmlFor="scheduled_at" className="block text-sm font-medium">
-           Date et heure de cours
-         </label> */}
-         <DateTimePicker
-           value={values.scheduled_at ? new Date(values.scheduled_at) : undefined}
-           onChange={(date) => {
-             setValues({
-               ...values,
-               scheduled_at: date.toISOString()
-             })
-           }}
-         />
-       </div>
-      {values.scheduled_at && (
-        <div className="mt-0 bg-gray-100   rounded">
+        <div className="">
+          <DateTimePicker
+            value={values.scheduled_at ? new Date(values.scheduled_at) : undefined}
+            onChange={(date) => {
+              setValues({
+                ...values,
+                scheduled_at: date.toISOString()
+              })
+            }}
+          />
+        </div>
+        {values.scheduled_at && (
+        <div className=" bg-gray-100   rounded">
           <TutorListComponent
             values={values}
             student={student}
@@ -597,22 +594,9 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
             }}
           />
         </div>
-      )}
-    </div>
-
+        )}
+      </div>
     );
   }
-
-  // return (
-  //   <input
-  //     id={f.name}
-  //     name={f.name}
-  //     type={f.type}
-  //     value={values[f.name] || ""}
-  //     onChange={handleChange}
-  //     className="w-full rounded border px-3 py-2 focus:ring focus:ring-blue-300"
-  //     required={!!f.required}
-  //   /> 
-  // );
 };
 

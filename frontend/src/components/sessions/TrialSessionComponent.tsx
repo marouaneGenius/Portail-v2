@@ -324,21 +324,9 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
         
         // Passer à l'étape suivante
         setCurrentConfigStep(prev => prev + 1);
-        
-        console.log('Passage à l\'étape suivante - tout réinitialisé');
     };
 
-    useEffect(() => {
-        console.log('values', values);
 
-    }, [values])
-
-    // Effet pour s'assurer que tout est réinitialisé lors du changement d'étape
-    useEffect(() => {
-        console.log('Changement d\'étape:', currentConfigStep);
-        console.log('Tuteurs filtrés:', filteredTutors.length);
-        console.log('Values actuels:', values);
-    }, [currentConfigStep])
 
     // Fonction pour revenir à l'étape précédente
     const goToPreviousStep = () => {
@@ -500,8 +488,8 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             return f
         });
 
-        // N'ajouter le champ tuteur QUE si des matières sont sélectionnées
-        const hasSelectedSubjects = values.school_subjects && values.school_subjects.length > 0;
+        // N'ajouter le champ tuteur QUE si des matières ET l'heure sont sélectionnées
+        const hasSelectedSubjects = values.school_subjects && values.school_subjects.length > 0 && values.scheduled_at;
         
         let updatedFields = [...baseFields];
         
@@ -542,10 +530,10 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     }
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
-            <div className="mb-4">
+        <div className="max-w-7xl mx-auto p-3 rounded-lg border border-gray-1 bg-gray-100 ">
+            <div className="mb-2">
                 {/* Indicateur d'étape */}
-                <div className="mb-6">
+                <div className="">
                     <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-bold">Sessions d'essai - Configuration</h1>
                         <Badge variant="secondary">
@@ -561,23 +549,25 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                         ></div>
                     </div>
                     
-                    {/* Nom de l'étudiant actuel */}
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <h2 className="text-lg font-semibold text-blue-800">
-                            Configuration pour: {getCurrentStudent()?.firstname} {getCurrentStudent()?.lastname}
-                            {currentConfigStep === 0 && <span className="text-sm font-normal"> (étudiant principal)</span>}
-                        </h2>
-                        <p className="text-sm text-blue-600 mt-1">
-                            Choisissez d'abord les matières, puis un tuteur sera proposé parmi ceux qui enseignent ces matières.
-                        </p>
-                    </div>
+       
                 </div>
-                
-                <StudentInfoCard student={getCurrentStudent()} />
+                {/* Nom de l'étudiant actuel */}
+                <div className="my-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                    <h2 className="text-md font-semibold text-blue-800">
+                        Configuration pour: {getCurrentStudent()?.firstname} {getCurrentStudent()?.lastname}
+                        {currentConfigStep === 0 && <span className="text-sm font-normal"> (étudiant principal)</span>}
+                    </h2>
+                    <p className="text-xs text-blue-600 mt-1">
+                        Choisissez d'abord les matières, puis un tuteur sera proposé parmi ceux qui enseignent ces matières.
+                    </p>
+                </div>
+                    
+
+ 
 
                 {/* Section de sélection des frères/sœurs (seulement à l'étape 0) */}
                 {siblings.length > 0 && currentConfigStep === 0 && (
-                    <Card className="mb-6">
+                    <Card className="mb-1 p-1">
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
                                 Frères et sœurs disponibles
@@ -634,7 +624,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
 
                 {/* Récapitulatif des configurations déjà faites (pour les étapes > 0) */}
                 {currentConfigStep > 0 && Object.keys(studentsConfigs).length > 0 && (
-                    <Card className="mb-6 border-green-200 bg-green-50">
+                    <Card className="mb-1 border-green-200 bg-green-50">
                         <CardHeader>
                             <CardTitle className="text-green-800">Configurations terminées</CardTitle>
                         </CardHeader>
@@ -697,77 +687,143 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                 )}
             </div>
 
-            {/* Information sur les tuteurs disponibles - N'afficher QUE si des matières sont sélectionnées */}
-            {values.school_subjects && values.school_subjects.length > 0 && (
-                <div className="mb-4">
-                    {filteredTutors.length > 0 ? (
-                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <h3 className="text-sm font-medium text-green-800 mb-1">
-                                ✅ {filteredTutors.length} tuteur{filteredTutors.length > 1 ? 's' : ''} disponible{filteredTutors.length > 1 ? 's' : ''}
-                            </h3>
-                            <p className="text-xs text-green-600">
-                                Pour les matières: {values.school_subjects.join(', ')}
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                            <h3 className="text-sm font-medium text-orange-800 mb-1">
-                                ⚠️ Aucun tuteur disponible
-                            </h3>
-                            <p className="text-xs text-orange-600">
-                                Aucun tuteur ne peut enseigner les matières sélectionnées ({values.school_subjects.join(', ')}) au niveau {getCurrentStudent()?.class}. 
-                                Essayez de modifier votre sélection de matières.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
+            <div className="">
+                {/* Information sur les tuteurs disponibles - N'afficher QUE si des matières ET l'heure sont sélectionnées */}
+                {values.school_subjects && values.school_subjects.length > 0 && values.scheduled_at && (
+                    <div className="mb-1">
+                        {filteredTutors.length > 0 ? (
+                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <h3 className="text-sm font-medium text-green-800 mb-1">
+                                    ✅ {filteredTutors.length} tuteur{filteredTutors.length > 1 ? 's' : ''} disponible{filteredTutors.length > 1 ? 's' : ''}
+                                </h3>
+                                <p className="text-xs text-green-600">
+                                    Pour les matières: {values.school_subjects.join(', ')}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <h3 className="text-sm font-medium text-orange-800 mb-1">
+                                    ⚠️ Aucun tuteur disponible
+                                </h3>
+                                <p className="text-xs text-orange-600">
+                                    Aucun tuteur ne peut enseigner les matières sélectionnées ({values.school_subjects.join(', ')}) au niveau {getCurrentStudent()?.class}. 
+                                    Essayez de modifier votre sélection de matières.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {fields.map((field:any) => (
-                    <div key={`${field.name}-step-${currentConfigStep}`} className="space-y-2">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* {fields.map((field:any) => (
+                        <div key={`${field.name}-step-${currentConfigStep}`} className="space-y-2 flex flex-row">
+                            <RenderTrialField
+                                f={field}
+                                values={values}
+                                setValues={setValues}
+                                handleChange={handleChange}
+                                removeValueFromField={removeValueFromField}
+                                fieldName={field.name}
+                                student={getCurrentStudent()}
+                            />
+                        </div>
+                    ))} */}
+                    {/* parent component where you map fields */}
+                    {fields.map((field:any, idx:any) => {
+                    // si c'est school_subjects et que le suivant est scheduled_at -> row
+                    if (
+                        field.name === "school_subjects" &&
+                        fields[idx + 1] &&
+                        fields[idx + 1].name === "scheduled_at"
+                    ) {
+                        const next = fields[idx + 1];
+                        return (
+                        <div key={`row-${idx}`} className="flex gap-4">
+                            <div className="flex-1">
+                            <RenderTrialField
+                                f={field}
+                                values={values}
+                                setValues={setValues}
+                                handleChange={handleChange}
+                                removeValueFromField={removeValueFromField}
+                                student={getCurrentStudent()}
+                            />
+                            </div>
+
+                            <div className="flex-1">
+                            <RenderTrialField
+                                f={next}
+                                values={values}
+                                setValues={setValues}
+                                handleChange={handleChange}
+                                removeValueFromField={removeValueFromField}
+                                student={getCurrentStudent()}
+                            />
+                            </div>
+                        </div>
+                        );
+                    }
+
+                    // si c'est scheduled_at mais on l'a déjà rendu dans la paire, skip
+                    if (
+                        field.name === "scheduled_at" &&
+                        fields[idx - 1] &&
+                        fields[idx - 1].name === "school_subjects"
+                    ) {
+                        return null;
+                    }
+
+                    // rendu normal pour les autres champs
+                    return (
+                        <div key={`${field.name}-step-${currentConfigStep}`} className="mb-4">
                         <RenderTrialField
                             f={field}
                             values={values}
                             setValues={setValues}
                             handleChange={handleChange}
                             removeValueFromField={removeValueFromField}
-                            fieldName={field.name}
                             student={getCurrentStudent()}
                         />
-                    </div>
-                ))}
-                <div className="flex gap-3">
-                    {/* Bouton Précédent */}
-                    {currentConfigStep > 0 && (
-                        <button
-                            type="button"
-                            onClick={goToPreviousStep}
-                            className="flex-1 bg-gray-500 text-white py-3 rounded-md hover:bg-gray-600 transition"
-                        >
-                            ← Précédent
-                        </button>
-                    )}
+                        </div>
+                    );
+                    })}
+
                     
-                    {/* Bouton Suivant/Créer */}
-                    <button
-                        type="submit"
-                        disabled={disablesdButtonUntilFindUser || validationErrors.length > 0}
-                        className={`${currentConfigStep > 0 ? 'flex-1' : 'w-full'} ${
-                            disablesdButtonUntilFindUser || validationErrors.length > 0 ? 
-                            "bg-gray-300 text-white py-3 rounded-md hover:bg-blue-300 transition cursor-not-allowed" :
-                            "bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"
-                        }`}
-                    >
-                        {validationErrors.length > 0 
-                            ? "⚠️ Problèmes de compatibilité à résoudre"
-                            : isLastStep()
-                            ? `Créer les ${selectedSiblings.length + 1} sessions d'essai (${totalPrice}€)`
-                            : `Suivant : ${siblings.find(s => s.id === selectedSiblings[currentConfigStep])?.firstname || 'Étudiant suivant'} →`
-                        }
-                    </button>
-                </div>
-            </form>
+                    <div className="flex gap-3">
+                        {/* Bouton Précédent */}
+                        {currentConfigStep > 0 && (
+                            <button
+                                type="button"
+                                onClick={goToPreviousStep}
+                                className="flex-1 bg-gray-500 text-white py-3 rounded-md hover:bg-gray-600 transition"
+                            >
+                                ← Précédent
+                            </button>
+                        )}
+                        
+                        {/* Bouton Suivant/Créer */}
+                        <button
+                            type="submit"
+                            disabled={disablesdButtonUntilFindUser || validationErrors.length > 0}
+                            className={`${currentConfigStep > 0 ? 'flex-1' : 'w-full'} ${
+                                disablesdButtonUntilFindUser || validationErrors.length > 0 ? 
+                                "bg-gray-300 text-white py-3 rounded-md hover:bg-blue-300 transition cursor-not-allowed" :
+                                "bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition"
+                            }`}
+                        >
+                            {validationErrors.length > 0 
+                                ? "⚠️ Problèmes de compatibilité à résoudre"
+                                : isLastStep()
+                                ? `Créer les ${selectedSiblings.length + 1} sessions d'essai (${totalPrice}€)`
+                                : `Suivant : ${siblings.find(s => s.id === selectedSiblings[currentConfigStep])?.firstname || 'Étudiant suivant'} →`
+                            }
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+
+
         </div>
       )
 };

@@ -39,6 +39,7 @@ export const ClassesOptions = [
   export const SchoolSubjects = [
     { value: 'physique', label: 'Physique' },
     { value: 'maths', label: 'Maths' },
+    { value: 'maths-spe', label: 'Maths Spé' },
     { value: 'français', label: 'Français' },
     { value: 'ses', label: 'SES' },
     { value: 'philosophie', label: 'Philosophie' },

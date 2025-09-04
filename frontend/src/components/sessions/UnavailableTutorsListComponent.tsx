@@ -17,16 +17,16 @@ interface Tutor {
 
 export const UnavailableTutorsListComponent = ({ tutors, student }: any) => {
   return (
-    <div className="bg-amber-50 rounded-lg p-2 border border-amber-200">
+    <div className="bg-amber-50 rounded-lg p-2 border border-amber-200 ">
       <div className="flex items-start gap-2 mb-3">
         <div>
           <p className="text-sm text-amber-700">
-            {tutors.length} Tuteurs disponibles dans a {student && student.centers && student.centers.name} 
+            {tutors.length} Tuteurs disponibles à {student && student.centers && student.centers.name} 
           </p>
         </div>
       </div>
 
-      <div className="space-y-1 max-h-100 overflow-y-auto ">
+      <div className="space-y-1 max-h-48 overflow-y-auto ">
         {tutors.map((tutor:any) => (
           <div key={tutor.id} className="bg-white p-3 rounded border border-amber-100">
             <div className="flex justify-between">

@@ -267,23 +267,27 @@ export default function SessionCalendar() {
       alert(`Tuteur remplacé avec succès pour ${selectedSessionForChange.sessionIds.length} séance(s)`);
       
       // Recharger les données
-      if (selectedCenter && selectedDate) {
-        const date = new Date(selectedDate);
-        const period = currentView === 'weekly' ? 'week' : 'day';
-        api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
-          params: { date: formatDate(date), period }
-        })
-          .then(({ data }) => {
-            const filteredTutors = data.map((item: any) => ({
-              tutor: item,
-              sessions: item.sessions
-            }));
-            setTutors(filteredTutors);
-          });
-      }
+      refreshSessions();
     } catch (error) {
       console.error('Erreur lors du changement exceptionnel:', error);
       alert('Erreur lors du changement de tuteur');
+    }
+  };
+
+  const refreshSessions = () => {
+    if (selectedCenter && selectedDate) {
+      const date = new Date(selectedDate);
+      const period = currentView === 'weekly' ? 'week' : 'day';
+      api.get(`/api/sessions/center/${selectedCenter}/sessions-by-date`, {
+        params: { date: formatDate(date), period }
+      })
+        .then(({ data }) => {
+          const filteredTutors = data.map((item: any) => ({
+            tutor: item,
+            sessions: item.sessions
+          }));
+          setTutors(filteredTutors);
+        });
     }
   };
 
@@ -526,6 +530,7 @@ export default function SessionCalendar() {
                               hourSlot={hourSlot.value}
                               session={block}
                               onExceptionalChange={openExceptionalChangeModal}
+                              onSessionUpdate={refreshSessions}
                             />
                           );
                         })}

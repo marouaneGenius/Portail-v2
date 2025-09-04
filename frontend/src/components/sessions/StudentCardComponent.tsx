@@ -25,6 +25,7 @@ interface StudentCardProps {
   sessionHour: string;
   session: any;
   onExceptionalChange?: (sessionId: number, studentId: number, tutorId: number, studentName: string, tutorName?: string) => void;
+  onSessionUpdate?: () => void;
 }
 
 export const StudentCard: React.FC<StudentCardProps> = ({
@@ -33,6 +34,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   sessionHour,
   session,
   onExceptionalChange,
+  onSessionUpdate,
 }) => {
   const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | 'exceptional_change' | null>(null);
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
@@ -89,7 +91,9 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     api.patch(`/api/sessions/move-future-slots/${currentSession.id}`, newValues)
     .then((r) =>  {
       setShowEditModal(null)
-      alert('Creneaux modifiés')})
+      alert('Creneaux modifiés')
+      onSessionUpdate?.()
+    })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
@@ -98,7 +102,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       school_subjects: values.school_subjects,
       update_all:   applyAll,
       student_ids: [currentStudent.id],
-    }).then((r) => setShowEditModal(null))
+    }).then((r) => {
+      setShowEditModal(null)
+      onSessionUpdate?.()
+    })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
@@ -112,7 +119,9 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       updated_by: user?.email,
     }).then((r) => {
       setShowEditModal(null)
-      setIsCanceled(r.data.is_canceled)})
+      setIsCanceled(r.data.is_canceled)
+      onSessionUpdate?.()
+    })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }
 
@@ -128,6 +137,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     .then((r) => {
       setShowEditModal(null)
       setIsAbsent(r.data.is_absent)
+      onSessionUpdate?.()
     })
     .catch((e) => alert('Une erreur est survenu lors de la modification'))
   }

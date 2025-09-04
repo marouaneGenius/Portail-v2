@@ -34,6 +34,7 @@ interface TutorCardProps {
   hourSlot: string;
   session:any;
   onExceptionalChange?: (sessionIds: number[], studentIds: number[], tutorId: number, description: string, tutorName: string) => void;
+  onSessionUpdate?: () => void;
   // day: string;
 }
 
@@ -44,7 +45,8 @@ export const TutorCard: React.FC<TutorCardProps> = ({
   droppableId,
   hourSlot,
   session,
-  onExceptionalChange
+  onExceptionalChange,
+  onSessionUpdate
   // day
 }) => {
   // Debug: vérifier si la fonction arrive
@@ -137,6 +139,7 @@ export const TutorCard: React.FC<TutorCardProps> = ({
                   tutorId={tutor.id}
                   sessionHour={hourSlot}
                   session={session}
+                  onSessionUpdate={onSessionUpdate}
                 />
               )
             })
