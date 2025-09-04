@@ -110,7 +110,7 @@ export const TutorCard: React.FC<TutorCardProps> = ({
               title="Remplacer ce tuteur pour tous ses étudiants à ce créneau"
             >
               <UserCheck className="w-3 h-3" />
-              remplacer tueur ({students.length} élève{students.length > 1 ? 's' : ''})
+              remplacer tuteur ({students.length} élève{students.length > 1 ? 's' : ''})
             </button>
           </div>
         )}
