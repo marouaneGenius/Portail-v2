@@ -33,28 +33,41 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
     const [filteredTutors, setFilteredTutors] = useState<any[]>([]);
     const [disablesdButtonUntilFindUser, setDisablesdButtonUntilFindUser] = useState(true);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [formKey, setFormKey] = useState(0);
     const navigate = useNavigate();
 
     const handleChange = ( e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value, checked,  options }:any = e.target ;
     const multiple = e.target.multiple ;
 
-    // Si on change les matières, vider le tuteur sélectionné
-    const shouldClearTutor = name === 'school_subjects';
+    // Si on change les matières, vider tout le formulaire sauf les matières
+    const shouldClearForm = name === 'school_subjects';
 
     //pour gerer les select multiple
-    setValues(prev => ({
-    ...prev,
-    [name]: multiple
+    const newValue = multiple
         ? Array.from(options)
             .filter((opt:any) => opt.selected)
             .map((opt:any) => opt.value)
         : type === 'checkbox'
         ? checked
-        : value,
-    // Vider le tuteur si on change les matières
-    ...(shouldClearTutor && { tutor_id: undefined })
-    }));
+        : value;
+
+    if (shouldClearForm) {
+        // Vider tout le formulaire et ne garder que les nouvelles matières
+        setValues({
+            school_subjects: newValue
+        });
+        // Vider aussi la liste des tuteurs filtrés
+        setFilteredTutors([]);
+        setDisablesdButtonUntilFindUser(true);
+        // Forcer le re-render du formulaire avec une nouvelle key
+        setFormKey(prev => prev + 1);
+    } else {
+        setValues(prev => ({
+            ...prev,
+            [name]: newValue
+        }));
+    }
     };
 
 
@@ -238,7 +251,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             };
             
             console.log('Création sessions groupées:', groupedSessionData);
-            const response = await api.post('/api/sessions/trial-session-group', groupedSessionData);
+            await api.post('/api/sessions/trial-session-group', groupedSessionData);
             
             alert(`✅ Sessions créées avec succès pour:\n${sessionsCreated.join('\n')}\n\nTotal: ${totalPrice}€\n\n✅ Le parent recevra UN SEUL SMS avec le lien de paiement groupé!`);
             
@@ -472,8 +485,16 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
             console.log('Déclenchement du filtrage...');
             filterTutorsBySubjects(values.school_subjects);
         } else {
-            console.log('Aucune matière - vidage des tuteurs filtrés');
+            console.log('Aucune matière - vidage des tuteurs filtrés et des autres champs');
             setFilteredTutors([]);
+            // Vider aussi les autres champs si aucune matière n'est sélectionnée
+            setValues(prev => ({
+                ...prev,
+                tutor_id: undefined,
+                scheduled_at: undefined
+            }));
+            setDisablesdButtonUntilFindUser(true);
+            setFormKey(prev => prev + 1);
         }
     }, [values.school_subjects, availableTutors]);
 
@@ -714,7 +735,7 @@ const TrialSessionComponent: React.FC<any> =  ({student}) => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form key={formKey} onSubmit={handleSubmit} className="space-y-6">
                     {/* {fields.map((field:any) => (
                         <div key={`${field.name}-step-${currentConfigStep}`} className="space-y-2 flex flex-row">
                             <RenderTrialField
