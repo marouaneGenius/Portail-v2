@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StudentCard } from './StudentCardComponent';
 import { useDroppable } from '@dnd-kit/core';
-import { User, UserCheck} from "lucide-react";
+import { User, UserCheck, UserRoundPen} from "lucide-react";
 
 type Tutor = { 
   id: number; 
@@ -109,8 +109,8 @@ export const TutorCard: React.FC<TutorCardProps> = ({
               className="w-full px-3 py-2 text-xs bg-gray-100 text-black rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 "
               title="Remplacer ce tuteur pour tous ses étudiants à ce créneau"
             >
-              <UserCheck className="w-3 h-3" />
-              remplacer tuteur ({students.length} élève{students.length > 1 ? 's' : ''})
+              <UserRoundPen className="w-3 h-3" />
+              Remplacer le tuteur ({students.length} élève{students.length > 1 ? 's' : ''})
             </button>
           </div>
         )}
