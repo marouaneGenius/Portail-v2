@@ -175,53 +175,67 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
       {/* Planning par jour */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {Object.entries(sessionsByDay).map(([day, { sessions: daySessions, centers }]) => (
-          <Card key={day} className="min-h-[200px]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
-                <div className="flex items-center justify-between">
-                  <span>{day}</span>
-                  <span className="text-sm font-normal text-gray-500">
-                    {daySessions.length} cours
-                  </span>
-                </div>
-                {centers.size > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {Array.from(centers).map((centerName) => (
-                      <span
-                        key={centerName}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                      >
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {centerName}
-                      </span>
-                    ))}
+        {Object.entries(sessionsByDay).map(([day, { sessions: daySessions, centers }], idx) => {
+          // Calcule la date du jour courant de la semaine
+          const dayDate = new Date(weekStart);
+          dayDate.setDate(weekStart.getDate() + idx);
+
+          // Formatage en français
+          const formattedDate = dayDate.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long'
+          });
+
+          return (
+            <Card key={day} className="min-h-[200px]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">
+                  <div className="flex items-center justify-between">
+                    <span>
+                      {day} {formattedDate}
+                    </span>
+                    <span className="text-sm font-normal text-gray-500">
+                      {daySessions.length} cours
+                    </span>
                   </div>
+                  {centers.size > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {Array.from(centers).map((centerName) => (
+                        <span
+                          key={centerName}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                        >
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {centerName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="space-y-3">
+                {daySessions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Aucun cours prévu</p>
+                  </div>
+                ) : (
+                  daySessions.map((session, index) => (
+                    <SessionCard
+                      key={`${session.id}-${index}`}
+                      session={session}
+                      compact={true}
+                      onClick={() => onSessionClick?.(session)}
+                      onAttendanceChange={onAttendanceChange}
+                      isTutor={isTutor}
+                    />
+                  ))
                 )}
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent className="space-y-3">
-              {daySessions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">Aucun cours prévu</p>
-                </div>
-              ) : (
-                daySessions.map((session, index) => (
-                  <SessionCard
-                    key={`${session.id}-${index}`}
-                    session={session}
-                    compact={true}
-                    onClick={() => onSessionClick?.(session)}
-                    onAttendanceChange={onAttendanceChange}
-                    isTutor={isTutor}
-                  />
-                ))
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Message si aucun cours */}
