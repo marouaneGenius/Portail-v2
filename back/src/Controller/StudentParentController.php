@@ -35,7 +35,7 @@ class StudentParentController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', name: 'api_parents_create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -218,7 +218,7 @@ class StudentParentController extends AbstractController
     // idee une list des apelle en attente
 
     #[Route('/{id}', name: 'api_parents_update', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function update(int $id, Request $request): JsonResponse
     {
         // 1. Charger le parent
@@ -295,7 +295,7 @@ class StudentParentController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_parents_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function delete(int $id): JsonResponse
     {
         $parent = $this->parentRepo->find($id);
