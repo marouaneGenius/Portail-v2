@@ -598,11 +598,11 @@ export default function SessionCalendar() {
                                 {slotSessions.map((block, idx) => (
                                   <div
                                     key={block.tutor.id + '-' + idx}
-                                    className="bg-white border border-fading-grey rounded-lg shadow-sm p-3 max-w-[260px] overflow-hidden"
+                                    className="bg-white border border-fading-grey rounded-lg shadow-sm p-1 max-w-[260px] overflow-hidden"
                                   >
                                     {/* Tuteur */}
                                     <div className="flex items-center gap-2 mb-2">
-                                      <span className="font-semibold text-mister-anthracite">
+                                      <span className="text-[12px] font-bold text-mister-anthracite">
                                         {block.tutor.firstname} {block.tutor.lastname}
                                       </span>
                                       <div className="flex flex-wrap gap-1 max-w-full">
@@ -629,7 +629,7 @@ export default function SessionCalendar() {
                                           return (
                                             <div
                                               key={`${student.id}-${student.session_id}`}
-                                              className={`rounded-md hover:bg-slate-100 transition-colors px-2 py-2 mb-1 border
+                                              className={`rounded-md hover:bg-slate-100 transition-colors px-0.5 py-0.5 mb-1 border
                                                 ${currentSession?.is_canceled ? 'opacity-50 bg-red-50 border-red-200' : 
                                                   currentSession?.session_type === 'trial_session' ? 
                                                     (currentSession?.is_paid ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300') : 
@@ -638,18 +638,30 @@ export default function SessionCalendar() {
                                             >
                                               <div className="flex items-center justify-between w-full">
                                                 <div className="flex flex-col gap-1 flex-1">
-                                                  <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`text-sm font-medium ${currentSession?.is_canceled ? 'line-through text-slate-500' : 'text-mister-anthracite'}`}>
+                                                  <div className="flex items-center gap-1 flex-wrap">
+                                                    <span className={`text-[10px] font-medium ${currentSession?.is_canceled ? 'line-through text-slate-500' : 'text-mister-anthracite'}`}>
                                                       {student.firstname} {student.lastname}
                                                     </span>
-                                                    {student.class && (
-                                                      <Badge
-                                                        variant="outline"
-                                                        className="text-xs px-1 py-0 bg-orange-50 text-orange-700 border-orange-200"
-                                                      >
-                                                        {student.class}
-                                                      </Badge>
-                                                    )}
+                                                    <div className='flex flex-row text-xs'>
+                                                      {student.class && (
+                                                        <Badge
+                                                          variant="outline"
+                                                          className="text-[8px] px-0.5 py-0 bg-orange-50 text-orange-700 border-orange-200"
+                                                        >
+                                                          {student.class}
+                                                        </Badge>
+                                                      )}
+                                                      {(currentSession?.school_subjects ?? []).map((subject: string) => (
+                                                        <Badge
+                                                          key={subject}
+                                                          variant="outline"
+                                                          className="text-[8px] bg-blue-50 text-blue-700 border-blue-200 px-0.5 py-0.5"
+                                                        >
+                                                          {subject}
+                                                        </Badge>
+                                                      ))}
+                                                    </div>
+                                           
                                                     {currentSession?.is_absent && !currentSession?.is_canceled && (
                                                       <Badge variant="destructive" className="text-xs px-2 py-0.5">Absent</Badge>
                                                     )}
@@ -659,38 +671,8 @@ export default function SessionCalendar() {
                                                       </span>
                                                     )}
                                                   </div>
-                                                  <div className="flex flex-wrap gap-1">
-                                                    {(currentSession?.school_subjects ?? []).map((subject: string) => (
-                                                      <Badge
-                                                        key={subject}
-                                                        variant="outline"
-                                                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-2 py-0.5"
-                                                      >
-                                                        {subject}
-                                                      </Badge>
-                                                    ))}
-                                                  </div>
+                                  
                                                 </div>
-                                                {/* Bouton Changement exceptionnel */}
-                                                {!currentSession?.is_canceled && (
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      openExceptionalChangeModal(
-                                                        currentSession.id,
-                                                        student.id,
-                                                        block.tutor.id,
-                                                        `${student.firstname} ${student.lastname}`,
-                                                        `${block.tutor.firstname} ${block.tutor.lastname}`
-                                                      );
-                                                    }}
-                                                    className="ml-2 px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-1"
-                                                    title="Changement exceptionnel de tuteur"
-                                                  >
-                                                    <UserCheck className="w-3 h-3" />
-                                                    Changer
-                                                  </button>
-                                                )}
                                               </div>
                                             </div>
                                           );
