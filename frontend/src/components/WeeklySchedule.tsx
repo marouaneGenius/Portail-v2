@@ -45,29 +45,45 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     });
   }, [sessions, weekStart, weekEnd]);
 
-  // Grouper les sessions par jour et centre
+  // Grouper les sessions par jour, puis par créneaux horaires
   const sessionsByDay = useMemo(() => {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    const grouped: { [key: string]: { sessions: SessionData[], centers: Set<string> } } = {};
+    const grouped: { [key: string]: { timeSlots: { [key: string]: SessionData[] }, centers: Set<string> } } = {};
 
     // Initialiser tous les jours
     days.forEach(day => {
-      grouped[day] = { sessions: [], centers: new Set() };
+      grouped[day] = { timeSlots: {}, centers: new Set() };
     });
 
-    // Grouper les sessions
+    // Grouper les sessions par jour et par créneau horaire
     weekSessions.forEach(session => {
       const sessionDate = new Date(session.date);
       const dayName = days[sessionDate.getDay() === 0 ? 6 : sessionDate.getDay() - 1];
-      grouped[dayName].sessions.push(session);
+      const timeSlot = `${session.startTime} - ${session.endTime}`;
+      
+      if (!grouped[dayName].timeSlots[timeSlot]) {
+        grouped[dayName].timeSlots[timeSlot] = [];
+      }
+      grouped[dayName].timeSlots[timeSlot].push(session);
+      
       if (session.center?.name) {
         grouped[dayName].centers.add(session.center.name);
       }
     });
 
-    // Trier les sessions de chaque jour par heure
+    // Trier les créneaux de chaque jour par heure
     Object.keys(grouped).forEach(day => {
-      grouped[day].sessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      const sortedTimeSlots: { [key: string]: SessionData[] } = {};
+      Object.keys(grouped[day].timeSlots)
+        .sort((a, b) => {
+          const timeA = a.split(' - ')[0];
+          const timeB = b.split(' - ')[0];
+          return timeA.localeCompare(timeB);
+        })
+        .forEach(timeSlot => {
+          sortedTimeSlots[timeSlot] = grouped[day].timeSlots[timeSlot];
+        });
+      grouped[day].timeSlots = sortedTimeSlots;
     });
 
     return grouped;
@@ -175,7 +191,7 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
       {/* Planning par jour */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {Object.entries(sessionsByDay).map(([day, { sessions: daySessions, centers }], idx) => {
+        {Object.entries(sessionsByDay).map(([day, { timeSlots, centers }], idx) => {
           // Calcule la date du jour courant de la semaine
           const dayDate = new Date(weekStart);
           dayDate.setDate(weekStart.getDate() + idx);
@@ -186,6 +202,8 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             month: 'long'
           });
 
+          const totalSessions = Object.values(timeSlots).flat().length;
+
           return (
             <Card key={day} className="min-h-[200px]">
               <CardHeader className="pb-3">
@@ -195,7 +213,7 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                       {day} {formattedDate}
                     </span>
                     <span className="text-sm font-normal text-gray-500">
-                      {daySessions.length} cours
+                      {totalSessions} cours
                     </span>
                   </div>
                   {centers.size > 0 && (
@@ -215,21 +233,89 @@ const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               </CardHeader>
               
               <CardContent className="space-y-3">
-                {daySessions.length === 0 ? (
+                {totalSessions === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Aucun cours prévu</p>
                   </div>
                 ) : (
-                  daySessions.map((session, index) => (
-                    <SessionCard
-                      key={`${session.id}-${index}`}
-                      session={session}
-                      compact={true}
-                      onClick={() => onSessionClick?.(session)}
-                      onAttendanceChange={onAttendanceChange}
-                      isTutor={isTutor}
-                    />
+                  Object.entries(timeSlots).map(([timeSlot, sessions]) => (
+                    <Card key={timeSlot} className="bg-gray-50 border-l-4 border-l-blue-500">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold text-blue-700">
+                          {timeSlot}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {sessions.map((session, index) => (
+                          <div
+                            key={`${session.id}-${index}`}
+                            className={`flex items-center justify-between p-2 rounded border cursor-pointer ${
+                              session.status === 'cancelled'
+                                ? 'bg-red-50 border-red-200 opacity-75'
+                                : session.sessionType === 'trial_session' 
+                                ? 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200' 
+                                : 'bg-white hover:bg-gray-50'
+                            }`}
+                            onClick={() => onSessionClick?.(session)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`font-medium ${
+                                  session.status === 'cancelled' 
+                                    ? 'text-gray-500 line-through' 
+                                    : 'text-gray-900'
+                                }`}>
+                                  {session.student.name}
+                                </span>
+                                <span className={`text-sm ${
+                                  session.status === 'cancelled' 
+                                    ? 'text-gray-400 line-through' 
+                                    : 'text-gray-500'
+                                }`}>
+                                  ({session.student.class})
+                                </span>
+                                {session.status === 'cancelled' && (
+                                  <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                                    ANNULÉE
+                                  </span>
+                                )}
+                              </div>
+                              <div className={`text-sm ${
+                                session.status === 'cancelled' 
+                                  ? 'text-gray-400 line-through' 
+                                  : 'text-blue-600'
+                              }`}>
+                                {session.subject}
+                              </div>
+                            </div>
+                            {isTutor && onAttendanceChange && session.status !== 'cancelled' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newAttendance = session.student.attendance === 'present' ? 'absent' : 'present';
+                                  onAttendanceChange(session.id, session.student.id, newAttendance);
+                                }}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  session.student.attendance === 'present'
+                                    ? 'bg-green-100 text-green-700 border-green-300'
+                                    : session.student.attendance === 'absent'
+                                    ? 'bg-red-100 text-red-700 border-red-300'
+                                    : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-blue-50'
+                                }`}
+                              >
+                                {session.student.attendance === 'present' 
+                                  ? 'Présent' 
+                                  : session.student.attendance === 'absent'
+                                  ? 'Absent'
+                                  : 'Marquer'
+                                }
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
                   ))
                 )}
               </CardContent>

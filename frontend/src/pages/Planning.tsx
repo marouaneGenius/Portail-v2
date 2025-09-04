@@ -7,6 +7,7 @@ import WeeklySchedule from '../components/WeeklySchedule';
 import { SessionData } from '../components/SessionCard';
 import api from '@/api/aixos';
 import { formatDateTimeParent } from '../services/functions';
+import { toast } from 'sonner';
 
 const Planning: React.FC = () => {
   const { hasPermission, isTutor, isAdmin, isUser, user } = usePermissions();
@@ -75,7 +76,8 @@ const Planning: React.FC = () => {
               absent_by: session.absent_by || undefined,
               is_absent: session.is_absent || undefined,
 
-              markedByParent: session.marked_by_parent || false
+              markedByParent: session.marked_by_parent || false,
+              sessionType: session.session_type || 'regular'
             }));
           });
           setSessions(formattedSessions);
@@ -103,6 +105,10 @@ const Planning: React.FC = () => {
 
   const handleAttendanceChange = async (sessionId: number, studentId: number, attendance: 'present' | 'absent') => {
     try {
+      // Trouver le nom de l'élève pour l'alerte
+      const session = sessions.find(s => s.id === sessionId && s.student.id === studentId);
+      const studentName = session?.student.name || 'Élève';
+      
       // Appel API pour mettre à jour la présence en utilisant la route existante
       const isAbsent = attendance === 'absent';
       await api.patch(`/api/sessions/manage/${sessionId}`, {
@@ -127,9 +133,18 @@ const Planning: React.FC = () => {
             : session
         )
       );
+
+      // Toast de confirmation avec le nom de l'élève
+      const statusText = attendance === 'present' ? 'présent(e)' : 'absent(e)';
+      if (attendance === 'present') {
+        toast.success(`${studentName} a été marqué(e) ${statusText} - Sonnet`);
+      } else {
+        toast.error(`${studentName} a été marqué(e) ${statusText} - Sonnet`);
+      }
+      
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la présence:', error);
-      alert('Une erreur est survenue lors de la modification de la présence');
+      toast.error("Une erreur est survenue lors de la modification de la présence - Sonnet");
     }
   };
 

@@ -29,6 +29,7 @@ export interface SessionData {
   absent_by?: string;
   markedByParent?: boolean;
   canceled_by?: string;
+  sessionType?: string;
 }
 
 interface SessionCardProps {
