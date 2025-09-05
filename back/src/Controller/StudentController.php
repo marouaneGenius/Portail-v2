@@ -191,7 +191,7 @@ class StudentController extends AbstractController
             error_log('Erreur création Stripe customer: ' . $e->getMessage());
         }
 
-        if ($this->isProdEnv()) {
+        // if ($this->isProdEnv()) {
             // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive)
             $dataZapier = [
                 'mail'      => !empty($parent) ? $parent->getEmail() : null,
@@ -238,7 +238,7 @@ class StudentController extends AbstractController
             ];
             $contextParent = stream_context_create($optionsParent);
             $result = file_get_contents($urlParent, false, $contextParent);
-        }
+        // }
 
         return $this->json(
             [
@@ -418,7 +418,7 @@ class StudentController extends AbstractController
         // 7. Persister
         $this->em->flush();
 
-        if ($this->isProdEnv()) {
+        // if ($this->isProdEnv()) {
             $dataZapier = [
                 'mail_parent'      => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getEmail() : null,
                 'numero_parent'     => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getPhone() : $student->getPhone(),
@@ -440,7 +440,7 @@ class StudentController extends AbstractController
             ];
             $context = stream_context_create($options);
             $result = file_get_contents($url, false, $context);
-        }
+        // }
 
         // 8. Réponse JSON
         return $this->json([
@@ -591,9 +591,9 @@ class StudentController extends AbstractController
         return new JsonResponse(['is_member' => false]);
     }
 
-    private function isProdEnv(): bool
-    {
-        // return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
-        return $this->getParameter('kernel.environment') === 'prod';
-    }
+    // private function isProdEnv(): bool
+    // {
+    //     // return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
+    //     return $this->getParameter('kernel.environment') === 'prod';
+    // }
 }
