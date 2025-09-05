@@ -593,7 +593,6 @@ class StudentController extends AbstractController
 
     // private function isProdEnv(): bool
     // {
-    //     // return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
-    //     return $this->getParameter('kernel.environment') === 'prod';
+    //     return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
     // }
 }

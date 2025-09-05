@@ -24,10 +24,10 @@ class StudentParentController extends AbstractController
         private PhoneValidatorService     $phoneValidator
     ) {}
 
-    private function isProdEnv(): bool
-    {
-        return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
-    }
+    // private function isProdEnv(): bool
+    // {
+    //     return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
+    // }
 
     /**
      * Crée un nouveau parent d’élève.
@@ -100,7 +100,7 @@ class StudentParentController extends AbstractController
         $this->em->persist($parent);
         $this->em->flush();
 
-        if ($this->isProdEnv()) {
+        // if ($this->isProdEnv()) {
             // ✅ Préparation des données à envoyer à Zapier (modification parent dans sinao)
             $dataZapierParent = [
                 'mail'      => $parent->getEmail(),
@@ -125,7 +125,7 @@ class StudentParentController extends AbstractController
             ];
             $contextParent = stream_context_create($optionsParent);
             $result = file_get_contents($urlParent, false, $contextParent);
-        }
+        // }
 
         return $this->json(
             [
@@ -250,7 +250,7 @@ class StudentParentController extends AbstractController
         // 5. Persister
         $this->em->flush();
 
-        if ($this->isProdEnv()) {
+        // if ($this->isProdEnv()) {
             $dataZapierParent = [
                 'mail'      => $parent->getEmail(),
                 'phone'     =>  $parent->getPhone(),
@@ -274,7 +274,7 @@ class StudentParentController extends AbstractController
             ];
             $contextParent = stream_context_create($optionsParent);
             $result = file_get_contents($urlParent, false, $contextParent);
-        }
+        // }
 
         // 6. Retour JSON de confirmation
         return $this->json([
