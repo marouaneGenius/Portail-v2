@@ -191,67 +191,54 @@ class StudentController extends AbstractController
             error_log('Erreur création Stripe customer: ' . $e->getMessage());
         }
 
-        // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive)
-        $dataZapier = [
-            'mail'      => !empty($parent) ? $parent->getEmail() : null,
-            'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
-            'name'      => $student->getLastname(),
-            'prenom'    => $student->getFirstname(),
-            'classe'    => $student->getClass(),
-            'centre'    => $student->getIdCenter()->getCity(),
-            'centre_id' => $student->getIdCenter()->getId(),
-            'id'        => $student->getId(),
-        ];
+        if ($this->isProdEnv()) {
+            // ✅ Préparation des données à envoyer à Zapier (ajout pipedrive)
+            $dataZapier = [
+                'mail'      => !empty($parent) ? $parent->getEmail() : null,
+                'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
+                'name'      => $student->getLastname(),
+                'prenom'    => $student->getFirstname(),
+                'classe'    => $student->getClass(),
+                'centre'    => $student->getIdCenter()->getCity(),
+                'centre_id' => $student->getIdCenter()->getId(),
+                'id'        => $student->getId(),
+            ];
+            $jsonData = json_encode($dataZapier);
+            $url = 'https://hooks.zapier.com/hooks/catch/22004412/utr45fa/';
+            $options = [
+                'http' => [
+                    'method'  => 'POST',
+                    'header'  => "Content-Type: application/json\r\n",
+                    'content' => $jsonData
+                ]
+            ];
+            $context = stream_context_create($options);
+            $result = file_get_contents($url, false, $context);
 
-        // Encodage JSON
-        $jsonData = json_encode($dataZapier);
-
-        // URL Zapier
-        $url = 'https://hooks.zapier.com/hooks/catch/22004412/utr45fa/';
-
-        // Contexte HTTP POST
-        $options = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/json\r\n",
-                'content' => $jsonData
-            ]
-        ];
-
-        $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-
-
-        // ✅ Préparation des données à envoyer à Zapier (ajout parent dans sinao)
-        $dataZapierParent = [
-            'mail'      => !empty($parent) ? $parent->getEmail() : null,
-            'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
-            'name'      => $parent->getLastname(),
-            'prenom'    => $parent->getFirstname(),
-            'ville'     => $parent->getCity(),
-            'code_postal' => $parent->getZipCode(),
-            'adresse'   => $parent->getAddress(),
-            'telephone' => $parent->getPhone(),
-            'id'        => $parent->getId()
-        ];
-
-        // Encodage JSON
-        $jsonDataParent = json_encode($dataZapierParent);
-
-        // URL Zapier
-        $urlParent = 'https://hooks.zapier.com/hooks/catch/22004412/ut5i5cr/';
-
-        // Contexte HTTP POST
-        $optionsParent = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/json\r\n",
-                'content' => $jsonDataParent
-            ]
-        ];
-
-        $contextParent = stream_context_create($optionsParent);
-        $result = file_get_contents($urlParent, false, $contextParent);
+            // ✅ Préparation des données à envoyer à Zapier (ajout parent dans sinao)
+            $dataZapierParent = [
+                'mail'      => !empty($parent) ? $parent->getEmail() : null,
+                'phone'     => !empty($parent) ? $parent->getPhone() : $student->getPhone(),
+                'name'      => $parent->getLastname(),
+                'prenom'    => $parent->getFirstname(),
+                'ville'     => $parent->getCity(),
+                'code_postal' => $parent->getZipCode(),
+                'adresse'   => $parent->getAddress(),
+                'telephone' => $parent->getPhone(),
+                'id'        => $parent->getId()
+            ];
+            $jsonDataParent = json_encode($dataZapierParent);
+            $urlParent = 'https://hooks.zapier.com/hooks/catch/22004412/ut5i5cr/';
+            $optionsParent = [
+                'http' => [
+                    'method'  => 'POST',
+                    'header'  => "Content-Type: application/json\r\n",
+                    'content' => $jsonDataParent
+                ]
+            ];
+            $contextParent = stream_context_create($optionsParent);
+            $result = file_get_contents($urlParent, false, $contextParent);
+        }
 
         return $this->json(
             [
@@ -431,35 +418,29 @@ class StudentController extends AbstractController
         // 7. Persister
         $this->em->flush();
 
-        // ✅ Préparation des données à envoyer à Zapier (update pipedrive + stripe)
-        $dataZapier = [
-            'mail_parent'      => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getEmail() : null,
-            'numero_parent'     => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getPhone() : $student->getPhone(),
-            'nom'      => $student->getLastname(),
-            'prenom'    => $student->getFirstname(),
-            'classe'    => $student->getClass(),
-            'ville'    => $student->getIdCenter()->getCity(),
-            'centre_id' => $student->getIdCenter()->getId(),
-            'id'        => $student->getId(),
-        ];
-
-        // Encodage JSON
-        $jsonData = json_encode($dataZapier);
-
-        // URL Zapier
-        $url = 'https://hooks.zapier.com/hooks/catch/22004412/utrhn6z/';
-
-        // Contexte HTTP POST
-        $options = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/json\r\n",
-                'content' => $jsonData
-            ]
-        ];
-
-        $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
+        if ($this->isProdEnv()) {
+            $dataZapier = [
+                'mail_parent'      => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getEmail() : null,
+                'numero_parent'     => $student->getIdParent()->count() > 0 ? $student->getIdParent()->first()->getPhone() : $student->getPhone(),
+                'nom'      => $student->getLastname(),
+                'prenom'    => $student->getFirstname(),
+                'classe'    => $student->getClass(),
+                'ville'    => $student->getIdCenter()->getCity(),
+                'centre_id' => $student->getIdCenter()->getId(),
+                'id'        => $student->getId(),
+            ];
+            $jsonData = json_encode($dataZapier);
+            $url = 'https://hooks.zapier.com/hooks/catch/22004412/utrhn6z/';
+            $options = [
+                'http' => [
+                    'method'  => 'POST',
+                    'header'  => "Content-Type: application/json\r\n",
+                    'content' => $jsonData
+                ]
+            ];
+            $context = stream_context_create($options);
+            $result = file_get_contents($url, false, $context);
+        }
 
         // 8. Réponse JSON
         return $this->json([
@@ -608,5 +589,10 @@ class StudentController extends AbstractController
 
         // Si aucune contract groupé ou aucune n'est valide
         return new JsonResponse(['is_member' => false]);
+    }
+
+    private function isProdEnv(): bool
+    {
+        return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
     }
 }
