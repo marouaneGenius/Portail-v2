@@ -109,10 +109,10 @@ class StudentVoter extends Voter
             return false;
         }
 
-        // USER ne peut PAS supprimer d'étudiants
-        if (in_array('ROLE_USER', $user->getRoles())) {
-            return false;
-        }
+        // // USER ne peut PAS supprimer d'étudiants
+        // if (in_array('ROLE_USER', $user->getRoles())) {
+        //     return false;
+        // }
 
         // TUTOR ne peut rien supprimer
         if (in_array('ROLE_TUTOR', $user->getRoles())) {

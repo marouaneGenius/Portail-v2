@@ -458,7 +458,7 @@ class StudentController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_students_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function delete(int $id): JsonResponse
     {
         $student = $this->studentRepo->find($id);
