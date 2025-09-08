@@ -35,6 +35,7 @@ export default function CustomDataTable({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [selectedCenter, setSelectedCenter] = useState<number | 'all'>('all');
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -81,12 +82,16 @@ export default function CustomDataTable({
   };
 
   const filteredData = useMemo(() => {
-    return data.filter((item) =>
+    let result = data;
+    if (selectedCenter !== 'all') {
+      result = result.filter((item) => item.id_center === selectedCenter);
+    }
+    return result.filter((item) =>
       Object.values(item).some((val) =>
         String(val).toLowerCase().includes(globalFilter.toLowerCase())
       )
     );
-  }, [data, globalFilter]);
+  }, [data, globalFilter, selectedCenter]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = useMemo(() => {
@@ -122,16 +127,36 @@ export default function CustomDataTable({
 
       <Card className="border-fading-grey shadow-sm">
         <CardHeader>
-          <div className="flex justify-between items-center gap-4 flex-wrap">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 flex-wrap">
             <CardTitle className="text-xl text-mister-anthracite">Résultats</CardTitle>
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mister-anthracite/50 w-4 h-4" />
-              <Input
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                placeholder="Rechercher…"
-                className="pl-10 border-fading-grey"
-              />
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto items-center">
+              {/* Filtre centre uniquement pour la liste des élèves */}
+              {endpoint === 'student' && (
+                <div className="flex items-center gap-2 min-w-[180px]">
+
+                  <select
+                    id="center-filter"
+                    value={selectedCenter}
+                    onChange={e => setSelectedCenter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="border border-fading-grey rounded px-3 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-hello-yellow transition w-full"
+                    style={{ minWidth: 120 }}
+                  >
+                    <option value="all">Tous les centres</option>
+                    {Object.entries(centerMap).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="relative w-full md:w-[260px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mister-anthracite/50 w-4 h-4 pointer-events-none" />
+                <Input
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  placeholder="Rechercher…"
+                  className="pl-10 border-fading-grey w-full"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
