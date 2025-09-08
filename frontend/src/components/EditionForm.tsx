@@ -35,7 +35,15 @@ export default function EditionForm() {
     api
       .get(`/api/${resource}/${id}`)
       .then(({ data }) => {
-        setInitialValues(data);
+        // Correction pour le centre de l'élève
+        if (resource === 'student' && data.centers && data.centers.id) {
+          setInitialValues({
+            ...data,
+            id_center: String(data.centers.id), // ou Number selon le type attendu
+          });
+        } else {
+          setInitialValues(data);
+        }
       })
       .catch(() => {
         // gérer l’erreur (toast, redirection…)
