@@ -38,6 +38,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 }) => {
   const [showEditModal, setShowEditModal] = useState<'tutor' | 'subjects' | 'cancel' | 'absent' | 'exceptional_change' | null>(null);
   const [isCanceled, setIsCanceled] = useState(student.session.is_canceled);
+  const [isSuspended, setIsSuspended] = useState(student.session.is_suspended);
   const [isPaid, isIsPaid] = useState(student.session.is_paid);
   const [sessionType, setSessionType] = useState(student.session.session_type);
   const [isAbsent, setIsAbsent] = useState(student.session.is_absent);
@@ -51,12 +52,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const currentSession = student.session;
   const currentStudent = student.student;
   const { user } = useAuth();
-
-  // Debug: vérifier si la fonction arrive
-  useEffect(() => {
-    console.log('StudentCard - onExceptionalChange function:', onExceptionalChange ? 'Available' : 'Not available');
-    console.log('StudentCard - Session ID:', currentSession?.id, 'Student:', currentStudent?.firstname, currentStudent?.lastname);
-  }, [onExceptionalChange, currentSession, currentStudent]);
 
   useEffect(() => {
     if (tutorId) {

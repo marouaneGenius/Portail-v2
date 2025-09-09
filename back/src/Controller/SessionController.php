@@ -689,9 +689,9 @@ class SessionController extends AbstractController
         $periodParam = $request->query->get('period');
 
         if ($periodParam === 'week') {
-        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndWeek($center, $start, $users);
+            $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndWeek($center, $start, $users);
         } else {
-        $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start, $users);
+            $data = $this->sessionRepo->getTutorsAndSessionsWithStudentsByCenterAndDate($center, $start, $users);
         }
 
         return new JsonResponse($data);
@@ -1590,6 +1590,11 @@ class SessionController extends AbstractController
 
         $sessions = $subscription->getSessions();
         
+        // Filtrer les séances : exclure toutes les séances dont l'abonnement est suspendu
+        $filteredSessions = $sessions->filter(function($session) use ($subscription) {
+            return !$subscription->isIsSuspended();
+        });
+        
         $data = array_map(function($session) {
             return [
                 'id' => $session->getId(),
@@ -1601,7 +1606,7 @@ class SessionController extends AbstractController
                 'is_canceled' => $session->isIsCanceled(),
                 'session_type' => $session->getSessionType(),
             ];
-        }, $sessions->toArray());
+        }, $filteredSessions->toArray());
 
         return new JsonResponse($data, JsonResponse::HTTP_OK);
     }

@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Repository\SessionRepository;
 
 #[Route('/api/subs', name: 'api_subscription_')]
 class SubscriptionController extends AbstractController
@@ -25,12 +26,14 @@ class SubscriptionController extends AbstractController
     private CenterRepository $centerRepository;
     private SubscriptionRepository $subscriptionRepository;
     private StudentRepository $studentRepository;
+    private SessionRepository $sessionRepository;
 
     public function __construct(
         EntityManagerInterface $em,
         CenterRepository $centerRepository,
         SubscriptionRepository $subscriptionRepository,
         StudentRepository $studentRepository,
+        SessionRepository $sessionRepository,
         private UserRepository $userRepository,
         private HttpClientInterface $httpClient
     ) {
@@ -38,6 +41,7 @@ class SubscriptionController extends AbstractController
         $this->centerRepository = $centerRepository;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->studentRepository = $studentRepository;
+        $this->sessionRepository = $sessionRepository;
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
@@ -78,6 +82,7 @@ class SubscriptionController extends AbstractController
         $subscription->setCombinedId($data['combined_id'] ?? null);
         $subscription->setSubscriptionType($data['subscription_type'] ?? '');
         $subscription->setIsValide($data['is_valide'] ?? false);
+        $subscription->setIsSuspended($data['is_suspended'] ?? false);
         $subscription->setPaymentMode($data['payment_mode'] ?? null);
         $subscription->setCaution($data['caution'] ?? false);
         $subscription->setFavoriteSlots($data['favorite_slots'] ?? null);
@@ -136,7 +141,7 @@ class SubscriptionController extends AbstractController
             'membership_fee'         => $subscription->getMembershipFee(),
             'school_subjects'        => $subscription->getSchoolSubjects(),
             'favorite_slots'         => $subscription->getFavoriteSlots(),
-
+            'is_suspended'         => $subscription->isIsSuspended(),
             'is_programed'         => $subscription->isIsProgramed(),
             'programed_at'         => $subscription->getProgramedAt(),
 
@@ -194,6 +199,7 @@ class SubscriptionController extends AbstractController
             'membership_fee'         => $subscription->getMembershipFee(),
             'school_subjects'        => $subscription->getSchoolSubjects(),
             'favorite_slots'         => $subscription->getFavoriteSlots(),
+            'is_suspended'         => $subscription->isIsSuspended(),
             'student' => ($student = $subscription->getIdStudent()) ? [
                 'id'        => $student->getId(),
                 'firstname' => $student->getFirstname(),
@@ -317,6 +323,7 @@ class SubscriptionController extends AbstractController
             'school_subjects'        => $subscription->getSchoolSubjects(),
             'favorite_slots'         => $subscription->getFavoriteSlots(),
             'is_programed'           => $subscription->isIsProgramed(),
+            'is_suspended'           => $subscription->isIsSuspended(),
             'programed_at'           => $subscription->getProgramedAt(),
             'created_at'             => $subscription->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'created_by'             => $subscription->getCreatedBy(),
@@ -340,6 +347,9 @@ class SubscriptionController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $canceledBy = $data['canceled_by'] ?? null;
+        $isSuspended = $data['is_suspended'];
+        $resiliationDate = $data['resiliation_date'] ?? null;
+
 
         if (!$canceledBy) {
             return new JsonResponse(['error' => 'Le champ canceled_by (email) est requis.'], JsonResponse::HTTP_BAD_REQUEST);
@@ -347,7 +357,14 @@ class SubscriptionController extends AbstractController
 
         $subscription->setIsCanceled(true);
         $subscription->setCanceledBy($canceledBy);
+        $subscription->setIsSuspended($isSuspended);
+        $subscription->setCanceledAt(new \DateTimeImmutable());
         $subscription->setUpdatedAt(new \DateTimeImmutable());
+        
+        // Définir la date de résiliation si fournie
+        if ($resiliationDate) {
+            $subscription->setResiliationDate(new \DateTime($resiliationDate));
+        }
 
         $this->em->persist($subscription);
         $this->em->flush();
@@ -356,7 +373,48 @@ class SubscriptionController extends AbstractController
             'id'           => $subscription->getId(),
             'is_canceled'  => $subscription->isIsCanceled(),
             'canceled_by'  => $subscription->getCanceledBy(),
+            'canceled_at'  => $subscription->getCanceledAt()?->format(\DateTimeInterface::ATOM),
+            'is_suspended'  => $subscription->isIsSuspended(),
+            'resiliation_date' => $subscription->getResiliationDate()?->format('Y-m-d'),
             'updated_at'   => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+        ], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/{id}/reactivate', name: 'subscription_reactivate', methods: ['PATCH'])]
+    public function reactivateSubscription(int $id, Request $request): JsonResponse
+    {
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            return new JsonResponse(['error' => 'Abonnement introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $updatedBy = $data['updated_by'] ?? null;
+
+        if (!$updatedBy) {
+            return new JsonResponse(['error' => 'Le champ updated_by (email) est requis.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $subscription->setIsCanceled(false);
+        $subscription->setCanceledBy(null);
+        $subscription->setCanceledAt(null);
+        $subscription->setIsSuspended(false);
+        $subscription->setResiliationDate(null);
+        $subscription->setUpdatedAt(new \DateTimeImmutable());
+        $subscription->setUpdatedBy($updatedBy);
+
+        $this->em->persist($subscription);
+        $this->em->flush();
+
+        return new JsonResponse([
+            'id'           => $subscription->getId(),
+            'is_canceled'  => $subscription->isIsCanceled(),
+            'canceled_by'  => $subscription->getCanceledBy(),
+            'canceled_at'  => $subscription->getCanceledAt()?->format(\DateTimeInterface::ATOM),
+            'is_suspended'  => $subscription->isIsSuspended(),
+            'resiliation_date' => $subscription->getResiliationDate()?->format('Y-m-d'),
+            'updated_at'   => $subscription->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'message'      => 'Abonnement réactivé avec succès'
         ], JsonResponse::HTTP_OK);
     }
 
@@ -406,6 +464,35 @@ class SubscriptionController extends AbstractController
                 'message' => $e->getMessage()
             ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Réactive toutes les sessions suspendues d'un contrat (étudiant associé)
+     */
+    #[Route('/{id}/unsuspend-sessions', name: 'unsuspend_sessions', methods: ['POST'])]
+    public function unsuspendContractSessions(int $id): JsonResponse
+    {
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            return new JsonResponse(['error' => 'Contrat introuvable'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $student = $subscription->getIdStudent();
+        if (!$student) {
+            return new JsonResponse(['error' => 'Aucun étudiant associé à ce contrat'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Réactiver toutes les sessions suspendues de cet étudiant
+        $unsuspendedCount = $this->sessionRepository->unsuspendSessionsByStudent($student->getId());
+
+        return new JsonResponse([
+            'success' => true,
+            'contract_id' => $subscription->getId(),
+            'student_id' => $student->getId(),
+            'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
+            'unsuspended_sessions_count' => $unsuspendedCount,
+            'message' => "Sessions réactivées pour {$student->getFirstname()} {$student->getLastname()}"
+        ], JsonResponse::HTTP_OK);
     }
 
 }

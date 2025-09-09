@@ -26,8 +26,6 @@ interface CalculatorProps {
 const TarificationCalculator: React.FC<CalculatorProps> = ({ data, price }) => {
   const { lignes, totalApresReduction, coutHoraire } = computeTarification(data, price);
 
-
-
   return (
 
     lignes &&

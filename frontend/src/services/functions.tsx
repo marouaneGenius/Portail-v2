@@ -21,7 +21,6 @@ export function renameFields<T extends { name?: string }>(fields: T[]): T[] {
     });
 }
 
-
 export const formatDateTimeParent = (dateStr: string) => {
   // Approche simple : remplacer le 'T' par un espace et enlever les infos de fuseau horaire
   // pour forcer JavaScript à traiter la date comme locale
@@ -48,7 +47,6 @@ export const formatDateTimeParent = (dateStr: string) => {
     })
   };
 };
-
 
 export function splitParentKeys(values: Record<string, any>, resource:any) {
 
@@ -286,6 +284,7 @@ export const getFrenchDayLabel = (dateInput: string | Date): string => {
   const date = new Date(dateInput);
   return date.toLocaleDateString('fr-FR', { weekday: 'long' });
 };
+
 export const formatTime = (timeString: any) => {
   const isoMatch = timeString.match(/T(\d{2}:\d{2})/);
   if (isoMatch) return isoMatch[1];
@@ -294,8 +293,6 @@ export const formatTime = (timeString: any) => {
 
   return '';
 };
-
-
 
 type TimeInput = string | Date | number | null | undefined;
 
@@ -346,17 +343,6 @@ export function uuid () {
   return (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now());
 }
 
-// export const extractExactHour = (isoString: string | null | undefined): string => {
-//   if (!isoString) return ""; // sécurité
-//   const date = new Date(isoString);
-//   if (isNaN(date.getTime())) return ""; // sécurité Invalid Date
-
-//   // Affiche dans la timezone du navigateur
-//   const hours = date.getHours();
-//   const minutes = date.getMinutes().toString().padStart(2, "0");
-//   return `${hours}h${minutes}`;
-// };
-
 export const extractExactHour = (dateInput: Date | string | null | undefined): string => {
   if (!dateInput) return "";
   
@@ -394,7 +380,6 @@ export function formatScheduledAt(isoDateTime: string, slot: string, selectedDat
 
   return `${datePart} ${HH}:${MM}:00`;
 }
-
 
 export function buildSessions(
   startDate: string,
@@ -456,7 +441,6 @@ export function buildSessions(
   return sessions;
 }
 
-
 export function pad(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -467,7 +451,6 @@ export const  toLocalDateString = (date:any) => {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
-
 
 export function formatDate(dateStr:any) {
   const d = new Date(dateStr);
@@ -506,8 +489,6 @@ export const timeToMinutes = (time: string | DoctrineDate): number => {
 
   return 0;
 };
-
-
 
 export const formatDateTime = (date: Date | null): string | null => {
   if (!date) return null;
