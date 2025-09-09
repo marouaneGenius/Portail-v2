@@ -60,6 +60,16 @@ class ParentController extends AbstractController
                 $scheduledAt = $session->getScheduledAt();
                 if (!$scheduledAt) continue;
 
+                // Exclure les séances des contrats suspendus
+                $shouldHideSession = false;
+                foreach ($session->getIdSubscription() as $subscription) {
+                    if ($subscription->isIsSuspended()) {
+                        $shouldHideSession = true;
+                        break;
+                    }
+                }
+                if ($shouldHideSession) continue;
+
                 // Calculer les heures jusqu'à la session
                 $hoursUntilSession = ($scheduledAt->getTimestamp() - $now->getTimestamp()) / 3600;
                 
@@ -81,7 +91,8 @@ class ParentController extends AbstractController
                     'is_canceled' => $session->isIsCanceled() ?? false,
                     'canceled_by' => $session->getCanceledBy() ?? false,
                     'can_mark_absent' => $canMarkAbsent,
-                    'hours_until_session' => round($hoursUntilSession, 1)
+                    'hours_until_session' => round($hoursUntilSession, 1),
+                    'is_suspended' => $session->getIdSubscription()->first() ? $session->getIdSubscription()->first()->isIsSuspended() : false
                 ];
             }
         }
@@ -284,6 +295,7 @@ class ParentController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $reason = $data['reason'] ?? 'Rupture demandée par le parent';
+        $resiliationDate = $data['resiliation_date'] ?? null;
 
         $parent = $this->parentRepository->find($parentId);
         $subscription = $this->subscriptionRepository->find($contractId);
@@ -303,19 +315,29 @@ class ParentController extends AbstractController
             return $this->json(['error' => 'Ce contrat est déjà annulé'], 400);
         }
 
-        // Annuler le contrat
+        // Annuler et suspendre le contrat
         $subscription->setIsCanceled(true);
+        $subscription->setIsSuspended(true);
         $subscription->setCanceledBy($currentUser->getUserIdentifier() . ' (Parent: ' . $reason . ')');
+        $subscription->setCanceledAt(new \DateTimeImmutable());
         $subscription->setUpdatedAt(new \DateTimeImmutable());
         $subscription->setUpdatedBy($currentUser->getUserIdentifier());
+        
+        // Définir la date de résiliation si fournie
+        if ($resiliationDate) {
+            $subscription->setResiliationDate(new \DateTime($resiliationDate));
+        }
 
         $this->em->flush();
 
         return $this->json([
             'success' => true,
             'contract_id' => $subscription->getId(),
-            'message' => 'Contrat annulé avec succès',
-            'canceled_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
+            'is_canceled' => $subscription->isIsCanceled(),
+            'is_suspended' => $subscription->isIsSuspended(),
+            'canceled_at' => $subscription->getCanceledAt()?->format('Y-m-d H:i:s'),
+            'resiliation_date' => $subscription->getResiliationDate()?->format('Y-m-d'),
+            'message' => 'Contrat résilié avec succès'
         ]);
     }
 

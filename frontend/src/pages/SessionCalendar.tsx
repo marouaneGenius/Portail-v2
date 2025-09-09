@@ -197,7 +197,6 @@ export default function SessionCalendar() {
 
   };
 
-
   const loadAllTutors = async () => {
     try {
       const response = await api.get('/api/users/tutors');
@@ -233,11 +232,6 @@ export default function SessionCalendar() {
 
   const handleExceptionalChange = async () => {
     if (!selectedReplacementTutor || !selectedSessionForChange || conflictCheck.hasConflict) return;
-
-    console.log('handleExceptionalChange - selectedSessionForChange:', selectedSessionForChange);
-    console.log('handleExceptionalChange - sessionIds:', selectedSessionForChange.sessionIds);
-    console.log('handleExceptionalChange - typeof sessionIds:', typeof selectedSessionForChange.sessionIds);
-
     try {
       // Vérifier que sessionIds est bien un tableau
       if (!Array.isArray(selectedSessionForChange.sessionIds)) {
@@ -292,7 +286,6 @@ export default function SessionCalendar() {
   };
 
   const openExceptionalChangeModal = (sessionIds: number[], studentIds: number[], tutorId: number, description: string, tutorName: string) => {
-    console.log('openExceptionalChangeModal - Received params:', {sessionIds, studentIds, tutorId, description, tutorName});
     
     // S'assurer que les paramètres sont des tableaux
     const safeSessionIds = Array.isArray(sessionIds) ? sessionIds : [sessionIds];
@@ -482,8 +475,6 @@ export default function SessionCalendar() {
 
         {/* Vue conditionnelle */}
         {currentView === 'daily' ? (
-          // ...ta vue jour existante...
-          // (tout ce que tu as déjà)
           <DndContext onDragEnd={handleDragEnd} sensors={sensors} collisionDetection={closestCenter}>
             <div className="space-y-10">
               {HoursOptions.map(hourSlot => (

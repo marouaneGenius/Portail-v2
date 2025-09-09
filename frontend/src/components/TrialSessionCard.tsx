@@ -72,7 +72,6 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
       alert('Erreur lors de la modification de la séance');
     }
   };
-  console.log(upcomingTrialSessions)
 
 
   if (upcomingTrialSessions.length === 0) {

@@ -118,6 +118,15 @@ class Subscription
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $canceled_by = null;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $canceled_at = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $resiliation_date = null;
+
+    #[ORM\Column(nullable: false, options: ['default' => false])]
+    private ?bool $is_suspended = false;
+
     public function __construct()
     {
         $this->sessions = new ArrayCollection();
@@ -568,6 +577,42 @@ class Subscription
     public function setCanceledBy(?string $canceled_by): static
     {
         $this->canceled_by = $canceled_by;
+
+        return $this;
+    }
+
+    public function getCanceledAt(): ?\DateTimeImmutable
+    {
+        return $this->canceled_at;
+    }
+
+    public function setCanceledAt(?\DateTimeImmutable $canceled_at): static
+    {
+        $this->canceled_at = $canceled_at;
+
+        return $this;
+    }
+
+    public function getResiliationDate(): ?\DateTimeInterface
+    {
+        return $this->resiliation_date;
+    }
+
+    public function setResiliationDate(?\DateTimeInterface $resiliation_date): static
+    {
+        $this->resiliation_date = $resiliation_date;
+
+        return $this;
+    }
+
+    public function isIsSuspended(): ?bool
+    {
+        return $this->is_suspended;
+    }
+
+    public function setIsSuspended(?bool $is_suspended): static
+    {
+        $this->is_suspended = $is_suspended;
 
         return $this;
     }

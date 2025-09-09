@@ -323,6 +323,37 @@ class StudentController extends AbstractController
             ];
         })->toArray();
 
+        // Récupérer les contrats/subscriptions de l'étudiant avec informations de sessions suspendues
+        $subscriptions = $this->em->getRepository(\App\Entity\Subscription::class)->findBy(['id_student' => $student]);
+        $subscriptionsData = array_map(function($subscription) {
+            // Compter les sessions suspendues pour cette subscription
+            $suspendedSessions = $this->em->createQuery('
+                SELECT s FROM App\Entity\Session s 
+                JOIN s.id_subscription sub 
+                WHERE sub.id = :subId 
+                AND s.is_canceled = true
+            ')
+            ->setParameter('subId', $subscription->getId())
+            ->getResult();
+            
+            $totalSuspendedCount = count($suspendedSessions);
+            
+            return [
+                'id' => $subscription->getId(),
+                'subscription_type' => $subscription->getSubscriptionType(),
+                'offer_type' => $subscription->getOfferType(),
+                'is_canceled' => $subscription->isIsCanceled(),
+                'canceled_by' => $subscription->getCanceledBy(),
+                'subscription_start_date' => $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+                'subscription_end_date' => $subscription->getSubscriptionEndDate()?->format('Y-m-d'),
+                'school_subjects' => $subscription->getSchoolSubjects(),
+                'session_per_week' => $subscription->getSessionPerWeek(),
+                'suspended_sessions_count' => $totalSuspendedCount,
+                'has_suspended_sessions' => $totalSuspendedCount > 0,
+                'created_at' => $subscription->getCreatedAt()?->format('Y-m-d H:i:s')
+            ];
+        }, $subscriptions);
+
         $user = $this->studentRepo->find($id);
         if (!$user) {
             return $this->json(['message' => 'Pas trouvé'], 404);
@@ -359,6 +390,7 @@ class StudentController extends AbstractController
                 : null,
             'parents'   => $parents,
             'sessions'  => $sessions,
+            'contracts' => $subscriptionsData,
             'stripe_key' => $student->getIdStripe()
 
         ]);

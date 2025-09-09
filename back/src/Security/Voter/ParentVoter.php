@@ -93,8 +93,9 @@ class ParentVoter extends Voter
             return false;
         }
 
-        // USER peut modifier tous les parents
-        return in_array('ROLE_USER', $user->getRoles());
+        // USER et ADMIN peuvent modifier tous les parents
+        return in_array('ROLE_USER', $user->getRoles()) || 
+               in_array('ROLE_ADMIN', $user->getRoles());
     }
 
     private function canDelete(?StudentParent $parent, UserInterface $user): bool

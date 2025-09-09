@@ -22,6 +22,7 @@ interface ChildSession {
   center_name?: string;
   is_canceled: boolean;
   is_absent: boolean;
+  is_suspended: boolean;
   can_mark_absent: boolean; // Si on peut encore marquer absent (48h avant)
   hours_until_session: number;
   canceled_by?: string | null;
@@ -67,6 +68,9 @@ const ParentDashboard: React.FC = () => {
     tutor_id: ''
   });
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+  const [showResiliationModal, setShowResiliationModal] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [resiliationDate, setResiliationDate] = useState('');
 
   // Vérifier que c'est bien un parent
   if (!isParent()) {
@@ -175,31 +179,87 @@ const ParentDashboard: React.FC = () => {
     }
   };
 
-  const handleCancelContract = async (contractId: number, childName: string) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir annuler le contrat de ${childName} ?`)) {
+  // Calculer les dates de résiliation possibles (logique de ProcedureResiliationComponent)
+  const calculateResiliationDates = (contract: any) => {
+    const TOTAL_MONTHS = 9;
+    const INTERVAL = 3;
+    const offsetDays = 7;
+
+    const startDate = contract.subscription_start_date;
+    const start = new Date(startDate);
+    
+    const endDates: Date[] = [];
+    for (let m = INTERVAL; m <= TOTAL_MONTHS; m += INTERVAL) {
+      const d = new Date(start);
+      d.setMonth(start.getMonth() + m);
+      d.setDate(1); // toujours le 1er du mois
+      endDates.push(d);
+    }
+
+    // Prépare l'affichage (date de fin + date-limite)
+    return endDates.map((end) => {
+      const deadline = new Date(end);
+      deadline.setDate(end.getDate() - offsetDays);
+      return {
+        endDate: end,
+        deadlineDate: deadline,
+        endFr: end.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "2-digit", 
+          month: "long",
+          year: "numeric",
+        }),
+        deadlineFr: deadline.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long", 
+          year: "numeric",
+        }),
+        value: end.toISOString().split('T')[0] // pour le select
+      };
+    });
+  };
+
+  const openResiliationModal = (contract: any) => {
+    setSelectedContract(contract);
+    setResiliationDate('');
+    setShowResiliationModal(true);
+  };
+
+  const closeResiliationModal = () => {
+    setShowResiliationModal(false);
+    setSelectedContract(null);
+    setResiliationDate('');
+  };
+
+  const handleCancelContract = async () => {
+    if (!selectedContract || !resiliationDate) {
+      toast.error('Veuillez sélectionner une date de résiliation');
       return;
     }
 
-    const reason = window.prompt('Raison de l\'annulation (optionnel):') || 'Annulation demandée par le parent';
+    const reason = 'Annulation demandée par le parent';
 
     try {
-      await api.patch(`/api/parents/${user?.id}/contracts/${contractId}/cancel`, {
-        reason: reason
+      await api.patch(`/api/parents/${user?.id}/contracts/${selectedContract.id}/cancel`, {
+        reason: reason,
+        resiliation_date: resiliationDate
       });
 
       // Mettre à jour l'état local
       setContracts(prev =>
         prev.map(contract =>
-          contract.id === contractId
+          contract.id === selectedContract.id
             ? { ...contract, is_canceled: true }
             : contract
         )
       );
 
-      toast.success('Contrat annulé avec succès');
+      closeResiliationModal();
+      toast.success('Contrat résilié avec succès');
     } catch (error) {
-      console.error('Erreur lors de l\'annulation:', error);
-      toast.error('Erreur lors de l\'annulation du contrat');
+      console.error('Erreur lors de la résiliation:', error);
+      toast.error('Erreur lors de la résiliation du contrat');
     }
   };
 
@@ -313,18 +373,18 @@ const ParentDashboard: React.FC = () => {
     }));
   };
 
-
-
   const getUpcomingSessions = () => {
     const now = new Date();
-    return sessions.filter(session => new Date(session.scheduled_at) > now)
-                   .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+    return sessions.filter(session => 
+      new Date(session.scheduled_at) > now && !session.is_suspended
+    ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   };
 
   const getPastSessions = () => {
     const now = new Date();
-    return sessions.filter(session => new Date(session.scheduled_at) <= now)
-                   .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+    return sessions.filter(session => 
+      new Date(session.scheduled_at) <= now && !session.is_suspended
+    ).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
 
   const getMonthSessions = () => {
@@ -333,7 +393,7 @@ const ParentDashboard: React.FC = () => {
     
     return sessions.filter(session => {
       const sessionDate = new Date(session.scheduled_at);
-      return sessionDate >= monthStart && sessionDate <= monthEnd;
+      return sessionDate >= monthStart && sessionDate <= monthEnd && !session.is_suspended;
     }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   };
 
@@ -390,7 +450,7 @@ const ParentDashboard: React.FC = () => {
     
     return sessions.filter(session => {
       const sessionDate = new Date(session.scheduled_at);
-      return sessionDate >= dayStart && sessionDate <= dayEnd;
+      return sessionDate >= dayStart && sessionDate <= dayEnd && !session.is_suspended;
     });
   };
 
@@ -993,17 +1053,17 @@ const ParentDashboard: React.FC = () => {
                         </Button>
 
                         {/* Bouton annulation (seulement pour contrats actifs) */}
-                        {/* {contract.is_valide && !contract.is_canceled && (
+                        {contract.is_valide && !contract.is_canceled && (
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleCancelContract(contract.id, contract.child_name)}
+                            onClick={() => openResiliationModal(contract)}
                             className="flex items-center gap-1"
                           >
                             <Ban className="h-3 w-3" />
                             Annuler
                           </Button>
-                        )} */}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1081,6 +1141,73 @@ const ParentDashboard: React.FC = () => {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Modal de résiliation de contrat */}
+      {showResiliationModal && selectedContract && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              Résiliation du contrat de {selectedContract.child_name}
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date de résiliation possible
+              </label>
+              <select
+                value={resiliationDate}
+                onChange={(e) => setResiliationDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="">Sélectionner une date de résiliation</option>
+                {calculateResiliationDates(selectedContract).map((dateInfo, index) => (
+                  <option key={index} value={dateInfo.value}>
+                    {dateInfo.endFr} (à notifier avant le {dateInfo.deadlineFr})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {resiliationDate && (
+              <div className="mb-4">
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Date sélectionnée :</strong> Résiliation effective le {new Date(resiliationDate).toLocaleDateString("fr-FR", {
+                      weekday: "long",
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Attention :</strong> La résiliation sera effective à la date sélectionnée. 
+                Toutes les séances programmées après cette date seront annulées et suspendues.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={closeResiliationModal}
+                variant="outline"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleCancelContract}
+                disabled={!resiliationDate}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Confirmer la résiliation
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

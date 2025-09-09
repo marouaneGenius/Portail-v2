@@ -28,6 +28,7 @@ type Subscription = {
   combined_id:boolean;
   combined?: any[];
   url:string;
+  is_suspended:boolean;
   is_programed:boolean;
 };
 
@@ -100,6 +101,9 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
   const { user } = useAuth();
   const loadedCombined = useRef<Set<number>>(new Set());
   const [subscriptionSessions, setSubscriptionSessions] = useState<{[key: number]: any[]}>({});
+  const [showResiliationModal, setShowResiliationModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [resiliationDate, setResiliationDate] = useState('');
 
   // Helper function to format decimal hours to "Xh30" format
   const formatHours = (hours: number): string => {
@@ -247,38 +251,111 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     }
   }
 
-  const handleCancel = async (subscription:any, subscriptionId: number) => {
-    if (!window.confirm("Confirmer la rupture de l'abonnement ?")) return;
-    const ids = subscription.combined_id !== null ? await  getIdsToUpdate(subscription): [subscription.id];
+  // Calculer les dates de résiliation possibles (logique de ProcedureResiliationComponent)
+  const calculateResiliationDates = (subscription: any) => {
+    const TOTAL_MONTHS = 9;
+    const INTERVAL = 3;
+    const offsetDays = 7;
+
+    const startDate = subscription.subscription_start_date ;
+    const start = new Date(startDate);
+    
+    const endDates: Date[] = [];
+    for (let m = INTERVAL; m <= TOTAL_MONTHS; m += INTERVAL) {
+      const d = new Date(start);
+      d.setMonth(start.getMonth() + m);
+      d.setDate(1); // toujours le 1er du mois
+      endDates.push(d);
+    }
+
+    // Prépare l'affichage (date de fin + date-limite)
+    return endDates.map((end) => {
+      const deadline = new Date(end);
+      deadline.setDate(end.getDate() - offsetDays);
+      return {
+        endDate: end,
+        deadlineDate: deadline,
+        endFr: end.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "2-digit", 
+          month: "long",
+          year: "numeric",
+        }),
+        deadlineFr: deadline.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long", 
+          year: "numeric",
+        }),
+        value: end.toISOString().split('T')[0] // pour le select
+      };
+    });
+  };
+
+  const openResiliationModal = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    setResiliationDate('');
+    setShowResiliationModal(true);
+  };
+
+  const closeResiliationModal = () => {
+    setShowResiliationModal(false);
+    setSelectedSubscription(null);
+    setResiliationDate('');
+  };
+
+  const handleCancel = async () => {
+    if (!selectedSubscription || !resiliationDate) {
+      alert('Veuillez sélectionner une date de résiliation');
+      return;
+    }
+
+    const ids = selectedSubscription.combined_id !== null ? await getIdsToUpdate(selectedSubscription): [selectedSubscription.id];
 
     try {
       await Promise.all(
         ids.map((id:any) =>
-          api.patch(`/api/subs/${id}/cancel`, { canceled_by: user?.email })
+          api.patch(`/api/subs/${id}/cancel`, { 
+            canceled_by: user?.email, 
+            is_suspended: true,
+            resiliation_date: resiliationDate
+          })
         )
       );
   
       setSubs(prev =>
         prev.map(s =>
-          ids.includes(s.id) ? { ...s, is_canceled: true } : s
+          ids.includes(s.id) ? { ...s, is_canceled: true, is_suspended: true } : s
+        )
+      );
+      
+      closeResiliationModal();
+      alert('Contrat résilié avec succès');
+    } catch (err) {
+      console.error('Erreur d\'annulation :', err);
+      alert('Erreur lors de la résiliation');
+    }
+  };
+
+  const handleReactivate = async (subscription:any, subscriptionId: number) => {
+    if (!window.confirm("Confirmer la réactivation de l'abonnement ?")) return;
+    const ids = subscription.combined_id !== null ? await  getIdsToUpdate(subscription): [subscription.id];
+
+    try {
+      await Promise.all(
+        ids.map((id:any) =>
+          api.patch(`/api/subs/${id}/reactivate`, { updated_by: user?.email })
+        )
+      );
+  
+      setSubs(prev =>
+        prev.map(s =>
+          ids.includes(s.id) ? { ...s, is_canceled: false, is_suspended: false } : s
         )
       );
     } catch (err) {
-      console.error('Erreur d’annulation :', err);
+      console.error('Erreur de réactivation :', err);
     }
-
-
-    // await api.patch(`/api/subs/${subscriptionId}/cancel`, {
-    //   canceled_by: user?.email,
-    // });
-
-    // setSubs((prev) =>
-    //     prev.map((s) =>
-    //       s.id === subscriptionId
-    //         ? { ...s, is_canceled: true }
-    //         : s
-    //     )
-    //   );
   };
 
   const programeContract = async (subscription:any) => {
@@ -404,6 +481,7 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
             const isActive = sub.is_valide ;
             const isProgramed = sub.is_programed ;
             const isCanceled = !!sub.is_canceled;
+            const isSuspended = !!sub.is_suspended;
             const used = calculateUsedHours(sub.id);
             const total = calculateTotalHours(sub.id);
             const usedNumeric = calculateUsedHoursNumeric(sub.id);
@@ -446,7 +524,7 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 {!isCanceled && isActive && (
                 <button
                     className="border border-red-300 text-red-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-red-50 transition text-sm"
-                    onClick={() => handleCancel(sub, sub.id)}
+                    onClick={() => openResiliationModal(sub)}
                 >
                     <XCircle size={16} /> Rompre
                 </button>
@@ -481,11 +559,20 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 }
 
                 {
-                  isProgramed && programedbadgeContent(isProgramed)
+                  isProgramed && !isSuspended && programedbadgeContent(isProgramed)
                 }
+                
+                {(isCanceled || isSuspended) && (
+                  <button
+                      className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
+                      onClick={() => handleReactivate(sub, sub.id)}
+                  >
+                      <Check size={16} /> Réactiver
+                  </button>
+                )}
 
                 {
-                  !isProgramed && isActive && !isCanceled && !isCombined &&
+                  !isProgramed && isActive && !isCanceled && !isCombined && 
                     <button
                       className="border border-blue-300 text-blue-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-orange-50 transition text-sm"
                       onClick={e => programSessions(sub)}
@@ -516,6 +603,73 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
           );
         })}
       </div>
+
+      {/* Modal de résiliation */}
+      {showResiliationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              Résiliation du contrat
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date de résiliation possible
+              </label>
+              <select
+                value={resiliationDate}
+                onChange={(e) => setResiliationDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="">Sélectionner une date de résiliation</option>
+                {selectedSubscription && calculateResiliationDates(selectedSubscription).map((dateInfo, index) => (
+                  <option key={index} value={dateInfo.value}>
+                    {dateInfo.endFr} (à notifier avant le {dateInfo.deadlineFr})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {resiliationDate && selectedSubscription && (
+              <div className="mb-4">
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Date sélectionnée :</strong> Résiliation effective le {new Date(resiliationDate).toLocaleDateString("fr-FR", {
+                      weekday: "long",
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Attention :</strong> La résiliation sera effective à la date sélectionnée. 
+                Toutes les séances programmées après cette date seront annulées.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeResiliationModal}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={!resiliationDate}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+              >
+                Confirmer la résiliation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

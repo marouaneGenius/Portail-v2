@@ -285,16 +285,22 @@ import api from "../../api/aixos";
         const nbWeeks = qStart <= qEnd ? weeksBetween(qStart, qEnd) : 0;
         const nbSeances = seancesParSemaine * nbWeeks;
         const tarifTrimestre = (price * 3) *2; // 3 mois × prix mensuel
+        const realPrice =  tarifTrimestre / 2;
+
+
+
+
+        console.log(seancesParSemaine * nbWeeks, nbWeeks, seancesParSemaine)
   
         lignes.push({
           description: `${t + 1}ᵉ trimestre`,
           datePrelevement: fmtFR(datePrelevementTrimestre),
           nbSeances,
           tarifAvant: tarifTrimestre,
-          tarifApres: tarifTrimestre /2,
+          tarifApres: realPrice,
         });
   
-        totalApresReduction += tarifTrimestre;
+        totalApresReduction += realPrice;
         totalHeures += nbSeances * dureeSeance;
       }
 
@@ -312,7 +318,7 @@ import api from "../../api/aixos";
           description: `${moisRestants} mois restant${moisRestants > 1 ? 's' : ''}`,
           datePrelevement: fmtFR(dateMoisRestants),
           nbSeances,
-          tarifAvant: tarifMoisRestants,
+          tarifAvant: tarifMoisRestants * 2,
           tarifApres: tarifMoisRestants,
         });
 
@@ -321,21 +327,16 @@ import api from "../../api/aixos";
       }
   
     } else {
-
-
       // Mensualités
       const debut = new Date(subscription_start_date);
       const fin = new Date(subscription_end_date);
-
       const diffDays = Math.ceil((fin.getTime() - debut.getTime() + 1) / (1000*60*60*24));
       const nbSemaines = diffDays > 8
         ? Math.ceil(diffDays / 7)
         : Math.ceil(Math.max(0, diffDays - 1) / 7);
       const totalSeances = seancesParSemaine * nbSemaines;
       const nbMois = Math.ceil(totalSeances / (seancesParSemaine * 4));
-      
       // Prix mensuel = prix total divisé par le nombre de mois
-      const prixMensuel = price / nbMois;
   
       for (let i = 0; i < nbMois; i++) {
         // Nombre de séances ce mois
@@ -352,18 +353,16 @@ import api from "../../api/aixos";
           description: `${i + 1}ᵉ mensualité`,
           datePrelevement: fmtFR(dpStd),
           nbSeances: seancesCeMois,
-          tarifAvant: prixMensuel,
-          tarifApres: prixMensuel,
+          tarifAvant: price * 2,
+          tarifApres: price ,
         });
   
-        totalApresReduction += prixMensuel;
+        totalApresReduction += price;
         totalHeures += seancesCeMois * dureeSeance;
       }
     }
   
-    const coutHoraire = totalHeures > 0
-      ? totalApresReduction / totalHeures
-      : 0;
+    const coutHoraire = 17;
 
     return { lignes, totalApresReduction, coutHoraire, payment_mode };
   }

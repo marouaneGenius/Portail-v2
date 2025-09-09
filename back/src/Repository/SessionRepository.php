@@ -28,7 +28,9 @@ class SessionRepository extends ServiceEntityRepository
     public function getSessionsDataByTutor($tutor): array
     {
         $sessions = $this->createQueryBuilder('s')
+            ->leftJoin('s.id_subscription', 'sub')
             ->andWhere('s.idTutor = :tutor')
+            ->andWhere('sub.is_suspended = false')
             ->setParameter('tutor', $tutor)
             ->orderBy('s.scheduled_at', 'ASC')
             ->getQuery()
@@ -124,12 +126,24 @@ class SessionRepository extends ServiceEntityRepository
         foreach ($users as $user) {
             if (!in_array('ROLE_TUTOR', $user->getRoles())) continue; 
 
-            $sessionsDuJour = $user->getSessions()->filter(function($session) use ($center, $date) {
-                   return $session->getCenter()?->getId() === $center->getId()
-                    && $session->getScheduledAt() !== null
-                    && $session->getScheduledAt()->format('Y-m-d') === $date->format('Y-m-d')
-                    ;
-            });
+            // Requête DQL pour récupérer les sessions non suspendues
+            $startOfDay = $date->setTime(0, 0, 0);
+            $endOfDay = $date->setTime(23, 59, 59);
+            
+            $sessionsDuJour = $this->createQueryBuilder('s')
+            ->leftJoin('s.id_subscription', 'sub')
+            ->where('s.idTutor = :tutor')
+            ->andWhere('s.center = :center')
+            ->andWhere('s.scheduled_at >= :startOfDay')
+            ->andWhere('s.scheduled_at <= :endOfDay')
+            ->andWhere('sub.is_suspended = false')
+            ->setParameter('tutor', $user)
+            ->setParameter('center', $center)
+            ->setParameter('startOfDay', $startOfDay)
+            ->setParameter('endOfDay', $endOfDay)
+            ->getQuery()
+            ->getResult();
+        
 
             $sessionsArr = [];
             foreach ($sessionsDuJour as $session) {
@@ -153,6 +167,15 @@ class SessionRepository extends ServiceEntityRepository
                         // Ajoute ici ce que tu veux
                     ];
                 }
+                // Vérifier si l'abonnement est suspendu
+                $isSuspended = false;
+                foreach ($session->getIdSubscription() as $subscription) {
+                    if ($subscription->isIsSuspended()) {
+                        $isSuspended = true;
+                        break;
+                    }
+                }
+                
                 $sessionsArr[] = [
                     'id'            => $session->getId(),
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
@@ -162,6 +185,7 @@ class SessionRepository extends ServiceEntityRepository
                     'session_type'             => $session->getSessionType(),
                     'is_paid'         => $session->isIsPaid(),
                     'is_absent'        => $session->isIsAbsent(),
+                    'is_suspended'   => $isSuspended,
                     'students'      => $studentsArr,
                     'school_subjects' => $session->getSchoolSubjects(),
                 ];
@@ -198,13 +222,20 @@ class SessionRepository extends ServiceEntityRepository
         foreach ($users as $user) {
             if (!in_array('ROLE_TUTOR', $user->getRoles())) continue;
 
-            $sessionsSemaine = $user->getSessions()->filter(function($session) use ($center, $startOfWeek, $endOfWeek) {
-                $scheduledAt = $session->getScheduledAt();
-                return $session->getCenter()?->getId() === $center->getId()
-                    && $scheduledAt !== null
-                    && $scheduledAt >= $startOfWeek
-                    && $scheduledAt <= $endOfWeek;
-            });
+            // Requête DQL pour récupérer les sessions non suspendues de la semaine
+            $sessionsSemaine = $this->createQueryBuilder('s')
+                ->leftJoin('s.id_subscription', 'sub')
+                ->where('s.idTutor = :tutor')
+                ->andWhere('s.center = :center')
+                ->andWhere('s.scheduled_at >= :startOfWeek')
+                ->andWhere('s.scheduled_at <= :endOfWeek')
+                ->andWhere('sub.is_suspended = false')
+                ->setParameter('tutor', $user)
+                ->setParameter('center', $center)
+                ->setParameter('startOfWeek', $startOfWeek)
+                ->setParameter('endOfWeek', $endOfWeek)
+                ->getQuery()
+                ->getResult();
 
             $sessionsArr = [];
             foreach ($sessionsSemaine as $session) {
@@ -227,6 +258,16 @@ class SessionRepository extends ServiceEntityRepository
                             : null,
                     ];
                 }
+                
+                // Vérifier si l'abonnement est suspendu  
+                $isSuspended = false;
+                foreach ($session->getIdSubscription() as $subscription) {
+                    if ($subscription->isIsSuspended()) {
+                        $isSuspended = true;
+                        break;
+                    }
+                }
+                
                 $sessionsArr[] = [
                     'id'            => $session->getId(),
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
@@ -235,6 +276,7 @@ class SessionRepository extends ServiceEntityRepository
                     'canceled_by'   => $session->getCanceledBy(),
                     'is_absent'     => $session->isIsAbsent(),
                     'absent_by'     => $session->getAbsentBy(),
+                    'is_suspended'  => $isSuspended,
                     'students'      => $studentsArr,
                     'school_subjects' => $session->getSchoolSubjects(),
                 ];
@@ -319,5 +361,64 @@ class SessionRepository extends ServiceEntityRepository
         }
         
         return $filteredSessions;
+    }
+
+    /**
+     * Suspend toutes les sessions futures d'un étudiant
+     */
+    public function suspendFutureSessionsByStudent(int $studentId): int
+    {
+        $now = new \DateTimeImmutable();
+        
+        return $this->getEntityManager()
+            ->createQuery('
+                UPDATE App\Entity\Session s 
+                SET s.is_suspended = :suspended 
+                WHERE :studentId MEMBER OF s.id_student 
+                AND s.scheduled_at > :now
+            ')
+            ->setParameters([
+                'suspended' => true,
+                'studentId' => $studentId,
+                'now' => $now
+            ])
+            ->execute();
+    }
+
+    /**
+     * Réactive toutes les sessions suspendues d'un étudiant
+     */
+    public function unsuspendSessionsByStudent(int $studentId): int
+    {
+        return $this->getEntityManager()
+            ->createQuery('
+                UPDATE App\Entity\Session s 
+                SET s.is_suspended = :suspended 
+                WHERE :studentId MEMBER OF s.id_student 
+                AND s.is_suspended = :currentSuspended
+            ')
+            ->setParameters([
+                'suspended' => false,
+                'studentId' => $studentId,
+                'currentSuspended' => true
+            ])
+            ->execute();
+    }
+
+    /**
+     * Trouve les sessions suspendues pour des étudiants donnés
+     */
+    public function findSuspendedSessionsByStudents(array $studentIds): array
+    {
+        return $this->createQueryBuilder('s')
+            ->join('s.id_student', 'stu')
+            ->where('stu.id IN (:studentIds)')
+            ->andWhere('s.is_suspended = :suspended')
+            ->setParameters([
+                'studentIds' => $studentIds,
+                'suspended' => true
+            ])
+            ->getQuery()
+            ->getResult();
     }
 }

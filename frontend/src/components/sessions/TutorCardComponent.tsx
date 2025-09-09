@@ -123,7 +123,6 @@ export const TutorCard: React.FC<TutorCardProps> = ({
 
       <div className="mt-2">
         <div className="space-y-2 min-h-[60px]"> 
-
           {students.length > 0 ? (
             students.map((student:any) => {
               const currentSession = session.sessions.find((s:any) => s.id === student.session_id)
