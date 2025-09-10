@@ -287,11 +287,6 @@ import api from "../../api/aixos";
         const tarifTrimestre = (price * 3) *2; // 3 mois × prix mensuel
         const realPrice =  tarifTrimestre / 2;
 
-
-
-
-        console.log(seancesParSemaine * nbWeeks, nbWeeks, seancesParSemaine)
-  
         lignes.push({
           description: `${t + 1}ᵉ trimestre`,
           datePrelevement: fmtFR(datePrelevementTrimestre),

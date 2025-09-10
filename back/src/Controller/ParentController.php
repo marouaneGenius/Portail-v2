@@ -60,10 +60,17 @@ class ParentController extends AbstractController
                 $scheduledAt = $session->getScheduledAt();
                 if (!$scheduledAt) continue;
 
-                // Exclure les séances des contrats suspendus
+                // Exclure les séances des contrats suspendus ou après la date de résiliation
                 $shouldHideSession = false;
                 foreach ($session->getIdSubscription() as $subscription) {
-                    if ($subscription->isIsSuspended()) {
+                    // Si suspendu ET pas de date de résiliation = vraiment suspendu
+                    if ($subscription->isIsSuspended() && !$subscription->getResiliationDate()) {
+                        $shouldHideSession = true;
+                        break;
+                    }
+                    
+                    // Vérifier si la session est après la date de résiliation
+                    if ($subscription->getResiliationDate() && $scheduledAt > $subscription->getResiliationDate()) {
                         $shouldHideSession = true;
                         break;
                     }
@@ -315,9 +322,8 @@ class ParentController extends AbstractController
             return $this->json(['error' => 'Ce contrat est déjà annulé'], 400);
         }
 
-        // Annuler et suspendre le contrat
+        // Annuler le contrat mais ne pas le suspendre si une date de résiliation est fournie
         $subscription->setIsCanceled(true);
-        $subscription->setIsSuspended(true);
         $subscription->setCanceledBy($currentUser->getUserIdentifier() . ' (Parent: ' . $reason . ')');
         $subscription->setCanceledAt(new \DateTimeImmutable());
         $subscription->setUpdatedAt(new \DateTimeImmutable());
@@ -326,6 +332,11 @@ class ParentController extends AbstractController
         // Définir la date de résiliation si fournie
         if ($resiliationDate) {
             $subscription->setResiliationDate(new \DateTime($resiliationDate));
+            // Ne pas suspendre complètement, la date de résiliation gérera le filtrage
+            $subscription->setIsSuspended(false);
+        } else {
+            // Si pas de date de résiliation, suspendre immédiatement
+            $subscription->setIsSuspended(true);
         }
 
         $this->em->flush();

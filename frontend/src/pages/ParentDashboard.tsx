@@ -375,16 +375,18 @@ const ParentDashboard: React.FC = () => {
 
   const getUpcomingSessions = () => {
     const now = new Date();
-    return sessions.filter(session => 
-      new Date(session.scheduled_at) > now && !session.is_suspended
-    ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate > now && !session.is_suspended;
+    }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   };
 
   const getPastSessions = () => {
     const now = new Date();
-    return sessions.filter(session => 
-      new Date(session.scheduled_at) <= now && !session.is_suspended
-    ).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate <= now && !session.is_suspended;
+    }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
 
   const getMonthSessions = () => {
