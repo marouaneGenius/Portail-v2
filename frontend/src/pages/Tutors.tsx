@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../Hooks/auth';
 import api from '@/api/aixos';
 import { getCenters } from '@/api/api';
-import { Building, BookOpen, Calendar, Users, MapPin, Phone, Mail } from "lucide-react";
+import { Building, BookOpen, Calendar, Users, MapPin, Phone, Mail, X, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SchoolSubjects, Days, ClassesOptions, ClassesOptionsLevel } from '@/mocks/mocks';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,8 @@ export default function Tutors() {
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [showWeeklyModal, setShowWeeklyModal] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   
 
   // Charger les centres
@@ -59,12 +61,6 @@ export default function Tutors() {
     setLoading(true);
     api.get('/api/user/tutors/complete')
       .then(({ data }) => {
-        console.log('Tutors data:', data);
-        // Examiner la structure des données de niveau
-        if (data.length > 0) {
-          console.log('Premier tuteur - structure class:', data[0].class);
-          console.log('Tous les niveaux trouvés:', data.map((t: any) => t.class).flat().map((c: any) => c.level));
-        }
         // Par défaut, ne récupérer que les tuteurs avec des disponibilités
         const tutorsWithSchedules = data.filter((tutor:any) => 
           tutor.tutor_schedules && tutor.tutor_schedules.length > 0
@@ -301,6 +297,17 @@ export default function Tutors() {
         )}
       </div>
 
+      {/* Bouton pour ouvrir le modal calendrier */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => setShowWeeklyModal(true)}
+          className="px-6 py-3 bg-hello-yellow text-mister-anthracite rounded-xl hover:bg-crazy-magenta hover:text-white font-semibold transition flex items-center gap-2 shadow-lg"
+        >
+          <Calendar className="w-5 h-5" />
+          Vue Calendrier Hebdomadaire
+        </button>
+      </div>
+
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white/80 backdrop-blur-sm rounded-xl border-2 border-fading-grey p-4 shadow-sm">
@@ -354,9 +361,247 @@ export default function Tutors() {
           </p>
         </div>
       )}
+
+      {/* Modal Calendrier Hebdomadaire */}
+      {showWeeklyModal && (
+        <WeeklyCalendarModal 
+          tutors={filteredTutors}
+          selectedCenter={selectedCenter}
+          centers={centers}
+          currentWeek={currentWeek}
+          setCurrentWeek={setCurrentWeek}
+          onClose={() => setShowWeeklyModal(false)}
+        />
+      )}
     </div>
   );
 }
+
+// Interface pour les props du modal calendrier
+interface WeeklyCalendarModalProps {
+  tutors: Tutor[];
+  selectedCenter: number | '';
+  centers: { id: number; name: string }[];
+  currentWeek: Date;
+  setCurrentWeek: (date: Date) => void;
+  onClose: () => void;
+}
+
+// Composant Modal Calendrier Hebdomadaire
+const WeeklyCalendarModal: React.FC<WeeklyCalendarModalProps> = ({ 
+  tutors, 
+  selectedCenter, 
+  centers, 
+  currentWeek, 
+  setCurrentWeek, 
+  onClose 
+}) => {
+  // Obtenir le début de la semaine (lundi)
+  const getStartOfWeek = (date: Date): Date => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
+  };
+
+  // Générer les 7 jours de la semaine
+  const getWeekDays = (startDate: Date): Date[] => {
+    const days: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  // Navigation semaine
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(currentWeek.getDate() + (direction === 'prev' ? -7 : 7));
+    setCurrentWeek(newWeek);
+  };
+
+  // Convertir le nom du jour en français
+  const getDayName = (date: Date): string => {
+    const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    return dayNames[date.getDay()];
+  };
+
+  // Filtrer les tuteurs par centre si un centre est sélectionné
+  const filteredTutors = selectedCenter 
+    ? tutors.filter(tutor => 
+        (tutor.centers || []).some(center => center.id === selectedCenter)
+      )
+    : tutors;
+
+  // Obtenir les disponibilités d'un tuteur pour un jour donné
+  const getTutorScheduleForDay = (tutor: Tutor, dayName: string) => {
+    return (tutor.tutor_schedules || []).filter(schedule => 
+      schedule.day.toLowerCase() === dayName.toLowerCase() &&
+      (selectedCenter === '' || (schedule.centers || []).some(center => center.id === selectedCenter))
+    );
+  };
+
+  const startOfWeek = getStartOfWeek(currentWeek);
+  const weekDays = getWeekDays(startOfWeek);
+  const centerName = selectedCenter ? centers.find(c => c.id === selectedCenter)?.name : 'Tous les centres';
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header du modal */}
+        <div className="flex justify-between items-center p-6 border-b bg-hello-yellow">
+          <div>
+            <h2 className="text-2xl font-bold text-mister-anthracite">
+              Calendrier Hebdomadaire - {centerName}
+            </h2>
+            <p className="text-mister-anthracite/70">
+              Disponibilités des tuteurs du {startOfWeek.toLocaleDateString('fr-FR')} au {weekDays[6].toLocaleDateString('fr-FR')}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/20 rounded-full transition"
+          >
+            <X className="w-6 h-6 text-mister-anthracite" />
+          </button>
+        </div>
+
+        {/* Navigation de semaine */}
+        <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+          <button
+            onClick={() => navigateWeek('prev')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Semaine précédente
+          </button>
+          
+          <div className="text-center">
+            <h3 className="font-semibold text-lg text-mister-anthracite">
+              Semaine du {startOfWeek.toLocaleDateString('fr-FR')}
+            </h3>
+            <p className="text-sm text-gray-600">{filteredTutors.length} tuteur(s)</p>
+          </div>
+          
+          <button
+            onClick={() => navigateWeek('next')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+          >
+            Semaine suivante
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Contenu du calendrier */}
+        <div className="p-4 overflow-auto max-h-[70vh]">
+          {filteredTutors.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-500">Aucun tuteur disponible</p>
+              <p className="text-sm text-gray-400">Pour le centre sélectionné</p>
+            </div>
+          ) : (
+            <div className="space-y-6 ">
+              {/* En-tête des jours - sticky */}
+              <div className="sticky top-0 z-10 grid grid-cols-8 gap-2 bg-white pb-4">
+                <div className="font-semibold text-mister-anthracite p-3 bg-gray-100 rounded-lg shadow-sm">
+                  Tuteur
+                </div>
+                {weekDays.map((day, index) => (
+                  <div key={index} className="text-center font-semibold text-mister-anthracite p-3 bg-gray-100 rounded-lg shadow-sm">
+                    <div className="text-sm capitalize">{getDayName(day)}</div>
+                    <div className="text-xs text-gray-600">{day.getDate()}/{day.getMonth() + 1}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Grille des tuteurs et leurs disponibilités */}
+              {filteredTutors.map((tutor) => (
+                <div key={tutor.id} className="grid grid-cols-8 gap-2 border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Colonne tuteur */}
+                  <div className="bg-fading-grey/30 p-4 flex items-center">
+                    <div>
+                      <h4 className="font-semibold text-mister-anthracite text-sm">
+                        {tutor.firstname} {tutor.lastname}
+                      </h4>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {(tutor.school_subjects || []).slice(0, 2).join(', ')}
+                        {(tutor.school_subjects || []).length > 2 && '...'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Colonnes des jours */}
+                  {weekDays.map((day, dayIndex) => {
+                    const dayName = getDayName(day);
+                    const schedules = getTutorScheduleForDay(tutor, dayName);
+                    
+                    return (
+                      <div key={dayIndex} className="p-2 bg-white min-h-[100px] border-l border-gray-100">
+                        {schedules.length > 0 ? (
+                          <div className="space-y-1">
+                            {schedules.map((schedule, scheduleIndex) => (
+                              <div
+                                key={scheduleIndex}
+                                className="bg-green-100 border border-green-300 rounded p-2 text-xs"
+                              >
+                                <div className="flex items-center gap-1 mb-1">
+                                  <Clock className="w-3 h-3 text-green-600" />
+                                  <span className="font-medium text-green-800">
+                                    {schedule.start_hour} - {schedule.end_hour}
+                                  </span>
+                                </div>
+                                {(schedule.centers || []).length > 0 && (
+                                  <div className="space-y-1">
+                                    {schedule.centers.map((center) => (
+                                      <Badge 
+                                        key={center.id} 
+                                        variant="outline" 
+                                        className="bg-green-50 text-green-700 border-green-200 text-xs"
+                                      >
+                                        {center.name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <span className="text-gray-400 text-xs italic">Pas disponible</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer avec statistiques */}
+        <div className="p-4 border-t bg-gray-50">
+          <div className="flex justify-between items-center text-sm text-gray-600">
+            <span>
+              {filteredTutors.length} tuteur(s) • {centerName}
+            </span>
+            <span>
+              Total: {filteredTutors.reduce((total, tutor) => 
+                total + (tutor.tutor_schedules || []).filter(schedule => 
+                  selectedCenter === '' || (schedule.centers || []).some(center => center.id === selectedCenter)
+                ).length, 0
+              )} créneau(x) disponible(s) cette semaine
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Composant pour une carte tuteur
 const TutorCard: React.FC<{ tutor: Tutor }> = ({ tutor }) => {
