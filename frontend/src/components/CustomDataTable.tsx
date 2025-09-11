@@ -4,7 +4,7 @@ import api from '../api/aixos';
 import { Center } from '@/types/entities';
 import {
   Plus, Search, Eye, Pencil, Trash2,
-  ShieldCheck, UserRound, GraduationCap, Mail, Phone, Mars, Venus
+  ShieldCheck, UserRound, GraduationCap, Mail, Phone, Mars, Venus, Download
 } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
@@ -112,17 +112,51 @@ export default function CustomDataTable({
     setCurrentPage(1);
   };
 
+  // Helper pour exporter en CSV
+  const exportToCSV = () => {
+    if (!filteredData.length) return;
+    const replacer = (key: string, value: any) => value === null ? '' : value;
+    const header = Object.keys(filteredData[0]);
+    const csv = [
+      header.join(';'),
+      ...filteredData.map(row =>
+        header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(';')
+      ),
+    ].join('\r\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${endpoint}-export.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-mister-anthracite">{title}</h1>
-        <Button
-          className="bg-hello-yellow text-mister-anthracite hover:bg-hello-yellow/90 transition"
-          onClick={() => navigate(`/form/${endpoint}`)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {addLabel}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            className="bg-hello-yellow text-mister-anthracite hover:bg-hello-yellow/90 transition"
+            onClick={() => navigate(`/form/${endpoint}`)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {addLabel}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={exportToCSV}
+            disabled={filteredData.length === 0}
+          >
+            <Download className="w-4 h-4" />
+            Exporter
+          </Button>
+        </div>
       </div>
 
       <Card className="border-fading-grey shadow-sm">
