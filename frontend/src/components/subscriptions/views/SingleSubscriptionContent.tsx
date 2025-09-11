@@ -58,9 +58,22 @@ function useSubscriptionLogic(Student: any, Subscription: any, SubscriptionType:
             const isMember = await IsStudentIsMember(Student?.id);
             const niveau: any = getNiveauScolaire(Student?.class);
 
-            const computedPrice = SubscriptionType === 'stage'
-                ? getStagePrice(Subscription?.week_count, isCombined, isMember)
-                : getPrice(SubscriptionType, Subscription?.session_per_week, niveau, { combined: isCombined, isMember });
+            let computedPrice;
+            if (SubscriptionType === 'stage') {
+                computedPrice = getStagePrice(Subscription?.week_count, isCombined, isMember);
+            } else if (['genius', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
+                // Pour les contrats Genius, on passe le type de contrat dans offer_type
+                computedPrice = getPrice('genius', Subscription?.session_per_week, niveau, { 
+                    combined: isCombined, 
+                    isMember, 
+                    offer_type: SubscriptionType 
+                });
+            } else {
+                computedPrice = getPrice(SubscriptionType, Subscription?.session_per_week, niveau, { 
+                    combined: isCombined, 
+                    isMember 
+                });
+            }
 
             if (!cancelled) setPrice(computedPrice ?? 0);
 
@@ -68,7 +81,8 @@ function useSubscriptionLogic(Student: any, Subscription: any, SubscriptionType:
             // - Non-combiné: visible par défaut (comportement historique)
             // - Combiné: visible uniquement pour le type principal déterminé par showSubscriptionPrice()
             // - Stage dans un combiné: masqué (comportement historique)
-            if (!isCombined) {
+            // - Genius: toujours visible si des frais existent
+            if (!isCombined || ['genius', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
                 if (!cancelled) setShowFraisInscription(true);
             } else {
                 if (SubscriptionType === 'stage') {
@@ -111,7 +125,7 @@ const StageSubscriptionContent: React.FC<FullContractProps & { price: number; sh
 
                     {Student && Subscription && (
                         <Page className="table-page-style">
-                            <TarificationCalculator data={Subscription} price={price} />
+                            <TarificationCalculator data={{...Subscription, subscription_type: SubscriptionType}} price={price} />
                         </Page>
                     )}
 
@@ -155,7 +169,7 @@ const NonStageSubscriptionContent: React.FC<FullContractProps & { price: number;
 
                     {Student && Subscription && (
                         <Page className="table-page-style">
-                            <TarificationCalculator data={Subscription} price={price} />
+                            <TarificationCalculator data={{...Subscription, subscription_type: SubscriptionType}} price={price} />
                         </Page>
                     )}
 

@@ -24,6 +24,7 @@ export const ClassesOptions = [
     { label: 'Ajouter une facture', to: (id) => `/students/${id}/invoices/new` },
     { label: 'Rupture de contrat', to: (id) => `/students/${id}/terminate` },
     { label: "Modifier l'élève", to: (id) => `/student/${id}/edit` },
+    { label: "Créer un contrat Genius", to: (id) => `/genius-contract/${id}` },
   ];
 
   export const Days = [

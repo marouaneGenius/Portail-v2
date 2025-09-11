@@ -64,7 +64,7 @@ class Subscription
     #[ORM\Column(nullable: true)]
     private ?array $school_subjects = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $offer_type = null;
 
     #[ORM\Column(nullable: true)]
@@ -337,7 +337,7 @@ class Subscription
         return $this->offer_type;
     }
 
-    public function setOfferType(string $offer_type): static
+    public function setOfferType(?string $offer_type): static
     {
         $this->offer_type = $offer_type;
 

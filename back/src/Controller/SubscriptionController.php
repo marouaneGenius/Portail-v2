@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Subscription;
+use App\Entity\Session;
 use App\Repository\CenterRepository;
 use App\Repository\SubscriptionRepository;
 use App\Repository\StudentRepository;
@@ -493,6 +494,256 @@ class SubscriptionController extends AbstractController
             'unsuspended_sessions_count' => $unsuspendedCount,
             'message' => "Sessions réactivées pour {$student->getFirstname()} {$student->getLastname()}"
         ], JsonResponse::HTTP_OK);
+    }
+
+    /**
+     * Créer un contrat Genius
+     */
+    #[Route('/genius', name: 'create_genius', methods: ['POST'])]
+    public function createGeniusContract(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
+
+        // Validation des champs requis
+        $requiredFields = ['student_id', 'contract_type', 'session_per_week', 'engagement', 'contract_start_date'];
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                return $this->json(['error' => "Le champ {$field} est requis"], 400);
+            }
+        }
+
+        // Récupérer l'étudiant
+        $student = $this->studentRepository->find($data['student_id']);
+        if (!$student) {
+            return $this->json(['error' => 'Étudiant non trouvé'], 404);
+        }
+
+        // Mettre à jour les matières scolaires si fournies
+        if (isset($data['school_subjects']) && is_array($data['school_subjects'])) {
+            $student->setSchoolSubjects($data['school_subjects']);
+            $this->em->persist($student);
+        }
+
+        // Valider le type de contrat
+        $validContractTypes = ['genius', 'genius_plus', 'genius_premium'];
+        if (!in_array($data['contract_type'], $validContractTypes)) {
+            return $this->json(['error' => 'Type de contrat invalide'], 400);
+        }
+
+        // Valider le nombre de séances
+        $validSessionsPerWeek = [1, 2, 3, 4];
+        if (!in_array((int)$data['session_per_week'], $validSessionsPerWeek)) {
+            return $this->json(['error' => 'Nombre de séances par semaine invalide'], 400);
+        }
+
+        // Calculer les prix selon la grille tarifaire Genius
+        $basePrice = $this->calculateGeniusBasePrice($data['contract_type'], (int)$data['session_per_week']);
+        $registrationFee = $data['registration_fee'] ?? 0;
+        $discount = $data['discount'] ?? 0;
+        $finalPrice = $this->calculateGeniusFinalPrice($basePrice, $registrationFee, $discount);
+
+        // Créer la subscription Genius
+        $subscription = new Subscription();
+        $subscription->setIdStudent($student);
+        $subscription->setSubscriptionType($data['contract_type']);
+        $subscription->setOfferType(null);
+        $subscription->setSessionPerWeek((int)$data['session_per_week']);
+        $subscription->setDiscount($discount);
+        $subscription->setMembershipFee((float)$registrationFee);
+        $subscription->setOfferAmount($finalPrice);
+        $subscription->setPaymentMode('mensuel');
+        $subscription->setIsValide(true);
+        
+        // Sauvegarder les créneaux favoris si fournis
+        if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
+            $subscription->setFavoriteSlots($data['favorite_slots_annuel']);
+        }
+        
+        // Convertir les dates
+        try {
+            $startDate = new \DateTime($data['contract_start_date']);
+            $subscription->setSubscriptionStartDate($startDate);
+            $subscription->setFirstDebitDate($startDate);
+            
+            // Calculer la date de fin basée sur l'engagement (en mois)
+            $engagementMois = (int)$data['engagement']; // 3, 6, 9 ou 10 mois
+            $endDate = clone $startDate;
+            $endDate->add(new \DateInterval('P' . $engagementMois . 'M'));
+            $subscription->setSubscriptionEndDate($endDate);
+            
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Format de date invalide'], 400);
+        }
+
+        // Sauvegarder le type d'engagement dans un champ existant (on peut utiliser payment_mode ou créer un champ custom)
+        // Pour l'instant on stocke l'engagement dans un champ de métadonnées
+        $subscription->setCreatedAt(new \DateTimeImmutable());
+        $subscription->setCreatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+
+        // Sauvegarder
+        $this->em->persist($subscription);
+        $this->em->flush();
+
+        // Créer les sessions basées sur les créneaux favoris
+        if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
+            $this->createSessionsFromFavoriteSlots($subscription, $data['favorite_slots_annuel'], $student);
+        }
+
+        return $this->json([
+            'success' => true,
+            'contract' => [
+                'id' => $subscription->getId(),
+                'subscription_type' => $subscription->getSubscriptionType(),
+                'offer_type' => $subscription->getOfferType(),
+                'contract_type' => $data['contract_type'],
+                'session_per_week' => $subscription->getSessionPerWeek(),
+                'engagement' => $data['engagement'],
+                'registration_fee' => $registrationFee,
+                'discount' => $subscription->getDiscount(),
+                'contract_start_date' => $subscription->getSubscriptionStartDate()->format('Y-m-d'),
+                'base_price' => $basePrice,
+                'final_price' => $finalPrice,
+                'school_subjects' => $data['school_subjects'] ?? null,
+                'favorite_slots_annuel' => $data['favorite_slots_annuel'] ?? null,
+                'created_at' => $subscription->getCreatedAt()->format('Y-m-d H:i:s'),
+            ]
+        ], 201);
+    }
+
+    /**
+     * Calculer le prix de base selon la grille tarifaire Genius
+     */
+    private function calculateGeniusBasePrice(string $contractType, int $sessionPerWeek): int
+    {
+        $pricing = [
+            'genius' => [
+                1 => 180,  // 1h30
+                2 => 360,  // 3h00
+                3 => 540,  // 4h30
+                4 => 720,  // 6h00
+            ],
+            'genius_plus' => [
+                1 => 300,  // 1h30
+                2 => 600,  // 3h00
+                3 => 900,  // 4h30
+                4 => 1200, // 6h00
+            ],
+            'genius_premium' => [
+                1 => 360,  // 1h30
+                2 => 720,  // 3h00
+                3 => 1080, // 4h30
+                4 => 1440, // 6h00
+            ],
+        ];
+
+        return $pricing[$contractType][$sessionPerWeek] ?? 0;
+    }
+
+    /**
+     * Calculer le prix final avec remise et frais d'inscription
+     */
+    private function calculateGeniusFinalPrice(int $basePrice, int $registrationFee, int $discount): int
+    {
+        $totalWithFees = $basePrice + $registrationFee;
+        $discountAmount = ($totalWithFees * $discount) / 100;
+        return $totalWithFees - $discountAmount;
+    }
+
+    /**
+     * Créer les sessions basées sur les créneaux favoris
+     */
+    private function createSessionsFromFavoriteSlots(Subscription $subscription, array $favoriteSlots, $student): void
+    {
+        // Simple: créer toutes les sessions pour chaque créneau pendant 36 semaines
+        foreach ($favoriteSlots as $slot) {
+            // Récupérer le tuteur
+            $tutor = $this->userRepository->find($slot['tutorId']);
+            if (!$tutor) {
+                continue;
+            }
+
+            // Récupérer le centre de l'étudiant  
+            $center = $student->getIdCenter();
+            if (!$center) {
+                continue;
+            }
+
+            // Date de début
+            $startDate = $subscription->getSubscriptionStartDate();
+            $firstDate = $this->getNextDateForDay($startDate, $slot['day']);
+            
+            // Convertir l'heure du format "15h00" vers "15:00"
+            $timeFormatted = $this->convertHourFormat($slot['hour']);
+
+            // Créer 36 sessions (une par semaine)
+            for ($week = 0; $week < 36; $week++) {
+                $sessionDate = clone $firstDate;
+                $sessionDate->modify("+{$week} weeks");
+
+                $session = new Session();
+                $session->setSessionType('recurring_genius');
+                $session->setScheduledAt(new \DateTimeImmutable($sessionDate->format('Y-m-d') . ' ' . $timeFormatted));
+                $session->setSchoolSubjects($slot['matieres']);
+                $session->setScheduledBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+                $session->setCenter($center);
+                $session->addIdSubscription($subscription);
+                
+                // Ajouter l'étudiant et le tuteur
+                $session->addIdStudent($student);
+                $session->setIdTutor($tutor);
+                
+                // Définir les propriétés requises
+                $session->setPaymentDate(new \DateTime($sessionDate->format('Y-m-d')));
+                $session->setDateSlot(new \DateTime($sessionDate->format('Y-m-d')));
+                $session->setIsCanceled(false);
+                $session->setCreatedAt(new \DateTimeImmutable());
+                $session->setCreatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+                $session->setUpdatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+
+                $this->em->persist($session);
+            }
+        }
+
+        $this->em->flush();
+    }
+
+    /**
+     * Calculer la prochaine occurrence d'un jour de la semaine
+     */
+    private function getNextDateForDay(\DateTime $startDate, string $dayName): \DateTime
+    {
+        $dayMapping = [
+            'lundi' => 'monday',
+            'mardi' => 'tuesday', 
+            'mercredi' => 'wednesday',
+            'jeudi' => 'thursday',
+            'vendredi' => 'friday',
+            'samedi' => 'saturday',
+            'dimanche' => 'sunday'
+        ];
+
+        $englishDay = $dayMapping[strtolower($dayName)] ?? 'monday';
+        $nextDate = clone $startDate;
+        
+        // Si on est déjà le bon jour, garder la date, sinon aller au prochain
+        if (strtolower($nextDate->format('l')) !== $englishDay) {
+            $nextDate->modify("next {$englishDay}");
+        }
+
+        return $nextDate;
+    }
+
+    /**
+     * Convertir le format d'heure de "15h00" vers "15:00"
+     */
+    private function convertHourFormat(string $hour): string
+    {
+        // Remplacer "h" par ":" pour le format DateTime
+        return str_replace('h', ':', $hour);
     }
 
 }

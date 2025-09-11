@@ -433,22 +433,20 @@ const ItemDetails: React.FC = () => {
                     {[
                       { icon: <FileText className="w-6 h-6 text-orange-600" />, label: "Abonnement", href: actions[1].to(item.id), tooltip: "Ajouter un abonnement", hover: "hover:bg-orange-50" },
                       { icon: <Calendar className="w-6 h-6 text-blue-500" />, label: "Séance d'essai", href: actions[2].to(item.id), tooltip: "Créer une séance d'essai", hover: "hover:bg-hello-yellow/10" },
+                      { icon: <Calendar className="w-6 h-6 text-pink-500" />, label: "Contrat Genius", href: actions[7].to(item.id), tooltip: "Créer un contrat Genius", hover: "hover:bg-hello-pink/10" },
                       // { icon: <CalendarDays className="w-6 h-6 text-green-600" />, label: "Re-planifier", href: actions[6].to(item.id), tooltip: "Re-planifier les séances", hover: "hover:bg-green-50" },
                     ].map(({ icon, label, href, tooltip, hover }, i) => (
                       <Tooltip key={i}>
                         <TooltipTrigger asChild>
                           <Button
-                            asChild
                             variant="outline"
+                            onClick={() => navigate(href)}
                             className={`w-full min-h-[90px] p-4 flex flex-col items-center justify-center gap-2 border-fading-grey text-center ${hover} overflow-hidden`}
                           >
-                            <a
-                              href={href}
-                              className="w-full flex flex-col items-center justify-center text-wrap break-words text-sm max-w-full"
-                            >
+                            <div className="w-full flex flex-col items-center justify-center text-wrap break-words text-sm max-w-full">
                               {icon}
                               <span className="leading-tight text-sm">{label}</span>
-                            </a>
+                            </div>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>{tooltip}</TooltipContent>

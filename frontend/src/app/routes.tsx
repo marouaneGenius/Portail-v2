@@ -30,6 +30,7 @@ import PaymentSuccess from "../pages/PaymentSuccess";
 import PaymentCancel from "../pages/PaymentCancel";
 import Page404 from "../pages/Page404";
 import SmartProtectedRoute from "./SmartProtectedRoute";
+import GeniusContracts from "@/components/subscriptions/GeniusContracts";
 
 export const router = createBrowserRouter([
     {
@@ -68,9 +69,11 @@ export const router = createBrowserRouter([
                 { path: "/tutors", element: <Tutors /> },
                 { path: "/historique", element: <HistoriqueModifications /> },
                 { path: "/parent-dashboard", element: <ParentDashboard /> },
+                { path: '/genius-contract/:id', element: <GeniusContracts /> },
                 // Routes génériques à la fin
                 { path: '/:resource/:id', element: <ItemDetails /> },
                 { path: '/:resource/:id/edit', element: <EditionForm /> },
+
               ],
             },
           ],
