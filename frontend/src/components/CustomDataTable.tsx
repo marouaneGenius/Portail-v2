@@ -36,6 +36,8 @@ export default function CustomDataTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [selectedCenter, setSelectedCenter] = useState<number | 'all'>('all');
+  const [sortBy, setSortBy] = useState<string>(''); // colonne triée
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // ordre
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -93,11 +95,27 @@ export default function CustomDataTable({
     );
   }, [data, globalFilter, selectedCenter]);
 
+  // Tri des données filtrées
+  const sortedData = useMemo(() => {
+    if (!sortBy) return filteredData;
+    return [...filteredData].sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      if (aVal === undefined || bVal === undefined) return 0;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      return sortOrder === 'asc'
+        ? String(aVal).localeCompare(String(bVal), 'fr', { sensitivity: 'base' })
+        : String(bVal).localeCompare(String(aVal), 'fr', { sensitivity: 'base' });
+    });
+  }, [filteredData, sortBy, sortOrder]);
+
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return filteredData.slice(start, start + rowsPerPage);
-  }, [filteredData, currentPage, rowsPerPage]);
+    return sortedData.slice(start, start + rowsPerPage);
+  }, [sortedData, currentPage, rowsPerPage]);
 
   const handlePageChange = (direction: 'next' | 'prev') => {
     setCurrentPage((prev) => {
@@ -133,6 +151,17 @@ export default function CustomDataTable({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Gestion du clic sur l'en-tête pour trier
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(key);
+      setSortOrder('asc');
+    }
+    setCurrentPage(1);
   };
 
   return (
@@ -206,8 +235,17 @@ export default function CustomDataTable({
                 <TableHeader>
                   <TableRow className="border-fading-grey">
                     {Object.keys(paginatedData[0]).map((key) => (
-                      <TableHead key={key} className="text-mister-anthracite uppercase text-xs">
+                      <TableHead
+                        key={key}
+                        className="text-mister-anthracite uppercase text-xs cursor-pointer select-none"
+                        onClick={() => handleSort(key)}
+                      >
                         {TranslateHeaderNames(key)}
+                        {sortBy === key && (
+                          <span className="ml-1">
+                            {sortOrder === 'asc' ? '▲' : '▼'}
+                          </span>
+                        )}
                       </TableHead>
                     ))}
                     <TableHead className="text-mister-anthracite uppercase text-xs">Actions</TableHead>
