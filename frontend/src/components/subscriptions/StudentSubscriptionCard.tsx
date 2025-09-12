@@ -383,7 +383,6 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     const geniusContract = subscription.subscription_type.includes('genius')
 
     if(geniusContract) {
-      console.log('=== PROGRAMMATION CONTRAT GENIUS ===');
       console.log('Subscription:', subscription);
       
       setLoading(true);
@@ -421,41 +420,6 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
       );
       handleCreateSessidons(allSessions, sub)
     }
-    
-    // const sub = subscription.isCombined ? 
-    //   (Array.isArray(subscription) ? 
-    //     // Pour les contrats combinés, chercher 'annuel' OU les types Genius
-    //     subscription.find((item) => 
-    //       item.subscription_type === 'annuel' || 
-    //       ['genius', 'genius_plus', 'genius_premium'].includes(item.subscription_type)
-    //     ) : null) : 
-    //   subscription;
-    
-    
-    // if (!sub) {
-    //   alert('Aucune subscription valide trouvée.');
-    //   return;
-    // }
-
-    // setLoading(true);
-    
-    // try {
-    //   // Utiliser la nouvelle API pour programmer les sessions
-    //   const response = await api.post(`/api/subs/${sub.id}/program-sessions`);
-    //   if (response.data.success) {
-    //     toast.success(`Sessions programmées avec succès ! ${response.data.sessions_created} sessions créées sur ${response.data.weeks_planned} semaines.`);
-    //     // Rafraîchir les données de l'étudiant pour voir les nouvelles sessions
-    //     window.location.reload(); // Solution simple pour rafraîchir
-    //   } else {
-    //     throw new Error(response.data.error || 'Erreur lors de la programmation');
-    //   }
-    // } catch (error: any) {
-    //   console.error('Erreur lors de la programmation des sessions:', error);
-    //   const errorMessage = error.response?.data?.error || 'Erreur lors de la programmation des sessions';
-    //   toast.error(errorMessage);
-    // } finally {
-    //   setLoading(false);
-    // }
   }
 
   const handleCreateSessidons = async (allSessions:any, subscription:any) => {
@@ -482,7 +446,6 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
           is_canceled: false,
           center_id: student.centers.id
         };
-
        
         return api.post('/api/sessions', payload);
       });
@@ -593,9 +556,26 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 )}
                 <button
                   className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
-                  onClick={e => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    window.open(sub.url, '_blank');
+                    
+                    try {
+                      // Récupérer l'URL du PDF via l'API backend
+                      const response = await api.get(`/api/subs/${sub.id}/download-pdf`, {
+                        responseType: 'blob'
+                      });
+                      
+                      // Créer une URL temporaire pour visualiser le PDF
+                      const blob = new Blob([response.data], { type: 'application/pdf' });
+                      const pdfUrl = window.URL.createObjectURL(blob);
+                      
+                      // Ouvrir le PDF dans un nouvel onglet pour visualisation
+                      window.open(pdfUrl, '_blank');
+                      
+                    } catch (error) {
+                      console.error('Erreur lors de l\'ouverture du contrat:', error);
+                      toast.error('Impossible d\'ouvrir le contrat. Il n\'a peut-être pas encore été généré.');
+                    }
                   }}
                 >
                   <Eye size={16} /> Voir 
