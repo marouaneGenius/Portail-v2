@@ -397,7 +397,7 @@ class StudentController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_students_update', methods: ['PUT'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(int $id, Request $request): JsonResponse
     {
         // 1. Charger l'élève
@@ -570,7 +570,6 @@ class StudentController extends AbstractController
 
         return $this->json(array_values($siblings), Response::HTTP_OK);
     }
-
 
 
     #[Route('/has-sibling/{studentId}', name: 'student_has_sibling', methods: ['GET'])]

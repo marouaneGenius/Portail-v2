@@ -9,6 +9,7 @@ import { LoaderOverlay } from "../LoaderOverlay";
 import { BadgeMark } from "@mui/material";
 import { nbSeancesperWeek } from "@/mocks/mocks";
 import { Student } from "@/types/entities";
+import { toast } from "sonner";
 
 type Subscription = {
   id: number;
@@ -378,22 +379,83 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     }
   }
 
-  const programSessions = (subscription:any) => {
-    const sub = subscription.isCombined ? (Array.isArray(subscription) ?subscription.find((item) => item.subscription_type === 'annuel') : null ): subscription
-    if (!sub) {
-      alert('Aucune subscription valide trouvée.');
-      console.warn('Aucune subscription valide trouvée.');
-      return;
+  const programSessions = async (subscription: any) => {
+    const geniusContract = subscription.subscription_type.includes('genius')
+
+    if(geniusContract) {
+      console.log('=== PROGRAMMATION CONTRAT GENIUS ===');
+      console.log('Subscription:', subscription);
+      
+      setLoading(true);
+      
+      try {
+        console.log(`Appel API: /api/subs/${subscription.id}/program-sessions`);
+        const response = await api.post(`/api/subs/${subscription.id}/program-sessions`);
+        
+        if (response.data.success) {
+          toast.success(`Sessions Genius programmées avec succès ! ${response.data.sessions_created} sessions créées sur ${response.data.weeks_planned} semaines.`);
+          window.location.reload(); // Rafraîchir pour voir les nouvelles sessions
+        } else {
+          throw new Error(response.data.error || 'Erreur lors de la programmation');
+        }
+      } catch (error: any) {
+        console.error('Erreur lors de la programmation des sessions Genius:', error);
+        const errorMessage = error.response?.data?.error || 'Erreur lors de la programmation des sessions';
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const sub = subscription.isCombined ? (Array.isArray(subscription) ? subscription.find((item) => item.subscription_type === 'annuel') : null ) : subscription
+      if (!sub) {
+        alert('Aucune subscription valide trouvée.');
+        console.warn('Aucune subscription valide trouvée.');
+        return;
+      }
+  
+      const allSessions = buildSessions(
+        sub.subscription_start_date,
+        sub.subscription_end_date,
+        sub.favorite_slots,
+        sub.session_per_week
+      );
+      handleCreateSessidons(allSessions, sub)
     }
+    
+    // const sub = subscription.isCombined ? 
+    //   (Array.isArray(subscription) ? 
+    //     // Pour les contrats combinés, chercher 'annuel' OU les types Genius
+    //     subscription.find((item) => 
+    //       item.subscription_type === 'annuel' || 
+    //       ['genius', 'genius_plus', 'genius_premium'].includes(item.subscription_type)
+    //     ) : null) : 
+    //   subscription;
+    
+    
+    // if (!sub) {
+    //   alert('Aucune subscription valide trouvée.');
+    //   return;
+    // }
 
-    const allSessions = buildSessions(
-      sub.subscription_start_date,
-      sub.subscription_end_date,
-      sub.favorite_slots,
-      sub.session_per_week
-    );
-
-    handleCreateSessidons(allSessions, sub)
+    // setLoading(true);
+    
+    // try {
+    //   // Utiliser la nouvelle API pour programmer les sessions
+    //   const response = await api.post(`/api/subs/${sub.id}/program-sessions`);
+    //   if (response.data.success) {
+    //     toast.success(`Sessions programmées avec succès ! ${response.data.sessions_created} sessions créées sur ${response.data.weeks_planned} semaines.`);
+    //     // Rafraîchir les données de l'étudiant pour voir les nouvelles sessions
+    //     window.location.reload(); // Solution simple pour rafraîchir
+    //   } else {
+    //     throw new Error(response.data.error || 'Erreur lors de la programmation');
+    //   }
+    // } catch (error: any) {
+    //   console.error('Erreur lors de la programmation des sessions:', error);
+    //   const errorMessage = error.response?.data?.error || 'Erreur lors de la programmation des sessions';
+    //   toast.error(errorMessage);
+    // } finally {
+    //   setLoading(false);
+    // }
   }
 
   const handleCreateSessidons = async (allSessions:any, subscription:any) => {

@@ -534,14 +534,20 @@ class SubscriptionController extends AbstractController
             return $this->json(['error' => 'Type de contrat invalide'], 400);
         }
 
+        // Calculer automatiquement le nombre de séances selon les créneaux favoris
+        $actualSessionsPerWeek = 1; // Par défaut
+        if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
+            $actualSessionsPerWeek = count($data['favorite_slots_annuel']);
+        }
+        
         // Valider le nombre de séances
         $validSessionsPerWeek = [1, 2, 3, 4];
-        if (!in_array((int)$data['session_per_week'], $validSessionsPerWeek)) {
-            return $this->json(['error' => 'Nombre de séances par semaine invalide'], 400);
+        if (!in_array($actualSessionsPerWeek, $validSessionsPerWeek)) {
+            return $this->json(['error' => "Nombre de créneaux invalide: $actualSessionsPerWeek. Doit être entre 1 et 4."], 400);
         }
 
         // Calculer les prix selon la grille tarifaire Genius
-        $basePrice = $this->calculateGeniusBasePrice($data['contract_type'], (int)$data['session_per_week']);
+        $basePrice = $this->calculateGeniusBasePrice($data['contract_type'], $actualSessionsPerWeek);
         $registrationFee = $data['registration_fee'] ?? 0;
         $discount = $data['discount'] ?? 0;
         $finalPrice = $this->calculateGeniusFinalPrice($basePrice, $registrationFee, $discount);
@@ -551,7 +557,7 @@ class SubscriptionController extends AbstractController
         $subscription->setIdStudent($student);
         $subscription->setSubscriptionType($data['contract_type']);
         $subscription->setOfferType(null);
-        $subscription->setSessionPerWeek((int)$data['session_per_week']);
+        $subscription->setSessionPerWeek($actualSessionsPerWeek);
         $subscription->setDiscount($discount);
         $subscription->setMembershipFee((float)$registrationFee);
         $subscription->setOfferAmount($finalPrice);
@@ -560,7 +566,14 @@ class SubscriptionController extends AbstractController
         
         // Sauvegarder les créneaux favoris si fournis
         if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
+            error_log("=== DEBUG CREATION CONTRAT ===");
+            error_log("Favorite slots reçus: " . json_encode($data['favorite_slots_annuel']));
             $subscription->setFavoriteSlots($data['favorite_slots_annuel']);
+            error_log("Favorite slots sauvegardés dans subscription");
+        } else {
+            error_log("=== WARNING ===");
+            error_log("Aucun créneau favori reçu lors de la création du contrat Genius");
+            error_log("Données reçues: " . json_encode($data));
         }
         
         // Convertir les dates
@@ -588,10 +601,10 @@ class SubscriptionController extends AbstractController
         $this->em->persist($subscription);
         $this->em->flush();
 
-        // Créer les sessions basées sur les créneaux favoris
-        if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
-            $this->createSessionsFromFavoriteSlots($subscription, $data['favorite_slots_annuel'], $student);
-        }
+        // Sessions seront créées plus tard via le bouton "Programmer"
+        // if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
+        //     $this->createSessionsFromFavoriteSlots($subscription, $data['favorite_slots_annuel'], $student);
+        // }
 
         return $this->json([
             'success' => true,
@@ -709,6 +722,243 @@ class SubscriptionController extends AbstractController
         }
 
         $this->em->flush();
+    }
+
+    /**
+     * Programmer les sessions pour un contrat (avec gestion spécifique Genius)
+     */
+    #[Route('/{id}/program-sessions', name: 'program_sessions', methods: ['POST'])]
+    public function programSessions(int $id): JsonResponse
+    {
+        
+        $subscription = $this->subscriptionRepository->find($id);
+        if (!$subscription) {
+            error_log("ERREUR: Subscription non trouvée avec ID: $id");
+            return $this->json(['error' => 'Subscription not found'], 404);
+        }
+
+        // Récupérer l'étudiant
+        $student = $subscription->getIdStudent();
+        if (!$student) {
+            error_log("ERREUR: Aucun étudiant associé à la subscription ID: $id");
+            return $this->json(['error' => 'Student not found'], 404);
+        }
+
+        // Vérifier le type de contrat
+        $subscriptionType = $subscription->getSubscriptionType();
+        
+        // Condition spécifique pour les contrats Genius
+        if (in_array($subscriptionType, ['genius', 'genius_plus', 'genius_premium'])) {
+            error_log("-> Redirection vers programGeniusContractSessions");
+            return $this->programGeniusContractSessions($subscription, $student);
+        } else {
+            error_log("-> Redirection vers programRegularContractSessions");
+            // Pour les autres types de contrats (annuel, trimestriel, etc.)
+            return $this->programRegularContractSessions($subscription, $student);
+        }
+    }
+
+    /**
+     * Méthode dédiée pour programmer les sessions des contrats Genius
+     */
+    private function programGeniusContractSessions(Subscription $subscription, $student): JsonResponse
+    {
+        try {
+            // Debug : afficher les données du contrat
+            error_log("=== DEBUG CONTRAT GENIUS ===");
+            error_log("Subscription ID: " . $subscription->getId());
+            error_log("Subscription Type: " . $subscription->getSubscriptionType());
+            
+            // Récupérer les créneaux favoris pour Genius
+            $favoriteSlots = $subscription->getFavoriteSlots();
+            error_log("Favorite Slots: " . ($favoriteSlots ? json_encode($favoriteSlots) : 'NULL'));
+            
+            // Vérification alternative si les créneaux favoris sont vides
+            if (!$favoriteSlots || !is_array($favoriteSlots) || empty($favoriteSlots)) {
+                // Essayer de récupérer les créneaux depuis les sessions existantes (si contrat déjà partiellement programmé)
+                $existingSessions = $this->sessionRepository->findBy(['id_subscription' => $subscription]);
+                
+                if (!empty($existingSessions)) {
+                    error_log("Sessions existantes trouvées, contrat déjà programmé");
+                    return $this->json([
+                        'error' => 'Ce contrat semble déjà programmé. Sessions existantes: ' . count($existingSessions)
+                    ], 400);
+                }
+                
+                return $this->json([
+                    'error' => 'Aucun créneau favori trouvé pour ce contrat Genius. Veuillez vérifier que les créneaux ont été correctement sauvegardés lors de la création du contrat.',
+                    'debug_info' => [
+                        'subscription_id' => $subscription->getId(),
+                        'favorite_slots' => $favoriteSlots,
+                        'subscription_type' => $subscription->getSubscriptionType(),
+                        'subscription_start_date' => $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+                        'subscription_end_date' => $subscription->getSubscriptionEndDate()?->format('Y-m-d')
+                    ]
+                ], 400);
+            }
+
+            // Créer les sessions spécifiques Genius
+            $sessionData = $this->createGeniusSessionsFromSlots($subscription, $favoriteSlots, $student);
+            
+            // Vérifier que $sessionData n'est pas null
+            if (!$sessionData || !is_array($sessionData)) {
+                throw new \Exception('Erreur lors de la création des sessions: données retournées invalides');
+            }
+            
+            $totalSessionsCreated = $sessionData['sessions_created'] ?? 0;
+            $numberOfWeeks = $sessionData['weeks_planned'] ?? 0;
+            
+            // Marquer le contrat comme programmé
+            $subscription->setIsProgramed(true);
+            $subscription->setProgramedAt(new \DateTimeImmutable());
+            $subscription->setProgramedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+            $this->em->persist($subscription);
+            $this->em->flush();
+            
+            // Calculer le nombre total d'heures (chaque session Genius = 1h30)
+            $totalHours = $totalSessionsCreated * 1.5;
+            
+            return $this->json([
+                'success' => true,
+                'message' => 'Sessions Genius programmées avec succès',
+                'subscription_id' => $subscription->getId(),
+                'contract_type' => $subscription->getSubscriptionType(),
+                'sessions_created' => $totalSessionsCreated,
+                'total_hours' => $totalHours,
+                'weeks_planned' => $numberOfWeeks,
+                'slots_per_week' => count($favoriteSlots)
+            ]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Erreur lors de la programmation Genius: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Méthode pour programmer les sessions des contrats réguliers (non-Genius)
+     */
+    private function programRegularContractSessions(Subscription $subscription, $student): JsonResponse
+    {
+        // Logique pour les contrats annuels/trimestriels normaux
+        try {
+            $favoriteSlots = $subscription->getFavoriteSlots();
+            if (!$favoriteSlots) {
+                return $this->json(['error' => 'Aucun créneau trouvé pour ce contrat'], 400);
+            }
+
+            // Ici tu peux ajouter la logique pour les contrats réguliers
+            // Pour l'instant, on retourne un message
+            return $this->json([
+                'success' => true,
+                'message' => 'Programmation des contrats réguliers pas encore implémentée',
+                'subscription_id' => $subscription->getId(),
+                'contract_type' => $subscription->getSubscriptionType()
+            ]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Erreur lors de la programmation: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Créer les sessions spécifiques aux contrats Genius
+     * Utilise la même logique que SessionController::create()
+     */
+    private function createGeniusSessionsFromSlots(Subscription $subscription, array $favoriteSlots, $student): array
+    {
+        $totalSessionsCreated = 0;
+        
+        // Date de début du contrat
+        $startDate = $subscription->getSubscriptionStartDate();
+        if (!$startDate) {
+            error_log("ERREUR: Date de début manquante pour subscription ID: " . $subscription->getId());
+            return ['sessions_created' => 0, 'weeks_planned' => 0];
+        }
+        
+        // Date de fin fixe depuis l'environnement (2026-06-14)
+        $endDate = new \DateTime('2026-06-14');
+        $weeksBetween = ceil($startDate->diff($endDate)->days / 7);
+        
+        error_log("=== CRÉATION SESSIONS GENIUS ===");
+        error_log("Date début: " . $startDate->format('Y-m-d'));
+        error_log("Date fin fixe: " . $endDate->format('Y-m-d'));
+        error_log("Nombre de semaines: $weeksBetween");
+        error_log("Nombre de créneaux: " . count($favoriteSlots));
+        
+        // Récupérer le centre de l'étudiant
+        $center = $student->getIdCenter();
+        if (!$center) {
+            error_log("ERREUR: Centre non trouvé pour l'étudiant ID: " . $student->getId());
+            return ['sessions_created' => 0, 'weeks_planned' => 0];
+        }
+        
+        // Pour chaque créneau configuré
+        foreach ($favoriteSlots as $slot) {
+            if (!isset($slot['tutorId']) || !isset($slot['day']) || !isset($slot['hour'])) {
+                error_log("Créneau invalide: " . json_encode($slot));
+                continue;
+            }
+            
+            // Récupérer le tuteur
+            $tutor = $this->userRepository->find($slot['tutorId']);
+            if (!$tutor) {
+                error_log("Tuteur non trouvé: " . $slot['tutorId']);
+                continue;
+            }
+            
+            // Calculer la première date pour ce jour de la semaine
+            $firstDate = $this->getNextDateForDay($startDate, $slot['day']);
+            $timeFormatted = $this->convertHourFormat($slot['hour']); // 9h30 -> 9:30
+            
+            // Créer toutes les sessions jusqu'à la date de fin
+            for ($week = 0; $week < $weeksBetween; $week++) {
+                $sessionDate = clone $firstDate;
+                $sessionDate->modify("+{$week} weeks");
+                
+                // Si on dépasse la date de fin, arrêter
+                if ($sessionDate > $endDate) {
+                    break;
+                }
+                
+                // Créer la session (même logique que SessionController)
+                $session = new Session();
+                
+                // Dates requises
+                $session->setPaymentDate($sessionDate);
+                $session->setDateSlot($sessionDate);
+                
+                // Données de base
+                $session->setSchoolSubjects($slot['matieres'] ?? []);
+                $session->setResume('Session Genius - Durée: 1h30');
+                $session->setCreatedAt(new \DateTimeImmutable());
+                $session->setCreatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+                $session->setIsPaid(false);
+                $session->setIsAbsent(false);
+                $session->setUpdatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+                $session->setCenter($center);
+                
+                // Programmation
+                $session->setIdTutor($tutor);
+                $session->setScheduledAt(new \DateTimeImmutable($sessionDate->format('Y-m-d') . ' ' . $timeFormatted));
+                $session->setScheduledBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
+                $session->setSessionType('genius_recurring');
+                $session->setIsCanceled(false);
+                
+                // Relations
+                $session->addIdStudent($student);
+                $session->addIdSubscription($subscription);
+                
+                $this->em->persist($session);
+                $totalSessionsCreated++;
+            }
+        }
+        
+        $this->em->flush();
+        
+        error_log("Sessions créées avec succès: $totalSessionsCreated");
+        
+        return [
+            'sessions_created' => $totalSessionsCreated,
+            'weeks_planned' => $weeksBetween
+        ];
     }
 
     /**

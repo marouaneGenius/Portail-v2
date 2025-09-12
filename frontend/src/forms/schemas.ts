@@ -186,20 +186,6 @@ export const GeniusContractStep1: FormField[] = [
       { value: 'genius_premium', label: 'Genius Premium' },
     ]
   },
-];
-
-export const GeniusContractStep2: FormField[] = [
-  { name: 'session_per_week', label: 'Nombre de séances par semaine', type: 'select', required: true,
-    options: [
-      { value: '1', label: '1h30' },
-      { value: '2', label: '3h00' },
-      { value: '3', label: '4h30' },
-      { value: '4', label: '6h00' },
-    ]
-  },
-];
-
-export const GeniusContractStep3: FormField[] = [
   { name: 'engagement', label: 'Engagement', type: 'select', required: true,
     options: [
       { value: 'with_engagement', label: 'Avec engagement' },
@@ -221,3 +207,4 @@ export const GeniusContractStep3: FormField[] = [
   },
   { name: 'contract_start_date', label: 'Date de début de contrat', type: 'date', required: true },
 ];
+

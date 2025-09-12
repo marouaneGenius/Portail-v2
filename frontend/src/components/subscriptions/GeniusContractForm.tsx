@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MultiStepFormWrapper from '../forms/MultiStepForm';
-import { GeniusContractStep0, GeniusContractStep1, GeniusContractStep2, GeniusContractStep3 } from '../../forms/schemas';
+import { GeniusContractStep0, GeniusContractStep1 } from '../../forms/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Zap } from 'lucide-react';
@@ -20,9 +20,7 @@ const GeniusContractForm: React.FC<GeniusContractFormProps> = ({ student }) => {
   // Configuration des étapes du formulaire
   const formSteps = [
     { title: 'Matières et créneaux', fields: GeniusContractStep0 },
-    { title: 'Type de contrat', fields: GeniusContractStep1 },
-    { title: 'Nombre de séances', fields: GeniusContractStep2 },
-    { title: 'Paramètres du contrat', fields: GeniusContractStep3 },
+    { title: 'Configuration du contrat', fields: GeniusContractStep1, showAllFields: true },
   ];
 
   const handleFormSubmit = async (formData: Record<string, any>) => {
@@ -31,18 +29,21 @@ const GeniusContractForm: React.FC<GeniusContractFormProps> = ({ student }) => {
       console.log('Données du formulaire Genius:', formData);
 
       // Préparer les données pour l'API
+      const favoriteSlots = formData['matières et créneaux']?.favorite_slots_annuel || [];
+      const sessionPerWeek = Array.isArray(favoriteSlots) ? favoriteSlots.length : 1;
+      
       const contractData = {
         student_id: parseInt(id!),
-        // Nouvelles données de l'étape 0
+        // Étape 1: Matières et créneaux
         school_subjects: formData['matières et créneaux']?.school_subjects,
-        favorite_slots_annuel: formData['matières et créneaux']?.favorite_slots_annuel,
-        // Données des autres étapes
-        contract_type: formData['type de contrat']?.contract_type,
-        session_per_week: parseInt(formData['nombre de séances']?.session_per_week),
-        engagement: formData['paramètres du contrat']?.engagement,
-        registration_fee: parseInt(formData['paramètres du contrat']?.registration_fee || '0'),
-        discount: parseInt(formData['paramètres du contrat']?.discount || '0'),
-        contract_start_date: formData['paramètres du contrat']?.contract_start_date,
+        favorite_slots_annuel: favoriteSlots,
+        // Étape 2: Configuration du contrat (tout regroupé)
+        contract_type: formData['configuration du contrat']?.contract_type,
+        session_per_week: sessionPerWeek, // Calculé automatiquement selon le nombre de créneaux
+        engagement: formData['configuration du contrat']?.engagement,
+        registration_fee: parseInt(formData['configuration du contrat']?.registration_fee || '0'),
+        discount: parseInt(formData['configuration du contrat']?.discount || '0'),
+        contract_start_date: formData['configuration du contrat']?.contract_start_date,
       };
 
       // Appeler l'API pour créer le contrat Genius via Subscription
@@ -133,7 +134,7 @@ const GeniusContractForm: React.FC<GeniusContractFormProps> = ({ student }) => {
                 Configuration du contrat
               </h2>
               <p className="text-gray-600">
-                Complétez les informations en 3 étapes pour générer le contrat personnalisé.
+                Complétez les informations en 2 étapes pour générer le contrat personnalisé.
               </p>
             </div>
 
