@@ -4,7 +4,7 @@ import FieldStepper from './FieldStepper';
 import ReviewStep from '../subscriptions/ReviewStep';
 
 interface MultiStepFormProps {
-  steps: { title: string; fields: FormField[] }[];
+  steps: { title: string; fields: FormField[]; showAllFields?: boolean }[];
   onSubmit: (values: Record<string, any>) => void;
 }
 
@@ -16,10 +16,6 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
   const [showReview, setShowReview] = useState(false);
 
   const handleNextStep = (section: string, stepValues: Record<string, any>) => {
-    // setCollectedValues((prev) => ({
-    //   ...prev,
-    //   [section.toLowerCase()]: stepValues,
-    // }));
     setCollectedValues(prev => ({
       ...prev,
       [section.toLowerCase()]: structuredClone(stepValues),
@@ -77,11 +73,10 @@ const MultiStepFormWrapper: React.FC<MultiStepFormProps> = ({ steps, onSubmit })
             title={currentStep.title}
             fields={currentStep.fields}
             isLast={isLastStep}
-            // initialValues={collectedValues}
             initialValues={collectedValues[currentStep.title.toLowerCase()] ?? {}}
-
             onBack={handleBack}
             onNext={handleNextStep}
+            showAllFields={currentStep.showAllFields}
           />
         }
       </div>

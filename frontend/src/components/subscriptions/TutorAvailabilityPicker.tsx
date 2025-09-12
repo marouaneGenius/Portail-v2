@@ -71,8 +71,8 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
               return hasLevelForSubject(item,studentRes.data.class, school_subjects )
             })  
 
-            if(filterBySchoolSubject.length === 0 && availabilitys.length === 0 && school_subjects.length !== 0) {
-              setErrorMessage(`❌ Aucun tuteur disponible n’enseigne ${school_subjects.join().toUpperCase() } pour  ${studentRes.data.class}`);
+            if(filterBySchoolSubject.length === 0 && (!availabilitys || availabilitys.length === 0) && school_subjects && school_subjects.length !== 0) {
+              setErrorMessage(`❌ Aucun tuteur disponible n'enseigne ${school_subjects ? school_subjects.join().toUpperCase() : ''} pour  ${studentRes.data.class}`);
             } else {
               setErrorMessage('');
               setIsAvailable(false)
@@ -186,7 +186,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
 
   useEffect(() => {
-    if(availabilitys.length !== 0){
+    if(availabilitys && availabilitys.length !== 0){
       setIsAvailable(false)
 
       const matieres = availabilitys.map((slot:any) => {
@@ -271,7 +271,7 @@ export const TutorAvailabilityPicker: React.FC<Props> = ({tutors, onSelect, scho
 
 
       <div className="mt-4 space-y-2">
-        {availabilitys.map((slot, index) => (
+        {availabilitys && availabilitys.map((slot, index) => (
           <div key={index} className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
             <span>
               🗓️ {slot.day} <br/>🕒 {slot.hour}<br/>📕 {slot.matieres.join()}<br/>👨‍🏫 {slot.tutorName}

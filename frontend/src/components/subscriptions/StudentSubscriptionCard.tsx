@@ -9,6 +9,7 @@ import { LoaderOverlay } from "../LoaderOverlay";
 import { BadgeMark } from "@mui/material";
 import { nbSeancesperWeek } from "@/mocks/mocks";
 import { Student } from "@/types/entities";
+import { toast } from "sonner";
 
 type Subscription = {
   id: number;
@@ -378,22 +379,47 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     }
   }
 
-  const programSessions = (subscription:any) => {
-    const sub = subscription.isCombined ? (Array.isArray(subscription) ?subscription.find((item) => item.subscription_type === 'annuel') : null ): subscription
-    if (!sub) {
-      alert('Aucune subscription valide trouvée.');
-      console.warn('Aucune subscription valide trouvée.');
-      return;
+  const programSessions = async (subscription: any) => {
+    const geniusContract = subscription.subscription_type.includes('genius')
+
+    if(geniusContract) {
+      console.log('Subscription:', subscription);
+      
+      setLoading(true);
+      
+      try {
+        console.log(`Appel API: /api/subs/${subscription.id}/program-sessions`);
+        const response = await api.post(`/api/subs/${subscription.id}/program-sessions`);
+        
+        if (response.data.success) {
+          toast.success(`Sessions Genius programmées avec succès ! ${response.data.sessions_created} sessions créées sur ${response.data.weeks_planned} semaines.`);
+          window.location.reload(); // Rafraîchir pour voir les nouvelles sessions
+        } else {
+          throw new Error(response.data.error || 'Erreur lors de la programmation');
+        }
+      } catch (error: any) {
+        console.error('Erreur lors de la programmation des sessions Genius:', error);
+        const errorMessage = error.response?.data?.error || 'Erreur lors de la programmation des sessions';
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const sub = subscription.isCombined ? (Array.isArray(subscription) ? subscription.find((item) => item.subscription_type === 'annuel') : null ) : subscription
+      if (!sub) {
+        alert('Aucune subscription valide trouvée.');
+        console.warn('Aucune subscription valide trouvée.');
+        return;
+      }
+  
+      const allSessions = buildSessions(
+        sub.subscription_start_date,
+        sub.subscription_end_date,
+        sub.favorite_slots,
+        sub.session_per_week
+      );
+      handleCreateSessidons(allSessions, sub)
     }
-
-    const allSessions = buildSessions(
-      sub.subscription_start_date,
-      sub.subscription_end_date,
-      sub.favorite_slots,
-      sub.session_per_week
-    );
-
-    handleCreateSessidons(allSessions, sub)
   }
 
   const handleCreateSessidons = async (allSessions:any, subscription:any) => {
@@ -420,7 +446,6 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
           is_canceled: false,
           center_id: student.centers.id
         };
-
        
         return api.post('/api/sessions', payload);
       });
@@ -531,9 +556,26 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 )}
                 <button
                   className="border border-green-300 text-green-500 rounded px-3 py-1 flex items-center gap-1 font-semibold hover:bg-green-50 transition text-sm"
-                  onClick={e => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    window.open(sub.url, '_blank');
+                    
+                    try {
+                      // Récupérer l'URL du PDF via l'API backend
+                      const response = await api.get(`/api/subs/${sub.id}/download-pdf`, {
+                        responseType: 'blob'
+                      });
+                      
+                      // Créer une URL temporaire pour visualiser le PDF
+                      const blob = new Blob([response.data], { type: 'application/pdf' });
+                      const pdfUrl = window.URL.createObjectURL(blob);
+                      
+                      // Ouvrir le PDF dans un nouvel onglet pour visualisation
+                      window.open(pdfUrl, '_blank');
+                      
+                    } catch (error) {
+                      console.error('Erreur lors de l\'ouverture du contrat:', error);
+                      toast.error('Impossible d\'ouvrir le contrat. Il n\'a peut-être pas encore été généré.');
+                    }
                   }}
                 >
                   <Eye size={16} /> Voir 

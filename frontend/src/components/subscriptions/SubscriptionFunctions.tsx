@@ -230,6 +230,17 @@ import api from "../../api/aixos";
     if(data.subscription_type === 'preinscription') {
        return computePreInscription(data, data.student.class, price);
     }
+
+    // Gestion spécifique pour les contrats Genius (une seule ligne)
+    if (['genius', 'genius_plus', 'genius_premium'].includes(data.subscription_type)) {
+      return computeGeniusSingleLineTarification(data, price);
+    }
+
+    // Pour les autres contrats, vérifier le mode de paiement
+    if (!['mensuel', 'anuelle', 'trimestrielle'].includes(payment_mode)) {
+      // Si le payment_mode n'est pas un mode classique, utiliser aussi une seule ligne
+      return computeGeniusSingleLineTarification(data, price);
+    }
   
     if (payment_mode === "anuelle") {
       // Calculer le nombre total de mois pour l'année
@@ -448,6 +459,62 @@ import api from "../../api/aixos";
     }
   }
 
+  function computeGeniusSingleLineTarification(data: any, price: number) {
+    // Extraction des données
+    const sessionPerWeek = data.session_per_week || 1;
+    const discount = data.discount || 0;
+    
+    const moisNames = [
+      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ];
+    const jourNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+    // Pour les contrats Genius, forcer 10 mois (année scolaire complète)
+    const nombreMois = 10;
+
+    // Le prix passé est déjà le prix mensuel, on calcule le total annuel
+    const prixMensuel = price;
+    const prixTotalAnnuel = prixMensuel * nombreMois * (1 - discount / 100);
+
+    // Date de prélèvement (date de début du contrat)
+    const subscriptionStartDate = data.subscription_start_date || data.first_debit_date;
+    const datePrelevement = subscriptionStartDate ? new Date(subscriptionStartDate) : new Date();
+    
+    // Nombre total de séances sur l'année scolaire (40 semaines)
+    const totalSeances = sessionPerWeek * 40; // 40 semaines d'école
+
+    // Description avec remise si applicable
+    let description = `Forfait ${data.subscription_type.replace('_', ' ')} annuel`;
+    if (discount > 0) {
+      description += ` (remise ${discount}%)`;
+    }
+
+    // Formatage correct de la date
+    const dateFormatee = `${jourNames[datePrelevement.getDay()]} ${datePrelevement.getDate()} ${moisNames[datePrelevement.getMonth()]} ${datePrelevement.getFullYear()}`;
+
+    // Génération d'une seule ligne avec le prix total annuel
+    const lignes: TarificationLigne[] = [{
+      description: description,
+      datePrelevement: dateFormatee,
+      nbSeances: totalSeances,
+      tarifAvant: prixTotalAnnuel,
+      tarifApres: prixTotalAnnuel
+    }];
+
+    // Calcul des totaux
+    const totalApresReduction = prixTotalAnnuel;
+    const dureeSeance = 1.5; // 1h30 par séance
+    const totalHeures = totalSeances * dureeSeance;
+    const coutHoraire = totalHeures > 0 ? totalApresReduction / totalHeures : 0;
+
+    return {
+      lignes,
+      totalApresReduction,
+      coutHoraire
+    };
+  }
+
   export function getPrice(subscriptionType:string, hoursOrWeeks:any, level:any, options:any = {}) {
     // Tarifs pour "preinscription"
     const pre:any = {
@@ -491,6 +558,28 @@ import api from "../../api/aixos";
     const extraMember      = 200;  // euros / semaine supplémentaire
     const extraNonMember   = 300;
 
+    // Tarifs pour "genius" (prix mensuels selon le type)
+    const genius = {
+      '1': { prix: 180, seances: 6 }, // 1h30 par semaine = 6h par mois
+      '2': { prix: 360, seances: 12 }, // 3h par semaine = 12h par mois  
+      '3': { prix: 540, seances: 18 }, // 4h30 par semaine = 18h par mois
+      '4': { prix: 720, seances: 24 }, // 6h par semaine = 24h par mois
+    };
+
+    const geniusPlus = {
+      '1': { prix: 300, seances: 6 },
+      '2': { prix: 600, seances: 12 },
+      '3': { prix: 900, seances: 18 },
+      '4': { prix: 1200, seances: 24 },
+    };
+
+    const geniusPremium = {
+      '1': { prix: 360, seances: 6 },
+      '2': { prix: 720, seances: 12 },
+      '3': { prix: 1080, seances: 18 },
+      '4': { prix: 1440, seances: 24 },
+    };
+
 
     if(subscriptionType !== null && subscriptionType !== undefined) {
 
@@ -519,6 +608,27 @@ import api from "../../api/aixos";
           }
           // plus de 3 semaines : tarif pour 3 + extras
           return baseTable[3] + extraRate * (weeks - 3);
+
+        case 'genius':
+          // Pour les contrats Genius, on utilise l'offer_type pour déterminer la grille
+          const offerType = options.offer_type || options.contractType || 'genius';
+          let geniusTable: any;
+          
+          switch (offerType) {
+            case 'genius_plus':
+              geniusTable = geniusPlus;
+              break;
+            case 'genius_premium':
+              geniusTable = geniusPremium;
+              break;
+            case 'genius':
+            default:
+              geniusTable = genius;
+              break;
+          }
+          
+          if (!geniusTable[hoursOrWeeks]) return null;
+          return geniusTable[hoursOrWeeks].prix;
       }
     }
   }

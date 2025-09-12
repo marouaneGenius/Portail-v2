@@ -1,5 +1,5 @@
 import { FormField } from "../components/FormGenerator";
-import { WeeksOptions } from "../mocks/mocks";
+import { WeeksOptions, SchoolSubjects } from "../mocks/mocks";
 
 
 export interface ArrayField  extends FormField   {
@@ -172,3 +172,39 @@ export const UpdateSlotForm: FormField[] = [
   { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
   { name: 'tutor_id', label: 'Tuteur', type: 'select', required: true },
 ]
+
+// Champs pour le formulaire contrat Genius
+export const GeniusContractStep0: FormField[] = [
+  { name: 'favorite_slots_annuel', label: 'Créneaux et tuteur', type: 'custom', required: true },
+];
+
+export const GeniusContractStep1: FormField[] = [
+  { name: 'contract_type', label: 'Type de contrat', type: 'select', required: true,
+    options: [
+      { value: 'genius', label: 'Genius' },
+      { value: 'genius_plus', label: 'Genius+' },
+      { value: 'genius_premium', label: 'Genius Premium' },
+    ]
+  },
+  { name: 'engagement', label: 'Engagement', type: 'select', required: true,
+    options: [
+      { value: 'with_engagement', label: 'Avec engagement' },
+      { value: 'without_engagement', label: 'Sans engagement' },
+    ]
+  },
+  { name: 'registration_fee', label: 'Frais d\'inscription', type: 'select', required: true,
+    options: [
+      { value: '0', label: '0€' },
+      { value: '90', label: '90€' },
+    ]
+  },
+  { name: 'discount', label: 'Remise', type: 'select', required: true,
+    options: [
+      { value: '0', label: '0%' },
+      { value: '10', label: '10%' },
+      { value: '20', label: '20%' },
+    ]
+  },
+  { name: 'contract_start_date', label: 'Date de début de contrat', type: 'date', required: true },
+];
+

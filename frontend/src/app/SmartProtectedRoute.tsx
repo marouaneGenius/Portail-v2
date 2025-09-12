@@ -30,6 +30,7 @@ const is404Route = (pathname: string): boolean => {
     /^\/subscriptions\/\d+$/, // /subscriptions/:id
     /^\/contract\/\d+\/\d+(\/combined)?$/, // /contract/:id/:student/:combined?
     /^\/student\/subscriptions\/\d+$/, // /student/subscriptions/:id
+    /^\/genius-contract\/\d+$/, // /genius-contract/:id
   ];
 
   // Routes génériques valides (resources connus seulement)
