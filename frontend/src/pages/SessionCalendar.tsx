@@ -628,7 +628,7 @@ export default function SessionCalendar() {
                                               className={`rounded-md hover:bg-slate-100 transition-colors px-0.5 py-0.5 mb-1 border
                                                 ${currentSession?.is_canceled ? 'opacity-50 bg-red-50 border-red-200' : 
                                                   currentSession?.session_type === 'trial_session' ? 
-                                                    (currentSession?.is_paid ? 'bg-green-50 border-green-300' : 'bg-orange-50 border-orange-300') : 
+                                                    (currentSession?.is_paid ? 'bg-green-50 border-green-300' : 'bg-yellow-100 border-orange-300') : 
                                                     'bg-slate-50 border-fading-grey'}
                                               `}
                                             >

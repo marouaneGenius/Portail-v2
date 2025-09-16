@@ -273,6 +273,7 @@ class SessionRepository extends ServiceEntityRepository
                 
                 $sessionsArr[] = [
                     'id'            => $session->getId(),
+                    'session_type'  => $session->getSessionType(),
                     'scheduled_at'  => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
                     'resume'        => $session->getResume(),
                     'is_canceled'   => $session->isIsCanceled(),
