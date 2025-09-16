@@ -601,6 +601,16 @@ export default function SessionCalendar() {
                                       <span className="text-[12px] font-bold text-mister-anthracite">
                                         {block.tutor.firstname} {block.tutor.lastname}
                                       </span>
+                                     {block.sessions.flatMap((s: any) => s.students ?? []).length > 5 && (
+                                        <span
+                                          role="img"
+                                          aria-label="warning"
+                                          title="Séance surchargée : plus de 5 élèves sur ce créneau !"
+                                          className="cursor-pointer"
+                                        >
+                                          ⚠️
+                                        </span>
+                                    )}
                                       <div className="flex flex-wrap gap-1 max-w-full">
                                         {(block.tutor.school_subjects ?? []).slice(0, 3).map((subject: string) => (
                                           <span

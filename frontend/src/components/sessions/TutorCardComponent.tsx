@@ -47,7 +47,6 @@ export const TutorCard: React.FC<TutorCardProps> = ({
   session,
   onExceptionalChange,
   onSessionUpdate
-  // day
 }) => {
   // Debug: vérifier si la fonction arrive
   useEffect(() => {
@@ -70,7 +69,7 @@ export const TutorCard: React.FC<TutorCardProps> = ({
       className={`flex flex-col bg-white border rounded-lg shadow-sm p-4
                   ${isOver ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'border-gray-200'}`}
     >
-      <div className="mb-3  flex flex-row justify-between">
+      <div className="mb-3 flex flex-row justify-between items-center">
         <div className="font-medium text-gray-900">
           <User className="inline-block text-crazy-magenta mr-1" /> {tutor.firstname} {tutor.lastname}
         </div>
@@ -86,13 +85,24 @@ export const TutorCard: React.FC<TutorCardProps> = ({
           ))}
         </div>
 
+        {/* Indicateur surcharge si plus de 5 élèves */}
+        {students.length > 5 && (
+          <span
+            role="img"
+            aria-label="warning"
+            title="Séance surchargée : plus de 5 élèves sur ce créneau !"
+            className="cursor-pointer ml-2 text-orange-500 text-lg"
+          >
+            ⚠️
+          </span>
+        )}
+
         {/* Bouton Changement exceptionnel pour TOUS les étudiants du tuteur */}
         {onExceptionalChange && students.length > 0 && (
-          <div className="  ">
+          <div>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Récupérer toutes les séances de ce tuteur pour ce créneau
                 const tutorSessions = session.sessions.filter((s: any) => 
                   students.some((student: any) => student.session_id === s.id)
                 );
@@ -100,15 +110,15 @@ export const TutorCard: React.FC<TutorCardProps> = ({
                 const studentIds = students.map((s: any) => s.id);
                 if (onExceptionalChange) {
                   onExceptionalChange(
-                    sessionIds, // Toutes les sessions
-                    studentIds, // Tous les étudiants
+                    sessionIds,
+                    studentIds,
                     tutor.id,
                     `${students.length} étudiant(s)`,
                     `${tutor.firstname} ${tutor.lastname}`
                   );
                 }
               }}
-              className="w-full px-3 py-2 text-xs bg-gray-100 text-black rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 "
+              className="w-full px-3 py-2 text-xs bg-gray-100 text-black rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
               title="Remplacer ce tuteur pour tous ses étudiants à ce créneau"
             >
               <UserRoundPen className="w-3 h-3" />
@@ -116,7 +126,6 @@ export const TutorCard: React.FC<TutorCardProps> = ({
             </button>
           </div>
         )}
-        
       </div>
 
 
