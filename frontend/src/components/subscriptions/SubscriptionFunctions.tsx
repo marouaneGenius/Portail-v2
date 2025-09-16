@@ -232,7 +232,7 @@ import api from "../../api/aixos";
     }
 
     // Gestion spécifique pour les contrats Genius (une seule ligne)
-    if (['genius', 'genius_plus', 'genius_premium'].includes(data.subscription_type)) {
+    if (['genius_access', 'genius_plus', 'genius_premium'].includes(data.subscription_type)) {
       return computeGeniusSingleLineTarification(data, price);
     }
 
@@ -485,7 +485,11 @@ import api from "../../api/aixos";
     const totalSeances = sessionPerWeek * 40; // 40 semaines d'école
 
     // Description avec remise si applicable
-    let description = `Forfait ${data.subscription_type.replace('_', ' ')} annuel`;
+    let description = `Forfait ${
+      typeof data.subscription_type === 'string'
+        ? data.subscription_type.replace('_', ' ')
+        : String(data.subscription_type)
+    } annuel`;
     if (discount > 0) {
       description += ` (remise ${discount}%)`;
     }
@@ -609,9 +613,9 @@ import api from "../../api/aixos";
           // plus de 3 semaines : tarif pour 3 + extras
           return baseTable[3] + extraRate * (weeks - 3);
 
-        case 'genius':
+        case 'genius_access':
           // Pour les contrats Genius, on utilise l'offer_type pour déterminer la grille
-          const offerType = options.offer_type || options.contractType || 'genius';
+          const offerType = options.offer_type || options.contractType || 'genius_access';
           let geniusTable: any;
           
           switch (offerType) {
@@ -621,7 +625,7 @@ import api from "../../api/aixos";
             case 'genius_premium':
               geniusTable = geniusPremium;
               break;
-            case 'genius':
+            case 'genius_access':
             default:
               geniusTable = genius;
               break;

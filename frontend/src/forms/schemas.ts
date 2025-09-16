@@ -181,7 +181,7 @@ export const GeniusContractStep0: FormField[] = [
 export const GeniusContractStep1: FormField[] = [
   { name: 'contract_type', label: 'Type de contrat', type: 'select', required: true,
     options: [
-      { value: 'genius', label: 'Genius' },
+      { value: 'genius_access', label: 'Genius access' },
       { value: 'genius_plus', label: 'Genius+' },
       { value: 'genius_premium', label: 'Genius Premium' },
     ]

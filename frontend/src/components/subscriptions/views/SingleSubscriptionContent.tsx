@@ -61,9 +61,9 @@ function useSubscriptionLogic(Student: any, Subscription: any, SubscriptionType:
             let computedPrice;
             if (SubscriptionType === 'stage') {
                 computedPrice = getStagePrice(Subscription?.week_count, isCombined, isMember);
-            } else if (['genius', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
+            } else if (['genius_access', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
                 // Pour les contrats Genius, on passe le type de contrat dans offer_type
-                computedPrice = getPrice('genius', Subscription?.session_per_week, niveau, { 
+                computedPrice = getPrice('genius_access', Subscription?.session_per_week, niveau, { 
                     combined: isCombined, 
                     isMember, 
                     offer_type: SubscriptionType 
@@ -82,7 +82,7 @@ function useSubscriptionLogic(Student: any, Subscription: any, SubscriptionType:
             // - Combiné: visible uniquement pour le type principal déterminé par showSubscriptionPrice()
             // - Stage dans un combiné: masqué (comportement historique)
             // - Genius: toujours visible si des frais existent
-            if (!isCombined || ['genius', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
+            if (!isCombined || ['genius_access', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
                 if (!cancelled) setShowFraisInscription(true);
             } else {
                 if (SubscriptionType === 'stage') {

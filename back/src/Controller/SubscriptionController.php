@@ -529,7 +529,7 @@ class SubscriptionController extends AbstractController
         }
 
         // Valider le type de contrat
-        $validContractTypes = ['genius', 'genius_plus', 'genius_premium'];
+        $validContractTypes = ['genius_access', 'genius_plus', 'genius_premium'];
         if (!in_array($data['contract_type'], $validContractTypes)) {
             return $this->json(['error' => 'Type de contrat invalide'], 400);
         }
@@ -562,7 +562,7 @@ class SubscriptionController extends AbstractController
         $subscription->setMembershipFee((float)$registrationFee);
         $subscription->setOfferAmount($finalPrice);
         $subscription->setPaymentMode('mensuel');
-        $subscription->setIsValide(true);
+        $subscription->setIsValide(false);
         
         // Sauvegarder les créneaux favoris si fournis
         if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
@@ -633,7 +633,7 @@ class SubscriptionController extends AbstractController
     private function calculateGeniusBasePrice(string $contractType, int $sessionPerWeek): int
     {
         $pricing = [
-            'genius' => [
+            'genius_access' => [
                 1 => 180,  // 1h30
                 2 => 360,  // 3h00
                 3 => 540,  // 4h30
@@ -748,7 +748,7 @@ class SubscriptionController extends AbstractController
         $subscriptionType = $subscription->getSubscriptionType();
         
         // Condition spécifique pour les contrats Genius
-        if (in_array($subscriptionType, ['genius', 'genius_plus', 'genius_premium'])) {
+        if (in_array($subscriptionType, ['genius_access', 'genius_plus', 'genius_premium'])) {
             error_log("-> Redirection vers programGeniusContractSessions");
             return $this->programGeniusContractSessions($subscription, $student);
         } else {

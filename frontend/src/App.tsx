@@ -12,7 +12,7 @@ const App = () => {
   const { isParent } = usePermissions();
 
   return (
-    <div className="flex h-screen w-screen">
+    <div className="sm:ml-[260px]"> {/* Ajoute ce wrapper */}
       {user ? (
         // Si c'est un parent, pas de sidebar
         isParent() ? (

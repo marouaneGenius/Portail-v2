@@ -59,7 +59,13 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
         ? `Abonnement annuel à raison de ${phrase}`
         : subscriptionType === 'preinscription'
           ? `Abonnement Pré-inscription à raison de ${phrase}`
-          : '';
+          : subscriptionType === 'genius_access'
+            ? `Abonnement Genius Access à raison de ${phrase}`
+            : subscriptionType === 'genius_plus'
+              ? `Abonnement Genius Plus à raison de ${phrase}`
+              : subscriptionType === 'genius_premium'
+                ? `Abonnement Genius Premium à raison de ${phrase}`
+                : '';
 
   const contractStart = subscription?.subscription_start_date || subscription?.selected_weeks?.[0] || '';
   const formattedStartDate = contractStart
@@ -146,7 +152,8 @@ const WelcomePageComponent: React.FC<WelcomePageProps> = ({ student, subscriptio
 
         <div>
           <span style={{ fontSize: 18 }}>
-            <strong className="poppins-title-bold">Début du contrat : Semaine du {formattedStartDate} </strong>Le ou les créneaux précis seront à définir d'ici le 4 Septembre 2025 (en fonction des disponibilités).
+            <strong className="poppins-title-bold">Début du contrat : Semaine du {formattedStartDate} </strong>
+            {/* Le ou les créneaux précis seront à définir d'ici le 4 Septembre 2025 (en fonction des disponibilités). */}
           </span>
         </div>
       </div>
