@@ -381,7 +381,7 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
                         ? addMinutes(toBaseTime(draft.start_hour), 90)
                         : new Date(0, 0, 0, 11, 0)
                     }
-                    maxTime={new Date(0, 0, 0, 18, 0)}
+                    maxTime={new Date(0, 0, 0, 19, 30)}
                 />
             </div>
 
