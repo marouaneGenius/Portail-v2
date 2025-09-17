@@ -397,7 +397,7 @@ class StudentController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_students_update', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function update(int $id, Request $request): JsonResponse
     {
         // 1. Charger l'élève
