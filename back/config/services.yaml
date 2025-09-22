@@ -30,7 +30,7 @@ services:
     App\EventListener\JWTCreatedListener: ~
     App\Service\ZapierSmsSender:
         arguments:
-            $zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/22004416/2hghlmc/'
+            $zapierWebhookUrl: 'https://hooks.zapier.com/hooks/catch/22004412/2hghlmc/'
             
     Stripe\StripeClient:
         class: Stripe\StripeClient
