@@ -14,7 +14,7 @@ export const ComportementComponent: React.FC = () => (
         En cas de problème de comportement de l&apos;enfant, si celui-ci reçoit trois avertissements écrits
         et que son comportement nuit à sa réussite et à celle de ses camarades, GENIUS se réserve le
         droit d&apos;interrompre les cours et d&apos;annuler toutes les séances restantes pour le trimestre en
-        cours, sans possibilité de remboursement. Le trimestre en cours sera entièrement dû.
+        cours, sans possibilité de remboursement. <strong>Le trimestre en cours sera intégralement dû.</strong>
       </li>
       <li>
         Tout manquement de respect, intimidation, menace, violence verbale ou physique de la part des

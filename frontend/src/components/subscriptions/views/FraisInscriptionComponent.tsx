@@ -36,13 +36,12 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
  
       {MEMEBERSHIP_FEE && (
         <p>
-          <strong>Frais d&apos;inscription&nbsp;</strong> de {MEMEBERSHIP_FEE / 2}€ (après
-          réduction), facturés&nbsp; le{" "}
-          {formatDateFr(fraisInscriptionEndDate)} (Avance Immédiate URSSAF).
+          <strong>Frais d&apos;inscription&nbsp;</strong> de {MEMEBERSHIP_FEE}€, facturés&nbsp; le{" "}
+          {formatDateFr(fraisInscriptionEndDate)}.
         </p>
       )}
 
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <p className="font-semibold">
             ⚠️ Le paiement mensuel indiqué dans le tableau ci-dessous est valable :
           </p>
@@ -55,7 +54,7 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
             À défaut, les paiements&nbsp; s&apos;effectueront&nbsp; sur une base trimestrielle,&nbsp; conformément&nbsp; à
             l&apos;engagement minimal&nbsp; requis.
           </p>
-        </div>
+        </div> */}
     </div>
   );
 };

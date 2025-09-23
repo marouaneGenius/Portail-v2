@@ -14,7 +14,7 @@ const DisponibiliteEtAssistanceDomicileComponent: React.FC = () => (
         GENIUS met à disposition un service de soutien scolaire accessible 7 jours sur 7. Les élèves
         peuvent solliciter de l’assistance pédagogique via WhatsApp, appels téléphoniques, SMS ou
         visioconférence (Google Meet, etc.). Les demandes sont traitées dans un délai raisonnable,
-        assurant un accompagnement continu pour maximiser la réussite.
+        assurant un accompagnement continu.
       </li>
     </ul>
   </div>

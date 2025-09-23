@@ -57,14 +57,14 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
       <p>
         La résiliation doit être notifiée sur la plateforme de gestion&nbsp;
         <a
-          href="https://gestion.geniusclass.fr"
+          href="https://portailv2.geniusclass.fr/login"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline"
         >
-          gestion.geniusclass.fr
+          portailv2.geniusclass.fr/login
         </a>
-        &nbsp;aux dates indiquées ci-dessous (tous les 3 mois).
+        &nbsp;aux dates suivantes : 
       </p>
       <ul className="list-disc list-inside space-y-2 text-sm">
         {items.map(({ endFr, deadlineFr }, idx) => (
@@ -74,6 +74,10 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
           </li>
         ))}
       </ul>
+
+      <p>
+        À défaut de résiliation dans les délais indiqués, <strong>le contrat est automatiquement reconduit pour un nouveau trimestre </strong>, selon les conditions de l’article 1.
+      </p>
     </div>
   );
 };

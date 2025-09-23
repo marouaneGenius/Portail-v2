@@ -16,6 +16,7 @@ import ChequeDeCautionComponent from './ChequeDeCautionComponent';
 import { getNiveauScolaire, getPrice, getStagePrice, IsStudentIsMember, showSubscriptionPrice } from '../SubscriptionFunctions';
 import ProcedureResiliationNotice from './ProcedureResiliationComponent';
 import SignatureComponent from './SignatureComponent';
+import { PaiementComponent } from './PaiementComponent';
 
 export interface FullContractProps {
     Student: any;
@@ -185,23 +186,23 @@ const NonStageSubscriptionContent: React.FC<FullContractProps & { price: number;
 
                         <EngagementPaiementNotice />
 
-                        {!!price && (
+                        {/* {!!price && (
                             <ChequeDeCautionComponent
                                 student={Student}
                                 subscriptionType={SubscriptionType}
                                 subscription={Subscription}
                                 price={price}
                             />
-                        )}
-
+                        )} */}
+                        <PaiementComponent />
                         <ComportementComponent />
                     </Page>
 
                     <Page>
                         <DisponibiliteEtAssistanceDomicileComponent />
-                        <AbsencesComponent />
-                        <CreationGestionCompteURSSAFComponent />
-                        <ModificationAnnulationNotice />
+                        <AbsencesComponent parent={Student?.parents?.[0]}/>
+                        {/* <CreationGestionCompteURSSAFComponent /> */}
+                        {/* <ModificationAnnulationNotice /> */}
                     </Page>
 
                     <Page className="page-break">

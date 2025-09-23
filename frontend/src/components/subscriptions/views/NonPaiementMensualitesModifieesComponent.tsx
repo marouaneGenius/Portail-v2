@@ -8,12 +8,17 @@ import React from "react";
 const NonPaiementMensualitesNotice: React.FC = () => (
   <div className="space-y-4 m-1 ml-3 py-2 " style={{ letterSpacing: '0.02em' }}>
     <strong className="text-body">Non-paiement des Mensualités Modifiées&nbsp;:</strong>
-    <p>
-      En cas de retard de paiement, après contact de notre équipe, le Client dispose de 48 heures pour
-      régulariser. Passé ce délai, GENIUS encaissera les chèques de caution pour couvrir les montants
-      restants jusqu’à la prochaine date de résiliation. L’abonnement sera automatiquement annulé à la
-      date de résiliation  prévue si le paiement n’est pas mis à jour.
-    </p>
+    <ul className="list-disc list-inside space-y-2">
+      <li>
+        En cas de retard de paiement, après relance de notre équipe, le client dispose de 48 heures pour régulariser.
+      </li>
+      <li>
+        Passé ce délai, <strong>GENIUS engagera une procédure de recouvrement par tous moyens légaux.</strong>
+      </li>
+      <li>
+        Les <strong>frais de justice et d’huissier seront intégralement imputés au client débiteur.</strong>
+      </li>
+    </ul>
   </div>
 );
 
