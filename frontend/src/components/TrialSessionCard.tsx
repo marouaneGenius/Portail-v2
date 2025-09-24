@@ -114,14 +114,18 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
                   </div>
                   <div>
                     <p className="font-semibold text-mister-anthracite">
-                      {getDate(session.date_slot)}
+                        {session.scheduled_at &&
+                          new Date(session.scheduled_at).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: '2-digit',
+                            month: 'long'
+                          })
+                            .replace(/^\w/, c => c.toUpperCase()) // Majuscule sur le premier caractère
+                        }
                     </p>
                     {session.scheduled_at && (
                       <p className="text-sm text-mister-anthracite/60">
-                        à {new Date(session.scheduled_at).toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        à {new Date(session.scheduled_at).toISOString().slice(11, 16)}
                       </p>
                     )}
                   </div>

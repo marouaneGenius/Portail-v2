@@ -66,7 +66,7 @@ export default function SessionCalendar() {
     studentId: number;
   } | null>(null);
   const [currentView, setCurrentView] = useState<'daily' | 'weekly'>('daily');
-  const [hideEmptyTutors, setHideEmptyTutors] = useState(false);
+  const [hideEmptyTutors, setHideEmptyTutors] = useState(true);
   const [showExceptionalChangeModal, setShowExceptionalChangeModal] = useState(false);
   const [allTutors, setAllTutors] = useState<any[]>([]);
   const [selectedReplacementTutor, setSelectedReplacementTutor] = useState<number | null>(null);
@@ -433,7 +433,7 @@ export default function SessionCalendar() {
         </div>
 
         <div className="flex items-center justify-self-start mb-6">
-          <div className="flex items-center gap-3 mb-2 pr-10">
+          <div className="hidden items-center gap-3 mb-2 pr-10">
             <label className="flex items-center gap-2 cursor-pointer text-mister-anthracite text-sm">
               <input
                 type="checkbox"
@@ -494,7 +494,7 @@ export default function SessionCalendar() {
                           ).length;
                           return acc + count;
                         }, 0)
-                      } groupe(s)
+                      } élève(s)
                     </p>
                   </div>
                   {/* ...le reste de ta vue (grille des TutorCard, etc.) ... */}
