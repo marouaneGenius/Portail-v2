@@ -24,6 +24,23 @@ class SessionRepository extends ServiceEntityRepository
         parent::__construct($registry, Session::class);
     }
 
+    /**
+     * Trouve toutes les sessions pour une date donnée, non annulées
+     */
+    public function findSessionsForDate(\DateTimeInterface $date): array
+    {
+        return $this->createQueryBuilder('s')
+            ->leftJoin('s.idTutor', 't')
+            ->addSelect('t')
+            ->where('s.date_slot = :date')
+            ->andWhere('s.is_canceled = false OR s.is_canceled IS NULL')
+            ->andWhere('t.id IS NOT NULL')
+            ->setParameter('date', $date->format('Y-m-d'))
+            ->orderBy('s.scheduled_at', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
 
     public function getSessionsDataByTutor($tutor): array
     {
