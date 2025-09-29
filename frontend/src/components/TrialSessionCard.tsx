@@ -30,10 +30,8 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
   const [loading, setLoading] = useState<{[key: number]: boolean}>({});
   const { user }:any = useAuth();
 
-  // Filtrer les séances d'essai à venir (incluant les annulées)
   const upcomingTrialSessions = sessions.filter(session => 
-    session.session_type === 'trial_session' && 
-    new Date(session.date_slot) >= new Date()
+    session.session_type === 'trial_session'
   );
 
   // Ne pas vérifier automatiquement le statut de paiement
@@ -88,9 +86,9 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
         </div>
         <div>
           <h3 className="text-xl font-bold text-mister-anthracite">Séances d'essai</h3>
-          <p className="text-sm text-mister-anthracite/60">
+          {/* <p className="text-sm text-mister-anthracite/60">
             {upcomingTrialSessions.length} séance(s) d'essai à venir
-          </p>
+          </p> */}
         </div>
       </div>
 

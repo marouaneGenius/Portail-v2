@@ -77,9 +77,14 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   });
 
   const updateStudentSlots = () => {
+    // Extraire la date de scheduled_at pour date_slot
+    const scheduledDate = new Date(values.scheduled_at);
+    const dateSlot = scheduledDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+
     const newValues = {
       tutor_id: values.tutor_id,
       scheduled_at: values.scheduled_at,
+      date_slot: dateSlot,
       update_all:   applyAll,
       updated_by: user?.email,
     }

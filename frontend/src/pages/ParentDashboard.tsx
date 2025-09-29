@@ -18,6 +18,7 @@ interface ChildSession {
   child_id: number;
   subject: string;
   scheduled_at: string;
+  date_slot?: string; // Date de la séance (format YYYY-MM-DD)
   tutor_name: string;
   center_name?: string;
   is_canceled: boolean;
@@ -290,9 +291,14 @@ const ParentDashboard: React.FC = () => {
     }
     
     try {
+      // Extraire la date de scheduled_at pour date_slot
+      const scheduledDate = new Date(rescheduleValues.scheduled_at);
+      const dateSlot = scheduledDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+
       // Utiliser la route des sessions générales au lieu de la route parent
       await api.put(`/api/sessions/move-future-slots/${showRescheduleModal}`, {
         scheduled_at: rescheduleValues.scheduled_at,
+        date_slot: dateSlot,
         school_subjects: rescheduleValues.school_subjects,
         tutor_id: rescheduleValues.tutor_id,
         update_all: false,
@@ -304,10 +310,11 @@ const ParentDashboard: React.FC = () => {
       setSessions(prev =>
         prev.map(session =>
           session.id === showRescheduleModal
-            ? { 
-                ...session, 
+            ? {
+                ...session,
                 scheduled_at: rescheduleValues.scheduled_at,
-                subject: Array.isArray(rescheduleValues.school_subjects) 
+                date_slot: dateSlot, // Mettre à jour date_slot aussi
+                subject: Array.isArray(rescheduleValues.school_subjects)
                   ? rescheduleValues.school_subjects.join(', ')
                   : rescheduleValues.school_subjects || session.subject,
                 tutor_name: rescheduleValues.tutor_id ? 'Nouveau tuteur' : session.tutor_name, // Sera mis à jour lors du rechargement
@@ -389,15 +396,6 @@ const ParentDashboard: React.FC = () => {
     }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
 
-  const getMonthSessions = () => {
-    const monthStart = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
-    const monthEnd = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
-    
-    return sessions.filter(session => {
-      const sessionDate = new Date(session.scheduled_at);
-      return sessionDate >= monthStart && sessionDate <= monthEnd && !session.is_suspended;
-    }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
-  };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setSelectedMonth(prev => {
@@ -424,8 +422,6 @@ const ParentDashboard: React.FC = () => {
     
     // Premier jour du mois
     const firstDay = new Date(year, month, 1);
-    // Dernier jour du mois
-    const lastDay = new Date(year, month + 1, 0);
     
     // Premier jour de la semaine (lundi = 1, dimanche = 0)
     const startDate = new Date(firstDay);
@@ -458,7 +454,6 @@ const ParentDashboard: React.FC = () => {
 
   const upcomingSessions = getUpcomingSessions();
   const pastSessions = getPastSessions();
-  const monthSessions = getMonthSessions();
   const activeContracts = contracts.filter(contract => contract.is_valide && !contract.is_canceled);
 
   return (
@@ -1109,6 +1104,7 @@ const ParentDashboard: React.FC = () => {
                     removeValueFromField={removeValueFromField}
                     fieldName={field.name}
                     student={student}
+                    isParentRescheduling={isParent()}
                   />
                 </div>
               ))}

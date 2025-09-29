@@ -315,9 +315,14 @@ export default function SessionCalendar() {
     updateAll: boolean
   ) => {
 
+    // Extraire la date de scheduled_at pour date_slot
+    const scheduledDate = new Date(scheduledAt);
+    const dateSlot = scheduledDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+
     api.patch(`/api/sessions/${sessionId}`, {
       tutor_id: fromTutorId !== toTutorId ? toTutorId : undefined,
       scheduled_at: scheduledAt,
+      date_slot: dateSlot,
       student_ids: [studentId],
       update_all: updateAll,
     }).catch(err => console.error(err.response.data));

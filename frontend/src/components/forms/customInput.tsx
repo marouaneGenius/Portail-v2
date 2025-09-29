@@ -17,7 +17,8 @@ export interface RenderFieldProps {
   fieldName?: any;
   tutors?:any,
   title?:any,
-  student?:any
+  student?:any,
+  isParentRescheduling?: boolean;
 }
 
 interface MultiSelectWrapperProps {
@@ -530,7 +531,8 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
   setValues,
   removeValueFromField,
   handleChange,
-  student
+  student,
+  isParentRescheduling = false
 }) => {
   const todayISO = new Date().toISOString().split("T")[0];
 
@@ -586,6 +588,7 @@ export const RenderTrialField: React.FC<RenderFieldProps> = ({
           <TutorListComponent
             values={values}
             student={student}
+            isParentRescheduling={isParentRescheduling}
             onSelect={(tutorId) => {
               setValues({
                 ...values,

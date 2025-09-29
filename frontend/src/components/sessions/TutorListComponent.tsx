@@ -26,15 +26,15 @@ interface TutorListProps {
   };
   student:any;
   onSelect: (tutorId: number) => void;
+  isParentRescheduling?: boolean; // Nouveau prop pour indiquer si c'est une reprogrammation par un parent
 }
 
-export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect, student }) => {
+export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect, student, isParentRescheduling = false }) => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [availableTutors, setAvailableTutors] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState<number | null>(null);
-  const [studentSchoolSubjects, setStudentSchoolSubjects] = useState<any[]>([]);
   const [tutorStudentCount, setTutorStudentCount] = useState<{[key: string]: number}>({});
 
   // Fonction pour vérifier le nombre d'étudiants d'un tuteur à un créneau donné
@@ -58,6 +58,13 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
     const key = `${tutorId}-${values.scheduled_at}`;
     const count = tutorStudentCount[key] || 0;
     return count < 5;
+  };
+
+  // Fonction pour vérifier si un tuteur est éligible pour la reprogrammation par un parent (≥ 2 élèves)
+  const isEligibleForParentReschedule = (tutorId: number): boolean => {
+    const key = `${tutorId}-${values.scheduled_at}`;
+    const count = tutorStudentCount[key] || 0;
+    return count >= 2;
   };
 
   useEffect(() => {
@@ -107,9 +114,9 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
           const count = values.scheduled_at ? await checkTutorStudentCount(tutor.id, values.scheduled_at) : 0;
           return { tutorId: tutor.id, count };
         });
-        
+
         const studentCounts = await Promise.all(studentCountPromises);
-        
+
         // Mettre à jour l'état avec les nombres d'étudiants
         const newTutorStudentCount: {[key: string]: number} = {};
         studentCounts.forEach(({ tutorId, count }) => {
@@ -117,7 +124,8 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
           newTutorStudentCount[key] = count;
         });
         setTutorStudentCount(newTutorStudentCount);
-        
+
+        // Pour la reprogrammation par un parent, on affiche tous les tuteurs mais on les catégorise
         setAvailableTutors(dateFilteredTutors);
       }
       setError(null);
@@ -174,6 +182,12 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
       alert('Ce tuteur a déjà atteint sa capacité maximale de 5 étudiants pour ce créneau.');
       return;
     }
+
+    if (isParentRescheduling && !isEligibleForParentReschedule(tutorId)) {
+      alert('Ce tuteur n\'a pas assez d\'élèves prévus dans ce créneau pour une reprogrammation. Minimum requis : 2 élèves.');
+      return;
+    }
+
     setSelectedTutor(tutorId);
     onSelect(tutorId);
   };
@@ -211,22 +225,57 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
   return (
     <div className="mt-6 space-y-4  bg-white rounded p-3">
       <h3 className="font-medium text-lg">Tuteurs disponibles</h3>
-      
+      {isParentRescheduling && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-medium text-blue-900 mb-2">Conditions de reprogrammation</h4>
+          <div className="space-y-2 text-sm text-blue-800">
+            <p>• <strong>Tuteurs sélectionnables :</strong> Ceux ayant au moins 2 élèves prévus dans ce créneau</p>
+            <p>• <strong>Tuteurs grisés :</strong> Ne respectent pas les conditions requises</p>
+            <p>• <strong>Capacité maximale :</strong> 5 élèves par tuteur et par créneau</p>
+          </div>
+        </div>
+      )}
+
+      {isParentRescheduling && (
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gray-100 border border-gray-200"></div>
+            <span>Sélectionnable</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-amber-50 border border-amber-200"></div>
+            <span>Pas assez d'élèves</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-red-50 border border-red-200"></div>
+            <span>Capacité atteinte</span>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-1 gap-1 ">
         {availableTutors.map(tutor => {
           const canSelect = canSelectTutor(tutor.id);
+          const isEligibleForParent = isEligibleForParentReschedule(tutor.id);
           const studentCount = tutorStudentCount[`${tutor.id}-${values.scheduled_at}`] || 0;
-          
+
+
+          // Détermine le style en fonction du statut
+          let cardStyle = '';
+          if (!canSelect) {
+            cardStyle = 'bg-red-50 border-red-200 opacity-70 cursor-not-allowed';
+          } else if (isParentRescheduling && !isEligibleForParent) {
+            cardStyle = 'bg-amber-50 border-amber-200 opacity-70 cursor-not-allowed';
+          } else if (selectedTutor === tutor.id) {
+            cardStyle = 'border-blue-500 bg-blue-50 cursor-pointer';
+          } else {
+            cardStyle = 'border-gray-200 hover:border-blue-300 bg-gray-100 cursor-pointer';
+          }
+
           return (
-            <div 
+            <div
               key={tutor.id}
-              className={`border rounded-lg p-2 w-full transition-all ${
-                !canSelect 
-                  ? 'bg-red-50 border-red-200 opacity-70 cursor-not-allowed' 
-                  : selectedTutor === tutor.id 
-                    ? 'border-blue-500 bg-blue-50 cursor-pointer' 
-                    : 'border-gray-200 hover:border-blue-300 bg-gray-100 cursor-pointer'
-              }`}
+              className={`border rounded-lg p-2 w-full transition-all ${cardStyle}`}
               onClick={() => handleSelectTutor(tutor.id)}
             >
             <div className="flex  gap-0">
@@ -248,10 +297,15 @@ export const TutorListComponent: React.FC<TutorListProps> = ({ values, onSelect,
                     ⚠️ Capacité maximale atteinte
                   </div>
                 )}
+                {canSelect && isParentRescheduling && !isEligibleForParent && (
+                  <div className="text-xs text-amber-600 font-medium mt-1">
+                    ⚠️ Pas assez d'élèves prévus (minimum 2 requis)
+                  </div>
+                )}
                 <p className="text-sm text-gray-600 mt-1">
                   {
                     tutor.school_subjects.map((s, index) => (
-                      <span key={index} className='bg-blue-200 m-1 rounded p-1 text-xs m-1'>{s} -  
+                      <span key={index} className='bg-blue-200 m-1 rounded p-1 text-xs'>{s} -
                       {getLevelForSubject (tutor, s)}
                       </span>
                     ))
