@@ -622,7 +622,7 @@ class SessionController extends AbstractController
             
             // Récupérer toutes les sessions du tuteur pour ce créneau exact
             $sessions = $this->sessionRepo->createQueryBuilder('s')
-                ->where('s.tutor_id = :tutorId')
+                ->where('s.idTutor = :tutorId')
                 ->andWhere('s.scheduled_at = :scheduledAt')
                 ->andWhere('s.is_canceled = false') // Ne pas compter les sessions annulées
                 ->setParameter('tutorId', $id)
