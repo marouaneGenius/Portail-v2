@@ -403,7 +403,7 @@ const ItemDetails: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <CustomSessionComponent currentkey="sessions" value={item.sessions} />
+                <CustomSessionComponent currentkey="sessions" value={item.sessions} student={item} />
               </CardContent>
             </Card>
           )}

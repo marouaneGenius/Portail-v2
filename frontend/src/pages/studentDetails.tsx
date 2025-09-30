@@ -28,6 +28,8 @@ interface StudentItem {
     const [error, setError] = useState<string | null>(null);
     const [student, setStudent] = useState<StudentItem>();
     const [trialSessions, setTrialSessions] = useState<any>([]);
+    const [allSessions, setAllSessions] = useState<any>([]);
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'catchup' | 'trial'>('upcoming');
     const [studentId, setId] = useState<any>(id);
     const [refreshKey, setRefreshKey] = useState(0);
     const { user }:any = useAuth();
@@ -40,7 +42,9 @@ interface StudentItem {
           .then(({ data }:any) => {
             console.log(data)
             const trial_sessions = data.sessions?.filter((s: any) => s.session_type === 'trial_session') || [];
+            const standard_sessions = data.sessions?.filter((s: any) => s.session_type !== 'trial_session') || [];
             setTrialSessions(trial_sessions)
+            setAllSessions(standard_sessions)
             setStudent(data);
           })
           .catch((err:any) => {
@@ -50,6 +54,37 @@ interface StudentItem {
 
     }, [id, refreshKey]);
 
+    // Fonctions de filtrage des séances
+    const getUpcomingSessions = () => {
+        const now = new Date();
+        return allSessions.filter((session: any) => {
+            const sessionDate = new Date(session.scheduled_at);
+            return sessionDate > now && !session.is_canceled && !session.is_suspended;
+        }).sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+    };
+
+    const getPastSessions = () => {
+        const now = new Date();
+        return allSessions.filter((session: any) => {
+            const sessionDate = new Date(session.scheduled_at);
+            return sessionDate <= now && !session.is_suspended;
+        }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+    };
+
+    const getCatchupSessions = () => {
+        return allSessions.filter((session: any) => {
+            return session.is_canceled && !session.is_suspended;
+        }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+    };
+
+    const formatSessionDateTime = (scheduled_at: string) => {
+        const date = new Date(scheduled_at);
+        return {
+            date: date.toLocaleDateString('fr-FR'),
+            time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        };
+    };
+
     const sessionAction = async(session:any) => {
         const values = {
             is_canceled : session.is_canceled ? false : true,
@@ -58,14 +93,26 @@ interface StudentItem {
         try{
             api.patch(`/api/sessions/${session.id}/action`, values).then((res)=>{
                 if(res) {
-                    alert('session modifié aves succees')
-                    setRefreshKey(prev => prev + 1); 
-                    setTrialSessions((prevSessions:any) => 
-                        prevSessions.map((s:any) => 
-                          s.id === session.id 
-                            ? { ...s, is_canceled: session.is_canceled } // Remet l'état original
-                        : s
-                        ))
+                    alert('Session modifiée avec succès')
+                    setRefreshKey(prev => prev + 1);
+
+                    // Mettre à jour les séances d'essai
+                    setTrialSessions((prevSessions:any) =>
+                        prevSessions.map((s:any) =>
+                          s.id === session.id
+                            ? { ...s, is_canceled: values.is_canceled }
+                            : s
+                        )
+                    );
+
+                    // Mettre à jour toutes les séances
+                    setAllSessions((prevSessions:any) =>
+                        prevSessions.map((s:any) =>
+                          s.id === session.id
+                            ? { ...s, is_canceled: values.is_canceled }
+                            : s
+                        )
+                    );
                 }
             })
 
@@ -111,38 +158,201 @@ interface StudentItem {
                                 )}
                             </div>
                         </div>
-                        <div className={trialSessions && trialSessions.length > 0 &&`"bg-gray-100 p-3 rounded w-full"`}>
-                        {trialSessions && trialSessions.length > 0 && (
-                            <div className="space-y-3">
-                                <h4 className="font-medium text-gray-700">Séances d'essai</h4>
-                                {trialSessions.map((session: any) => (
-                                <div key={session.id} className="bg-gray-50 p-3 rounded border flex justify-around">
-                                    <span> 
-                                        Seance d'essai le  :
-                                    { getDate(session.date_slot)} - 
+                        {/* Section des séances avec onglets */}
+                        <div className="bg-gray-100 p-4 rounded w-full">
+                            <h4 className="font-medium text-gray-700 mb-4">Séances</h4>
 
-                                    </span>
-
-                                    <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                                        session.is_canceled 
-                                        ? 'bg-red-100 text-red-800' 
-                                        : 'bg-green-100 text-green-800'
-                                    }`}>
-                                        {session.is_canceled ? 'Annulée' : 'Active'}
-                                    </span>
-
-                                    <Button variant="outlined" color={session.is_canceled ? 'info': 'error'} size="small"  onClick={()=>sessionAction(session)} >
-                                        <span className="text-xs">
-                                            {session.is_canceled ? 'activer' : 'Annuler'}
-
-                                        </span>
-                                    </Button>
-                                </div>
-                                ))}
+                            {/* Navigation par onglets */}
+                            <div className="flex space-x-1 bg-gray-200 p-1 rounded-lg mb-4">
+                                <button
+                                    onClick={() => setActiveTab('upcoming')}
+                                    className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 text-sm ${
+                                        activeTab === 'upcoming'
+                                            ? 'bg-white text-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-blue-600'
+                                    }`}
+                                >
+                                    À venir ({getUpcomingSessions().length})
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('past')}
+                                    className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 text-sm ${
+                                        activeTab === 'past'
+                                            ? 'bg-white text-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-blue-600'
+                                    }`}
+                                >
+                                    Passées ({getPastSessions().length})
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('catchup')}
+                                    className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 text-sm ${
+                                        activeTab === 'catchup'
+                                            ? 'bg-white text-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-blue-600'
+                                    }`}
+                                >
+                                    À rattraper ({getCatchupSessions().length})
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('trial')}
+                                    className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 text-sm ${
+                                        activeTab === 'trial'
+                                            ? 'bg-white text-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-blue-600'
+                                    }`}
+                                >
+                                    Essais ({trialSessions.length})
+                                </button>
                             </div>
-                        )}
 
+                            {/* Contenu des onglets */}
+                            <div className="space-y-3">
+                                {activeTab === 'upcoming' && (
+                                    getUpcomingSessions().length > 0 ? (
+                                        getUpcomingSessions().map((session: any) => (
+                                            <div key={session.id} className="bg-white p-3 rounded border shadow-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-medium">{formatSessionDateTime(session.scheduled_at).date}</span>
+                                                            <span className="text-blue-600">{formatSessionDateTime(session.scheduled_at).time}</span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {session.school_subjects && Array.isArray(session.school_subjects)
+                                                                ? session.school_subjects.join(', ')
+                                                                : session.school_subjects || 'Matière non spécifiée'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                                                            Planifiée
+                                                        </span>
+                                                        <Button variant="outlined" color="error" size="small" onClick={() => sessionAction(session)}>
+                                                            <span className="text-xs">Annuler</span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            Aucune séance à venir
+                                        </div>
+                                    )
+                                )}
 
+                                {activeTab === 'past' && (
+                                    getPastSessions().length > 0 ? (
+                                        getPastSessions().map((session: any) => (
+                                            <div key={session.id} className="bg-white p-3 rounded border shadow-sm opacity-75">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-medium">{formatSessionDateTime(session.scheduled_at).date}</span>
+                                                            <span className="text-gray-600">{formatSessionDateTime(session.scheduled_at).time}</span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {session.school_subjects && Array.isArray(session.school_subjects)
+                                                                ? session.school_subjects.join(', ')
+                                                                : session.school_subjects || 'Matière non spécifiée'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded text-xs ${
+                                                            session.is_canceled
+                                                                ? 'bg-red-100 text-red-800'
+                                                                : session.is_absent
+                                                                ? 'bg-orange-100 text-orange-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {session.is_canceled ? 'Annulée' : session.is_absent ? 'Absent' : 'Terminée'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            Aucune séance passée
+                                        </div>
+                                    )
+                                )}
+
+                                {activeTab === 'catchup' && (
+                                    getCatchupSessions().length > 0 ? (
+                                        getCatchupSessions().map((session: any) => (
+                                            <div key={session.id} className="bg-amber-50 p-3 rounded border border-amber-200 shadow-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-medium">{formatSessionDateTime(session.scheduled_at).date}</span>
+                                                            <span className="text-amber-600">{formatSessionDateTime(session.scheduled_at).time}</span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {session.school_subjects && Array.isArray(session.school_subjects)
+                                                                ? session.school_subjects.join(', ')
+                                                                : session.school_subjects || 'Matière non spécifiée'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">
+                                                            Annulée
+                                                        </span>
+                                                        <Button variant="outlined" color="info" size="small" onClick={() => sessionAction(session)}>
+                                                            <span className="text-xs">Reprogrammer</span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            Aucune séance à rattraper
+                                        </div>
+                                    )
+                                )}
+
+                                {activeTab === 'trial' && (
+                                    trialSessions.length > 0 ? (
+                                        trialSessions.map((session: any) => (
+                                            <div key={session.id} className="bg-blue-50 p-3 rounded border border-blue-200 shadow-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-medium">Séance d'essai</span>
+                                                            <span className="text-blue-600">{getDate(session.date_slot)}</span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            {session.school_subjects && Array.isArray(session.school_subjects)
+                                                                ? session.school_subjects.join(', ')
+                                                                : session.school_subjects || 'Matière non spécifiée'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded text-xs ${
+                                                            session.is_canceled
+                                                                ? 'bg-red-100 text-red-800'
+                                                                : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                            {session.is_canceled ? 'Annulée' : 'Active'}
+                                                        </span>
+                                                        <Button variant="outlined" color={session.is_canceled ? 'info': 'error'} size="small" onClick={() => sessionAction(session)}>
+                                                            <span className="text-xs">
+                                                                {session.is_canceled ? 'Activer' : 'Annuler'}
+                                                            </span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            Aucune séance d'essai
+                                        </div>
+                                    )
+                                )}
+                            </div>
                         </div>
                         <ActionGrid studentId={student.id} />
                     </>  

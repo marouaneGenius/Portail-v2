@@ -1208,13 +1208,15 @@ class SessionController extends AbstractController
         // Si c'est un PUT (reprogrammation par parent), réactiver la séance annulée
         $isPutRequest = $request->getMethod() === 'PUT';
         $isParentReschedule = $data['rescheduled_by_parent'] ?? false;
-        
-        if ($isPutRequest && $isParentReschedule && $session->isIsCanceled()) {
+        $isAdminReschedule = isset($data['is_canceled']) && $data['is_canceled'] === false;
+
+        if ($isPutRequest && ($isParentReschedule || $isAdminReschedule) && $session->isIsCanceled()) {
             $session->setIsCanceled(false);
             $session->setCanceledBy(null);
-            $logger->info('Session réactivée lors de la reprogrammation par parent', [
+            $userType = $isParentReschedule ? 'parent' : 'admin';
+            $logger->info("Session réactivée lors de la reprogrammation par {$userType}", [
                 'session_id' => $session->getId(),
-                'parent_user' => $data['updated_by'] ?? 'unknown'
+                'user' => $data['updated_by'] ?? 'unknown'
             ]);
         }
     

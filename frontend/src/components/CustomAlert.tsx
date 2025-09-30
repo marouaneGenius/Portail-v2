@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { actions } from '../mocks/mocks';
 import { CustomButton } from './CustomButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Building, MapPin, Phone, Users, User, Mail, Calendar } from 'lucide-react';
+import { Building, MapPin, Phone, Users, User, Mail, Calendar, Clock } from 'lucide-react';
 import api from '@/api/aixos';
 import { formatTime } from '@/services/functions';
+import Modal from './Modal';
+import { Button } from '@/components/ui/button';
+import { RenderTrialField } from './forms/customInput';
+import { UpdateSlotForm } from '@/forms/schemas';
 
 interface CustomAlertProps {
   title?: string;
@@ -341,31 +345,57 @@ export const CustomTutorScheduleComponent: React.FC<CustomComponentProps> = ({
 
 
 export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'catchup'>('upcoming');
+  const [showRescheduleModal, setShowRescheduleModal] = useState<number | null>(null);
+  const [rescheduleValues, setRescheduleValues] = useState<any>({
+    scheduled_at: '',
+    school_subjects: [],
+    tutor_id: ''
+  });
+  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+
   // Helper pour formatter la date
   const formatDate = (dateStr:any) => {
     const date = new Date(dateStr);
-    // ex: lundi 15 janvier
     return date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  };
+
+  const formatSessionDateTime = (scheduled_at: string) => {
+    const date = new Date(scheduled_at);
+    return {
+      date: date.toLocaleDateString('fr-FR'),
+      time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    };
   };
 
   let sessions: any = Array.isArray(value) ? value : [];
 
-  sessions = sessions
-    .filter((s: any) => !!s.scheduled_at)
-    .sort((a: any, b: any) =>
-      new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-    );
-  
-  // Trouve la prochaine séance (future)
-  const now = new Date();
-  const nextSession = sessions.find((s:any) => new Date(s.scheduled_at) >= now && s.session_type !== 'trial_session');
-  
-  // Trouve la dernière séance passée
-  const lastSession: any = [...sessions]
-    .filter(s => new Date(s.scheduled_at) < now)
-    .sort((a: any, b: any) =>
-      new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
-    )[0];
+  // Séparer les séances d'essai des séances standard
+  const trialSessions = sessions.filter((s: any) => s.session_type === 'trial_session');
+  const standardSessions = sessions.filter((s: any) => s.session_type !== 'trial_session' && !!s.scheduled_at);
+
+  // Fonctions de filtrage des séances
+  const getUpcomingSessions = () => {
+    const now = new Date();
+    return standardSessions.filter((session: any) => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate > now && !session.is_canceled && !session.is_suspended;
+    }).sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+  };
+
+  const getPastSessions = () => {
+    const now = new Date();
+    return standardSessions.filter((session: any) => {
+      const sessionDate = new Date(session.scheduled_at);
+      return sessionDate <= now && !session.is_suspended;
+    }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+  };
+
+  const getCatchupSessions = () => {
+    return standardSessions.filter((session: any) => {
+      return session.is_canceled && !session.is_suspended;
+    }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+  };
 
   // (option) Affichage du prénom de l'enfant si parent
   const getStudentName = (session:any) =>
@@ -373,53 +403,331 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
       ? `${session.student_firstname} ${session.student_lastname}`
       : null;
 
+  // Fonction pour reprogrammer une séance
+  const handleRescheduleSession = async () => {
+    if (!showRescheduleModal) return;
+
+    try {
+      const scheduledDate = new Date(rescheduleValues.scheduled_at);
+      const dateSlot = scheduledDate.toISOString().split('T')[0];
+
+      await api.put(`/api/sessions/move-future-slots/${showRescheduleModal}`, {
+        scheduled_at: rescheduleValues.scheduled_at,
+        date_slot: dateSlot,
+        school_subjects: rescheduleValues.school_subjects,
+        tutor_id: rescheduleValues.tutor_id,
+        update_all: false,
+        updated_by: 'Admin reprogrammation',
+        is_canceled: false,
+        canceled_by: null
+      });
+
+      setShowRescheduleModal(null);
+      setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
+      setConflictWarning(null);
+      alert('Séance reprogrammée avec succès');
+
+      // Recharger la page pour afficher les changements
+      window.location.reload();
+    } catch (error) {
+      console.error('Erreur lors de la reprogrammation:', error);
+      alert('Erreur lors de la reprogrammation de la séance');
+    }
+  };
+
+  // Handler pour les changements dans le formulaire
+  const handleRescheduleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked, options } = e.target as any;
+    const multiple = (e.target as HTMLSelectElement).multiple;
+
+    setRescheduleValues((prev: any) => ({
+      ...prev,
+      [name]: multiple
+        ? Array.from(options)
+            .filter((opt: any) => opt.selected)
+            .map((opt: any) => opt.value)
+        : type === 'checkbox'
+        ? checked
+        : value,
+    }));
+  };
+
+  const removeValueFromField = (field: any, value: any) => {
+    setRescheduleValues((prev: any) => ({
+      ...prev,
+      [field]: Array.isArray(prev[field])
+        ? prev[field].filter((v: any) => (typeof v === 'object' ? v.value || v.id : v) !== (typeof value === 'object' ? value.value || value.id : value))
+        : prev[field],
+    }));
+  };
+
   return (
-    <div className="p-2">
-      <div className="space-y-4">
-
-        {/* Prochaine séance */}
-        {nextSession && (
-          <div>
-            <div className="text-gray-600 text-sm mb-1">Prochaine séance</div>
-            <div className="bg-blue-50 rounded-lg px-4 py-3 mb-2">
-              <div className="font-semibold text-base text-blue-900">
-                {formatDate(nextSession.scheduled_at)}
-                {getStudentName(nextSession) && (
-                  <span className="ml-2 text-blue-500 text-xs">
-                    ({getStudentName(nextSession)})
-                  </span>
-                )}
-              </div>
-              <div className="text-blue-900 text-md mt-1">{formatTime(nextSession.scheduled_at)}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Dernière séance */}
-        {lastSession && (
-          <div>
-            <div className="text-gray-600 text-sm mb-1">Dernière séance</div>
-            <div className="bg-gray-100 rounded-lg px-4 py-3">
-              <div className="font-semibold text-base text-gray-800">
-                {formatDate(lastSession.scheduled_at)}
-                {getStudentName(lastSession) && (
-                  <span className="ml-2 text-blue-500 text-xs">
-                    ({getStudentName(lastSession)})
-                  </span>
-                )}
-              </div>
-              <div className="text-gray-800 text-md mt-1">{formatTime(lastSession.scheduled_at)}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Aucun */}
-        {!nextSession && !lastSession && (
-          <div className="text-gray-400 italic text-center">
-            Aucune séance planifiée ou passée.
-          </div>
-        )}
+    <div className="p-4">
+      {/* Navigation par onglets */}
+      <div className="flex space-x-1 bg-gray-200 p-1 rounded-lg mb-4">
+        <button
+          onClick={() => setActiveTab('upcoming')}
+          className={`flex-1 py-2 px-3 rounded-md transition-colors duration-200 text-sm ${
+            activeTab === 'upcoming'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          À venir ({getUpcomingSessions().length})
+        </button>
+        <button
+          onClick={() => setActiveTab('past')}
+          className={`flex-1 py-2 px-3 rounded-md transition-colors duration-200 text-sm ${
+            activeTab === 'past'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Passées ({getPastSessions().length})
+        </button>
+        <button
+          onClick={() => setActiveTab('catchup')}
+          className={`flex-1 py-2 px-3 rounded-md transition-colors duration-200 text-sm ${
+            activeTab === 'catchup'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          À rattraper ({getCatchupSessions().length})
+        </button>
       </div>
+
+      {/* Contenu des onglets */}
+      <div className="space-y-3 max-h-80 overflow-y-auto">
+        {activeTab === 'upcoming' && (
+          getUpcomingSessions().length > 0 ? (
+            getUpcomingSessions().map((session: any) => (
+              <div key={session.id} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-semibold text-blue-900 mb-1">
+                      {formatDate(session.scheduled_at)}
+                      {getStudentName(session) && (
+                        <span className="ml-2 text-blue-500 text-xs">
+                          ({getStudentName(session)})
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-blue-800 text-sm">{formatTime(session.scheduled_at)}</div>
+                    {session.school_subjects && (
+                      <div className="text-blue-700 text-xs mt-1">
+                        {Array.isArray(session.school_subjects)
+                          ? session.school_subjects.join(', ')
+                          : session.school_subjects}
+                      </div>
+                    )}
+                    {session.tutor_name && (
+                      <div className="text-blue-600 text-xs mt-1">
+                        👨‍🏫 {session.tutor_name}
+                      </div>
+                    )}
+                    {session.center_name && (
+                      <div className="text-blue-600 text-xs">
+                        📍 {session.center_name}
+                      </div>
+                    )}
+                  </div>
+                  <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800 ml-2">
+                    Planifiée
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-400 italic text-center py-8">
+              Aucune séance à venir
+            </div>
+          )
+        )}
+
+        {activeTab === 'past' && (
+          getPastSessions().length > 0 ? (
+            getPastSessions().map((session: any) => (
+              <div key={session.id} className="bg-gray-100 rounded-lg p-3 border border-gray-200 opacity-75">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800 mb-1">
+                      {formatDate(session.scheduled_at)}
+                      {getStudentName(session) && (
+                        <span className="ml-2 text-gray-500 text-xs">
+                          ({getStudentName(session)})
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-gray-700 text-sm">{formatTime(session.scheduled_at)}</div>
+                    {session.school_subjects && (
+                      <div className="text-gray-600 text-xs mt-1">
+                        {Array.isArray(session.school_subjects)
+                          ? session.school_subjects.join(', ')
+                          : session.school_subjects}
+                      </div>
+                    )}
+                    {session.tutor_name && (
+                      <div className="text-gray-600 text-xs mt-1">
+                        👨‍🏫 {session.tutor_name}
+                      </div>
+                    )}
+                    {session.center_name && (
+                      <div className="text-gray-600 text-xs">
+                        📍 {session.center_name}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs ml-2 ${
+                    session.is_canceled
+                      ? 'bg-red-100 text-red-800'
+                      : session.is_absent
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {session.is_canceled ? 'Annulée' : session.is_absent ? 'Absent' : 'Terminée'}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-400 italic text-center py-8">
+              Aucune séance passée
+            </div>
+          )
+        )}
+
+        {activeTab === 'catchup' && (
+          getCatchupSessions().length > 0 ? (
+            getCatchupSessions().map((session: any) => (
+              <div key={session.id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-semibold text-amber-900 mb-1">
+                      {formatDate(session.scheduled_at)}
+                      {getStudentName(session) && (
+                        <span className="ml-2 text-amber-600 text-xs">
+                          ({getStudentName(session)})
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-amber-800 text-sm">{formatTime(session.scheduled_at)}</div>
+                    {session.school_subjects && (
+                      <div className="text-amber-700 text-xs mt-1">
+                        {Array.isArray(session.school_subjects)
+                          ? session.school_subjects.join(', ')
+                          : session.school_subjects}
+                      </div>
+                    )}
+                    {session.tutor_name && (
+                      <div className="text-amber-600 text-xs mt-1">
+                        👨‍🏫 {session.tutor_name}
+                      </div>
+                    )}
+                    {session.center_name && (
+                      <div className="text-amber-600 text-xs">
+                        📍 {session.center_name}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">
+                      À rattraper
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setRescheduleValues({
+                          scheduled_at: new Date(session.scheduled_at).toISOString().slice(0, 16),
+                          school_subjects: session.school_subjects || [],
+                          tutor_id: ''
+                        });
+                        setShowRescheduleModal(session.id);
+                      }}
+                      className="text-xs py-1 h-auto"
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      Reprogrammer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-400 italic text-center py-8">
+              Aucune séance à rattraper
+            </div>
+          )
+        )}
+
+      </div>
+
+      {/* Modal de reprogrammation */}
+      {showRescheduleModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            setShowRescheduleModal(null);
+            setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
+            setConflictWarning(null);
+          }}
+          title="Reprogrammer la séance"
+        >
+          <div className="p-4 space-y-4">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Information :</strong> Reprogrammation de la séance annulée.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {student && UpdateSlotForm.map((field: any) => (
+                <div key={field.name} className="space-y-2">
+                  <RenderTrialField
+                    f={field}
+                    values={rescheduleValues}
+                    setValues={setRescheduleValues}
+                    handleChange={handleRescheduleChange}
+                    removeValueFromField={removeValueFromField}
+                    fieldName={field.name}
+                    student={student}
+                    isParentRescheduling={false}
+                  />
+                </div>
+              ))}
+
+              {/* Avertissement de conflit */}
+              {conflictWarning && (
+                <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                  <p className="text-sm text-red-800">{conflictWarning}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRescheduleModal(null);
+                  setRescheduleValues({ scheduled_at: '', school_subjects: [], tutor_id: '' });
+                  setConflictWarning(null);
+                }}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleRescheduleSession}
+                disabled={!rescheduleValues.scheduled_at || !!conflictWarning}
+                className="flex-1"
+              >
+                Reprogrammer
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

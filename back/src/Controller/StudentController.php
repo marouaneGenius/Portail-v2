@@ -312,14 +312,23 @@ class StudentController extends AbstractController
         })->toArray();
 
         $sessions = $student->getSessions()->map(function (\App\Entity\Session $s) {
+            $tutor = $s->getIdTutor();
+            $center = $s->getCenter();
+
             return [
                 'id'             => $s->getId(),
                 'date_slot'      => $s->getDateSlot()->format('Y-m-d'),
                 'session_type'   => $s->getSessionType(),
                 'is_canceled'    => $s->isIsCanceled(),
-                'scheduled_at'    => $s->getScheduledAt(),
-                'tutor_id'       => $s->getIdTutor()?->getId(),
-                'is_paid'       => $s->isIsPaid(),
+                'scheduled_at'   => $s->getScheduledAt(),
+                'tutor_id'       => $tutor?->getId(),
+                'tutor_name'     => $tutor ? $tutor->getFirstname() . ' ' . $tutor->getLastname() : null,
+                'center_name'    => $center?->getName(),
+                'school_subjects' => $s->getSchoolSubjects(),
+                'is_paid'        => $s->isIsPaid(),
+                'is_absent'      => $s->isIsAbsent(),
+                'absent_by'      => $s->getAbsentBy(),
+                'canceled_by'    => $s->getCanceledBy(),
             ];
         })->toArray();
 
