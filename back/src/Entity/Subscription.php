@@ -76,6 +76,9 @@ class Subscription
     #[ORM\Column(nullable: true)]
     private ?string $combined_id = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $engagement = null;
+
     #[ORM\Column(length: 255)]
     private ?string $subscription_type = null;
 
@@ -376,6 +379,18 @@ class Subscription
     public function setCombinedId(?string $combined_id): static
     {
         $this->combined_id = $combined_id;
+
+        return $this;
+    }
+
+    public function getEngagement(): ?string
+    {
+        return $this->engagement;
+    }
+
+    public function setEngagement(?string $engagement): static
+    {
+        $this->engagement = $engagement;
 
         return $this;
     }

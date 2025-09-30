@@ -63,16 +63,12 @@ function useSubscriptionLogic(Student: any, Subscription: any, SubscriptionType:
             if (SubscriptionType === 'stage') {
                 computedPrice = getStagePrice(Subscription?.week_count, isCombined, isMember);
             } else if (['genius_access', 'genius_plus', 'genius_premium'].includes(SubscriptionType)) {
-                // Pour les contrats Genius, on passe le type de contrat dans offer_type
-                computedPrice = getPrice('genius_access', Subscription?.session_per_week, niveau, { 
-                    combined: isCombined, 
-                    isMember, 
-                    offer_type: SubscriptionType 
-                });
+                // Pour les contrats Genius, utiliser directement le prix calculé par le backend (déjà proratisé)
+                computedPrice = Subscription?.offer_amount || 0;
             } else {
-                computedPrice = getPrice(SubscriptionType, Subscription?.session_per_week, niveau, { 
-                    combined: isCombined, 
-                    isMember 
+                computedPrice = getPrice(SubscriptionType, Subscription?.session_per_week, niveau, {
+                    combined: isCombined,
+                    isMember
                 });
             }
 

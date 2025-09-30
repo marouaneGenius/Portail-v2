@@ -463,26 +463,26 @@ import api from "../../api/aixos";
     // Extraction des données
     const sessionPerWeek = data.session_per_week || 1;
     const discount = data.discount || 0;
-    
+
     const moisNames = [
       'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
       'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
     ];
     const jourNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
-    // Pour les contrats Genius, forcer 10 mois (année scolaire complète)
-    const nombreMois = 10;
+    // Utiliser le nombre de semaines réel du contrat (calculé côté backend)
+    const weekCount = data.week_count || 40; // Par défaut 40 si non fourni
 
-    // Le prix passé est déjà le prix mensuel, on calcule le total annuel
-    const prixMensuel = price;
-    const prixTotalAnnuel = prixMensuel * nombreMois * (1 - discount / 100);
+    // Le prix passé est déjà le prix total proratisé pour la durée réelle
+    // On applique uniquement la remise si elle existe
+    const prixTotalAnnuel = price * (1 - discount / 100);
 
     // Date de prélèvement (date de début du contrat)
     const subscriptionStartDate = data.subscription_start_date || data.first_debit_date;
     const datePrelevement = subscriptionStartDate ? new Date(subscriptionStartDate) : new Date();
-    
-    // Nombre total de séances sur l'année scolaire (40 semaines)
-    const totalSeances = sessionPerWeek * 40; // 40 semaines d'école
+
+    // Nombre total de séances selon le nombre de semaines réelles
+    const totalSeances = sessionPerWeek * weekCount;
 
     // Description avec remise si applicable
     let description = `Forfait ${

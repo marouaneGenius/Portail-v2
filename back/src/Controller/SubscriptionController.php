@@ -145,6 +145,7 @@ class SubscriptionController extends AbstractController
             'is_suspended'         => $subscription->isIsSuspended(),
             'is_programed'         => $subscription->isIsProgramed(),
             'programed_at'         => $subscription->getProgramedAt(),
+            'engagement'             => $subscription->getEngagement(),
 
             'student' => $student ? [
                 'id'        => $student->getId(),
@@ -546,11 +547,39 @@ class SubscriptionController extends AbstractController
             return $this->json(['error' => "Nombre de créneaux invalide: $actualSessionsPerWeek. Doit être entre 1 et 4."], 400);
         }
 
-        // Calculer les prix selon la grille tarifaire Genius
-        $basePrice = $this->calculateGeniusBasePrice($data['contract_type'], $actualSessionsPerWeek);
+        // Calculer le prix et le nombre de séances selon la période du contrat
+        // Les cours commencent le 15 septembre et finissent le 14 juin (max 9 mois)
+        // Si le contrat commence en milieu de mois, on facture le mois complet
+        $startDate = new \DateTime($data['contract_start_date']);
+        $fixedEndDate = new \DateTime('2026-06-14');
+
+        // Calculer le nombre de MOIS civils à facturer
+        // Du mois de début (complet) au mois de fin (complet si avant le 14)
+        $startMonth = (int)$startDate->format('n'); // 1-12
+        $startYear = (int)$startDate->format('Y');
+        $endMonth = 6; // Juin
+        $endYear = 2026;
+
+        // Calculer le nombre de mois entre le début et juin 2026
+        $monthsToCharge = (($endYear - $startYear) * 12) + ($endMonth - $startMonth) + 1;
+
+        // Maximum 9 mois de facturation (sept à juin, hors juillet-août)
+        $monthsToCharge = min($monthsToCharge, 9);
+
+        // Calculer le nombre de semaines réelles pour le nombre de séances
+        $interval = $startDate->diff($fixedEndDate);
+        $totalDays = $interval->days;
+        $actualWeeks = ceil($totalDays / 7);
+
+        // Le prix de base est un prix MENSUEL
+        $baseMensuelPrice = $this->calculateGeniusBasePrice($data['contract_type'], $actualSessionsPerWeek);
+
+        // Prix total = prix mensuel × nombre de mois à facturer
+        $basePriceProrated = $baseMensuelPrice * $monthsToCharge;
+
         $registrationFee = $data['registration_fee'] ?? 0;
         $discount = $data['discount'] ?? 0;
-        $finalPrice = $this->calculateGeniusFinalPrice($basePrice, $registrationFee, $discount);
+        $finalPrice = $this->calculateGeniusFinalPrice($basePriceProrated, $registrationFee, $discount);
 
         // Créer la subscription Genius
         $subscription = new Subscription();
@@ -558,11 +587,13 @@ class SubscriptionController extends AbstractController
         $subscription->setSubscriptionType($data['contract_type']);
         $subscription->setOfferType(null);
         $subscription->setSessionPerWeek($actualSessionsPerWeek);
+        $subscription->setWeekCount($actualWeeks); // Nombre de semaines réelles du contrat
         $subscription->setDiscount($discount);
         $subscription->setMembershipFee((float)$registrationFee);
         $subscription->setOfferAmount($finalPrice);
         $subscription->setPaymentMode('mensuel');
         $subscription->setIsValide(false);
+        $subscription->setEngagement($data['engagement']);
         
         // Sauvegarder les créneaux favoris si fournis
         if (isset($data['favorite_slots_annuel']) && is_array($data['favorite_slots_annuel'])) {
@@ -578,22 +609,16 @@ class SubscriptionController extends AbstractController
         
         // Convertir les dates
         try {
-            $startDate = new \DateTime($data['contract_start_date']);
             $subscription->setSubscriptionStartDate($startDate);
             $subscription->setFirstDebitDate($startDate);
-            
-            // Calculer la date de fin basée sur l'engagement (en mois)
-            $engagementMois = (int)$data['engagement']; // 3, 6, 9 ou 10 mois
-            $endDate = clone $startDate;
-            $endDate->add(new \DateInterval('P' . $engagementMois . 'M'));
-            $subscription->setSubscriptionEndDate($endDate);
-            
+
+            // Tous les contrats Genius se terminent le 14 juin 2026
+            $subscription->setSubscriptionEndDate($fixedEndDate);
+
         } catch (\Exception $e) {
             return $this->json(['error' => 'Format de date invalide'], 400);
         }
 
-        // Sauvegarder le type d'engagement dans un champ existant (on peut utiliser payment_mode ou créer un champ custom)
-        // Pour l'instant on stocke l'engagement dans un champ de métadonnées
         $subscription->setCreatedAt(new \DateTimeImmutable());
         $subscription->setCreatedBy($this->getUser() ? $this->getUser()->getUserIdentifier() : 'system');
 
@@ -618,8 +643,9 @@ class SubscriptionController extends AbstractController
                 'registration_fee' => $registrationFee,
                 'discount' => $subscription->getDiscount(),
                 'contract_start_date' => $subscription->getSubscriptionStartDate()->format('Y-m-d'),
-                'base_price' => $basePrice,
+                'base_price' => $basePriceProrated,
                 'final_price' => $finalPrice,
+                'weeks_count' => $actualWeeks,
                 'school_subjects' => $data['school_subjects'] ?? null,
                 'favorite_slots_annuel' => $data['favorite_slots_annuel'] ?? null,
                 'created_at' => $subscription->getCreatedAt()->format('Y-m-d H:i:s'),
@@ -872,9 +898,10 @@ class SubscriptionController extends AbstractController
             error_log("ERREUR: Date de début manquante pour subscription ID: " . $subscription->getId());
             return ['sessions_created' => 0, 'weeks_planned' => 0];
         }
-        
-        // Date de fin fixe depuis l'environnement (2026-06-14)
+
+        // Tous les contrats Genius se terminent le 14 juin 2026
         $endDate = new \DateTime('2026-06-14');
+
         $weeksBetween = ceil($startDate->diff($endDate)->days / 7);
         
         error_log("=== CRÉATION SESSIONS GENIUS ===");

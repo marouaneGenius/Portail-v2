@@ -4,6 +4,7 @@ export interface ContractHeaderProps {
   subscriptionType: number; // 1 = mensuel/preinscription, sinon annuel
   subscription: {
     subscription_start_date: string; // ex: "2025-09-01"
+    engagement?: string; // 'with_engagement' | 'without_engagement'
   };
 }
 
@@ -51,6 +52,19 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
     };
   });
 
+  // Si le contrat est avec engagement, afficher le texte d'engagement
+  if (subscription.engagement === 'with_engagement') {
+    return (
+      <div className="space-y-4 m-1 py-2" style={{ letterSpacing: '0.02em' }}>
+        <strong className="text-body">Engagement contractuel &nbsp;:</strong>
+        <p>
+          Ce contrat vous engage sur la totalité de l'année scolaire. Il entraîne donc des obligations de paiement pour la durée complète. Aucune résiliation anticipée n'est possible. En cas de non-paiement, des poursuites judiciaires pourront être engagées, à vos frais.
+        </p>
+      </div>
+    );
+  }
+
+  // Sinon, afficher la procédure de résiliation habituelle
   return (
     <div className="space-y-4 m-1 py-2" style={{ letterSpacing: '0.02em' }}>
       <strong className="text-body">Procédure de Résiliation &nbsp;:</strong>
@@ -64,7 +78,7 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
         >
           portailv2.geniusclass.fr/login
         </a>
-        &nbsp;aux dates suivantes : 
+        &nbsp;aux dates suivantes :
       </p>
       <ul className="list-disc list-inside space-y-2 text-sm">
         {items.map(({ endFr, deadlineFr }, idx) => (
@@ -76,7 +90,7 @@ const ProcedureResiliationNotice: React.FC<ContractHeaderProps> = ({ subscriptio
       </ul>
 
       <p>
-        À défaut de résiliation dans les délais indiqués, <strong>le contrat est automatiquement reconduit pour un nouveau trimestre </strong>, selon les conditions de l’article 1.
+        À défaut de résiliation dans les délais indiqués, <strong>le contrat est automatiquement reconduit pour un nouveau trimestre </strong>, selon les conditions de l'article 1.
       </p>
     </div>
   );
