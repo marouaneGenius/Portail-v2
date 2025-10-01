@@ -27,17 +27,20 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
     }, [subscription, subscriptionType, price])
 
 
-   
+
   const fraisInscriptionEndDate:any = endDateFeePrelevement(subscription, subscriptionType)
+  // Utiliser la valeur réelle des frais d'inscription depuis subscription
+  const membershipFee = subscription?.membership_fee ?? MEMEBERSHIP_FEE;
 
   return (
     <div className="space-y-4 m-1 py-2">
       <h6 className="font-semibold">Application du taux de TVA en vigueur.</h6>
- 
-      {MEMEBERSHIP_FEE && (
+
+      {membershipFee > 0 && (
         <p>
-          <strong>Frais d&apos;inscription&nbsp;</strong> de {MEMEBERSHIP_FEE}€, facturés&nbsp; le{" "}
-          {formatDateFr(fraisInscriptionEndDate)}.
+          <strong>Frais d&apos;inscription&nbsp;</strong> de {membershipFee}€
+          {/* , facturés&nbsp; le{" "}
+          {formatDateFr(fraisInscriptionEndDate)}. */}
         </p>
       )}
 
