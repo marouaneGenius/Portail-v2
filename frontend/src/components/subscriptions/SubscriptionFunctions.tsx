@@ -473,9 +473,12 @@ import api from "../../api/aixos";
     // Utiliser le nombre de semaines réel du contrat (calculé côté backend)
     const weekCount = data.week_count || 40; // Par défaut 40 si non fourni
 
-    // Le prix passé est déjà le prix total proratisé pour la durée réelle
-    // On applique uniquement la remise si elle existe
-    const prixTotalAnnuel = price * (1 - discount / 100);
+    // Le prix passé (offer_amount) contient déjà :
+    // - Le prix proratisé selon la durée réelle
+    // - Les frais d'inscription
+    // - La remise appliquée
+    // Il ne faut donc PAS réappliquer la remise ici
+    const prixTotalAnnuel = price;
 
     // Date de prélèvement (date de début du contrat)
     const subscriptionStartDate = data.subscription_start_date || data.first_debit_date;
