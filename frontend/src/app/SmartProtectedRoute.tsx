@@ -8,7 +8,7 @@ const is404Route = (pathname: string): boolean => {
   const exactRoutes = [
     '/home',
     '/dashboard',
-    '/profile', 
+    '/profile',
     '/centers',
     '/users',
     '/students',
@@ -18,7 +18,8 @@ const is404Route = (pathname: string): boolean => {
     '/session-calendar',
     '/tutors',
     '/historique',
-    '/parent-dashboard'
+    '/parent-dashboard',
+    '/trial-sessions'
   ];
 
   // Routes avec paramètres spécifiques

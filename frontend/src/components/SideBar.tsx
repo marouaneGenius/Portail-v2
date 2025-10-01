@@ -10,7 +10,8 @@ import {
   LogOut,
   CalendarRange,
   HistoryIcon,
-  GraduationCap as TutorIcon
+  GraduationCap as TutorIcon,
+  ClipboardList
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -64,19 +65,26 @@ const menuItems = [
     permission: 'session:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
   },
-  { 
-    title: 'Planning tuteurs', 
-    url: '/tutors', 
+  {
+    title: 'Planning tuteurs',
+    url: '/tutors',
     icon: CalendarRange,
     permission: 'planning:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // Gestion globale pour ADMIN/USER
   },
-  { 
-    title: 'Mon Planning', 
-    url: '/planning', 
+  {
+    title: 'Mon Planning',
+    url: '/planning',
     icon: CalendarRange,
     permission: 'planning:view',
     roles: ['ROLE_TUTOR'] // Vue personnelle pour TUTOR
+  },
+  {
+    title: 'Séances d\'essai',
+    url: '/trial-sessions',
+    icon: ClipboardList,
+    permission: 'session:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent voir les séances d'essai
   },
   { 
     title: 'Mon profil', 

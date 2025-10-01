@@ -1717,17 +1717,17 @@ class SessionController extends AbstractController
         $session->setIdTutor($newTutor);
         $session->setCenter($newCenter);
         $session->setUpdatedBy($changedBy);
-        
+
         // Ajouter une note courte dans la session pour tracer le changement
         $changeNote = sprintf(
             "T:%s→%s C:%s→%s %s",
             $oldTutor->getFirstname()[0] . $oldTutor->getLastname()[0],
-            $newTutor->getFirstname()[0] . $newTutor->getLastname()[0], 
+            $newTutor->getFirstname()[0] . $newTutor->getLastname()[0],
             $oldCenter ? $oldCenter->getName()[0] : '?',
             $newCenter->getName()[0],
             date('d/m H:i')
         );
-        
+
         // S'assurer que la note ne dépasse pas 255 caractères
         if (strlen($changeNote) <= 255) {
             $session->setResume($changeNote);
@@ -1751,6 +1751,104 @@ class SessionController extends AbstractController
                 'name' => $newCenter->getName()
             ]
         ]);
+    }
+
+    /**
+     * Récupère toutes les séances d'essai avec filtres optionnels
+     */
+    #[Route('/trial-sessions', name: 'get_trial_sessions', methods: ['GET'])]
+    public function getAllTrialSessions(Request $request): JsonResponse
+    {
+        // Récupération des paramètres de filtre
+        $centerId = $request->query->get('center_id');
+        $isPaid = $request->query->get('is_paid');
+        $isCanceled = $request->query->get('is_canceled');
+        $startDate = $request->query->get('start_date');
+        $endDate = $request->query->get('end_date');
+
+        // Construction de la requête
+        $qb = $this->sessionRepo->createQueryBuilder('s')
+            ->leftJoin('s.id_student', 'student')
+            ->leftJoin('s.idTutor', 'tutor')
+            ->leftJoin('s.center', 'center')
+            ->addSelect('student', 'tutor', 'center')
+            ->where('s.session_type = :sessionType')
+            ->setParameter('sessionType', 'trial_session')
+            ->orderBy('s.created_at', 'DESC');
+
+        // Application des filtres
+        if ($centerId && $centerId !== 'all') {
+            $qb->andWhere('center.id = :centerId')
+               ->setParameter('centerId', $centerId);
+        }
+
+        if ($isPaid !== null && $isPaid !== '' && $isPaid !== 'all') {
+            $qb->andWhere('s.is_paid = :isPaid')
+               ->setParameter('isPaid', filter_var($isPaid, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($isCanceled !== null && $isCanceled !== '' && $isCanceled !== 'all') {
+            $qb->andWhere('s.is_canceled = :isCanceled')
+               ->setParameter('isCanceled', filter_var($isCanceled, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($startDate) {
+            $qb->andWhere('s.scheduled_at >= :startDate')
+               ->setParameter('startDate', new \DateTimeImmutable($startDate));
+        }
+
+        if ($endDate) {
+            $qb->andWhere('s.scheduled_at <= :endDate')
+               ->setParameter('endDate', new \DateTimeImmutable($endDate . ' 23:59:59'));
+        }
+
+        $sessions = $qb->getQuery()->getResult();
+
+        // Formater les données pour la réponse
+        $data = array_map(function($session) {
+            $students = $session->getIdStudent();
+            $tutor = $session->getIdTutor();
+            $center = $session->getCenter();
+
+            return [
+                'id' => $session->getId(),
+                'scheduled_at' => $session->getScheduledAt()?->format('Y-m-d H:i:s'),
+                'date_slot' => $session->getDateSlot()?->format('Y-m-d'),
+                'school_subjects' => $session->getSchoolSubjects(),
+                'is_paid' => $session->isIsPaid(),
+                'is_canceled' => $session->isIsCanceled(),
+                'is_absent' => $session->isIsAbsent(),
+                'stripe_number' => $session->getStripeNumber(),
+                'resume' => $session->getResume(),
+                'created_at' => $session->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'created_by' => $session->getCreatedBy(),
+                'students' => array_map(fn($s) => [
+                    'id' => $s->getId(),
+                    'firstname' => $s->getFirstname(),
+                    'lastname' => $s->getLastname(),
+                    'email' => $s->getEmail(),
+                    'class' => $s->getClass(),
+                    'phone' => $s->getPhone(),
+                ], $students->toArray()),
+                'tutor' => $tutor ? [
+                    'id' => $tutor->getId(),
+                    'firstname' => $tutor->getFirstname(),
+                    'lastname' => $tutor->getLastname(),
+                    'email' => $tutor->getEmail(),
+                ] : null,
+                'center' => $center ? [
+                    'id' => $center->getId(),
+                    'name' => $center->getName(),
+                    'city' => $center->getCity(),
+                    'address' => $center->getAddress(),
+                ] : null,
+            ];
+        }, $sessions);
+
+        return new JsonResponse([
+            'total' => count($data),
+            'sessions' => $data
+        ], JsonResponse::HTTP_OK);
     }
 
 }

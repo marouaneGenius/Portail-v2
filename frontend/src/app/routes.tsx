@@ -31,6 +31,7 @@ import PaymentCancel from "../pages/PaymentCancel";
 import Page404 from "../pages/Page404";
 import SmartProtectedRoute from "./SmartProtectedRoute";
 import GeniusContracts from "@/components/subscriptions/GeniusContracts";
+import TrialSessions from "../pages/TrialSessions";
 
 export const router = createBrowserRouter([
     {
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
                 { path: "/historique", element: <HistoriqueModifications /> },
                 { path: "/parent-dashboard", element: <ParentDashboard /> },
                 { path: '/genius-contract/:id', element: <GeniusContracts /> },
+                { path: '/trial-sessions', element: <TrialSessions /> },
                 // Routes génériques à la fin
                 { path: '/:resource/:id', element: <ItemDetails /> },
                 { path: '/:resource/:id/edit', element: <EditionForm /> },
