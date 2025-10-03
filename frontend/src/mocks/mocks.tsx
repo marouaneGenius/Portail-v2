@@ -45,7 +45,7 @@ export const ClassesOptions = [
     { value: 'ses', label: 'SES' },
     { value: 'philosophie', label: 'Philosophie' },
     { value: 'anglais', label: 'Anglais' },
-    { value: 'espagnole', label: 'Espagnole' },
+    { value: 'espagnol', label: 'Espagnol' },
     { value: 'svt', label: 'SVT' },
     { value: 'nsi', label: 'NSI' },
     { value: 'histoire', label: 'Histoire' },

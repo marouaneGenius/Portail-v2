@@ -226,14 +226,19 @@ export const ScheduleArrayField: React.FC<ScheduleArrayFieldProps> = ({
 
       const hasSessions = sessions.some((session: any) => {
         if (!session.scheduled_at) return false;
-        
+
         const sessionDate = new Date(session.scheduled_at);
+        const now = new Date();
+
+        // Vérifier si la session est dans le futur
+        if (sessionDate <= now) return false;
+
         const sessionDay = sessionDate.toLocaleDateString('fr-FR', { weekday: 'long' });
         const sessionTime = sessionDate.toTimeString().slice(0, 5); // HH:MM format
-        
+
         // Vérifier si la session correspond au créneau
-        return sessionDay === schedule.day && 
-               sessionTime >= schedule.start_hour && 
+        return sessionDay === schedule.day &&
+               sessionTime >= schedule.start_hour &&
                sessionTime <= schedule.end_hour &&
                !session.is_canceled; // Ne pas compter les séances annulées
       });
