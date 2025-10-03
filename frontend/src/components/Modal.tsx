@@ -21,15 +21,15 @@ const Modal: React.FC<ModalProps> = ({
   // Le contenu du modal
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 "
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-4xl"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex justify-between items-center px-4 py-2 border-b">
+          <div className="flex justify-between items-center px-4 py-2 border-b flex-shrink-0">
             <h2 className="text-lg font-semibold">{title}</h2>
             <button
               onClick={onClose}
@@ -40,10 +40,10 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="p-0">{children}</div>
+        <div className="p-0 overflow-y-auto flex-1">{children}</div>
 
         {footer && (
-          <div className="px-4 py-2 border-t flex justify-end space-x-2">
+          <div className="px-4 py-2 border-t flex justify-end space-x-2 flex-shrink-0">
             {footer}
           </div>
         )}
