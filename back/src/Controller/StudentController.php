@@ -290,7 +290,7 @@ class StudentController extends AbstractController
     }
 
 
-    #[Route('/{id}', methods: ['GET'])]
+    #[Route('/{id}', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(int $id): JsonResponse
     {
         $student = $this->studentRepo->find($id);
@@ -629,6 +629,77 @@ class StudentController extends AbstractController
 
         // Si aucune contract groupé ou aucune n'est valide
         return new JsonResponse(['is_member' => false]);
+    }
+
+    /**
+     * Exporte la liste des étudiants avec les informations des parents et centres en CSV.
+     */
+    #[Route('/export-csv', name: 'api_students_export_csv', methods: ['GET'])]
+    public function exportCsv(): Response
+    {
+        $students = $this->studentRepo->findAll();
+
+        $csvData = [];
+        $csvData[] = [
+            'ID',
+            'Prénom',
+            'Nom',
+            'Genre',
+            'Classe',
+            'Téléphone Élève',
+            'Email Élève',
+            'Actif',
+            'Centre',
+            'Parent - Prénom',
+            'Parent - Nom', 
+            'Parent - Genre',
+            'Parent - Email',
+            'Parent - Téléphone',
+            'Date de création',
+            'Créé par'
+        ];
+
+        foreach ($students as $student) {
+            $center = $student->getIdCenter();
+            $centerName = $center ? $center->getName() : '';
+
+            // Récupérer le premier parent
+            $parents = $student->getIdParent();
+            $firstParent = $parents->count() > 0 ? $parents->first() : null;
+
+            $csvData[] = [
+                $student->getId(),
+                $student->getFirstname(),
+                $student->getLastname(),
+                $student->getGender(),
+                $student->getClass(),
+                $student->getPhone() ?: '',
+                $student->getEmail() ?: '',
+                $student->isIsActive() ? 'Oui' : 'Non',
+                $centerName,
+                $firstParent ? $firstParent->getFirstname() : '',
+                $firstParent ? $firstParent->getLastname() : '',
+                $firstParent ? $firstParent->getGender() : '',
+                $firstParent ? $firstParent->getEmail() : '',
+                $firstParent ? $firstParent->getPhone() : '',
+                $student->getCreatedAt() ? $student->getCreatedAt()->format('Y-m-d H:i:s') : '',
+                $student->getCreatedBy() ?: ''
+            ];
+        }
+
+        // Créer le contenu CSV
+        $csvContent = '';
+        foreach ($csvData as $row) {
+            $csvContent .= implode(';', array_map(function($field) {
+                return '"' . str_replace('"', '""', $field) . '"';
+            }, $row)) . "\n";
+        }
+
+        $response = new Response($csvContent);
+        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="export_eleves_' . date('Y-m-d_H-i-s') . '.csv"');
+
+        return $response;
     }
 
     // private function isProdEnv(): bool

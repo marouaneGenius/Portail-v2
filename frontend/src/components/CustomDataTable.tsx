@@ -131,26 +131,48 @@ export default function CustomDataTable({
   };
 
   // Helper pour exporter en CSV
-  const exportToCSV = () => {
-    if (!filteredData.length) return;
-    const replacer = (key: string, value: any) => value === null ? '' : value;
-    const header = Object.keys(filteredData[0]);
-    const csv = [
-      header.join(';'),
-      ...filteredData.map(row =>
-        header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(';')
-      ),
-    ].join('\r\n');
+  const exportToCSV = async () => {
+    if (endpoint === 'student') {
+      // Export spécifique pour les élèves avec informations parents et centres
+      try {
+        const response = await api.get('/api/student/export-csv', {
+          responseType: 'blob'
+        });
+        
+        const url = URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', response.headers['content-disposition']?.split('filename=')[1]?.replace(/"/g, '') || `export_eleves_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Erreur lors de l\'export des élèves:', error);
+        alert('Erreur lors de l\'export');
+      }
+    } else {
+      // Export générique pour les autres entités
+      if (!filteredData.length) return;
+      const replacer = (_key: string, value: any) => value === null ? '' : value;
+      const header = Object.keys(filteredData[0]);
+      const csv = [
+        header.join(';'),
+        ...filteredData.map(row =>
+          header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(';')
+        ),
+      ].join('\r\n');
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${endpoint}-export.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${endpoint}-export.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   // Gestion du clic sur l'en-tête pour trier
@@ -180,7 +202,7 @@ export default function CustomDataTable({
             variant="outline"
             className="flex items-center gap-2"
             onClick={exportToCSV}
-            disabled={filteredData.length === 0}
+            disabled={endpoint !== 'student' && filteredData.length === 0}
           >
             <Download className="w-4 h-4" />
             Exporter
