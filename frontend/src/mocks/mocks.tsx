@@ -62,7 +62,7 @@ export const ClassesOptions = [
   export const tiers = [
     {
       id: "stage",
-      title: "Stage d'été",
+      title: "Stage",
       img: "/images/stage-ete.svg",
       gradient: "from-rose-400 to-orange-400",
     },

@@ -83,7 +83,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ values, order, onEdit, onConfir
         onClick={onConfirm}
         className="w-full sm:w-auto bg-hello-yellow hover:bg-crazy-magenta text-mister-anthracite hover:text-white font-bold px-10 py-3 rounded-xl shadow-lg transition-all text-lg flex items-center justify-center gap-2"
       >
-        <HiCheckCircle className="w-6 h-6" /> Valider et envoyer
+        <HiCheckCircle className="w-6 h-6" /> Valider
       </button>
     </div>
   );
