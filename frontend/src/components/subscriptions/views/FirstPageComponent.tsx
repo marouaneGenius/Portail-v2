@@ -11,32 +11,44 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
   const devisNumber = subscription?.id || '';
   const devisDate = subscription?.created_at || '';
 
-  // Calculer le nombre d'heures basé sur les données disponibles
-  const sessionPerWeek = subscription?.session_per_week || 1;
-  const weeklyHours = subscription?.weekly_hours || '';
-
   let phrase = '';
   let nbSeances = 1;
 
-  if (sessionPerWeek === 2 || weeklyHours === '3h00/semaine') {
-    nbSeances = 2;
-    phrase = '3h';
-  } else if (sessionPerWeek === 4 || weeklyHours === '6h00/semaine') {
-    nbSeances = 4;
-    phrase = '6h';
-  } else if (sessionPerWeek === 3 || weeklyHours === '4h30/semaine') {
-    nbSeances = 3;
-    phrase = '4h30';
+  // Logique spécifique pour les stages
+  if (subscriptionType === 'stage') {
+    const weekCount = subscription?.week_count || 1;
+    if (weekCount === 1) {
+      phrase = '1 semaine';
+    } else if (weekCount === 2) {
+      phrase = '2 semaines';
+    } else {
+      phrase = `${weekCount} semaines`;
+    }
   } else {
-    nbSeances = 1;
-    phrase = '1h30';
-  }
+    // Logique existante pour les autres types d'abonnements
+    const sessionPerWeek = subscription?.session_per_week || 1;
+    const weeklyHours = subscription?.weekly_hours || '';
 
-  // Si on a weeklyHours directement, l'utiliser
-  if (weeklyHours && weeklyHours.includes('h')) {
-    const match = weeklyHours.match(/(\d+h\d*)/);
-    if (match) {
-      phrase = match[1];
+    if (sessionPerWeek === 2 || weeklyHours === '3h00/semaine') {
+      nbSeances = 2;
+      phrase = '3h';
+    } else if (sessionPerWeek === 4 || weeklyHours === '6h00/semaine') {
+      nbSeances = 4;
+      phrase = '6h';
+    } else if (sessionPerWeek === 3 || weeklyHours === '4h30/semaine') {
+      nbSeances = 3;
+      phrase = '4h30';
+    } else {
+      nbSeances = 1;
+      phrase = '1h30';
+    }
+
+    // Si on a weeklyHours directement, l'utiliser
+    if (weeklyHours && weeklyHours.includes('h')) {
+      const match = weeklyHours.match(/(\d+h\d*)/);
+      if (match) {
+        phrase = match[1];
+      }
     }
   }
 
@@ -77,11 +89,23 @@ const FirstPageComponent: React.FC<FirstPageProps> = ({ student, subscription, s
       <div>
         <div>
           <h1 style={{ fontSize: 80 }}>
-            Accompagnons {studentName} avec{' '}
-            <strong className="poppins-title-bold">
-              <span className="text-warning">{phrase}</span> de cours par
-            </strong>{' '}
-            <strong className="bold-title poppins-title-bold">semaine</strong>
+            {subscriptionType === 'stage' ? (
+              <>
+                Accompagnons {studentName} avec{' '}
+                <strong className="poppins-title-bold">
+                  <span className="text-warning">{phrase}</span> de
+                </strong>{' '}
+                <strong className="bold-title poppins-title-bold">stage</strong>
+              </>
+            ) : (
+              <>
+                Accompagnons {studentName} avec{' '}
+                <strong className="poppins-title-bold">
+                  <span className="text-warning">{phrase}</span> de cours par
+                </strong>{' '}
+                <strong className="bold-title poppins-title-bold">semaine</strong>
+              </>
+            )}
           </h1>
         </div>
         <br />

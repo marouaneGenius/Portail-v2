@@ -3,7 +3,7 @@ import { FIXED_END_DATE } from "../../mocks/constants";
 import { ClassesOptions, WeeksOptions, WeeksOptionss } from "../../mocks/mocks";
 import SlotSelector from "../subscriptions/SlotSelector";
 import { TutorAvailabilityPicker } from "../subscriptions/TutorAvailabilityPicker";
-import VacationWeekSelector from "../subscriptions/WeeksAvailiabilityPicker";
+import StageConfigSelector from "../subscriptions/StageConfigSelector";
 import GroupedInputs from "./GroupedInputs";
 import { DateTimePicker } from "../ui/date-time-picker";
 import { TutorListComponent } from "../sessions/TutorListComponent";
@@ -335,7 +335,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       );
     }
   
-    if (f.name === 'offer_amount' || f.name === 'offer_type' || f.name === 'discount') {
+    // Pour les stages, ne pas grouper le discount - il utilisera le select standard
+    if ((f.name === 'offer_amount' || f.name === 'offer_type' || f.name === 'discount') && title !== 'Stage') {
       return (
         <GroupedInputs
           defaultOpen={true}  
@@ -380,14 +381,16 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Stage ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if(title === 'Stage'){
-    if(f.name === 'week_count'){
-      return <VacationWeekSelector
-        onSelect={(data:any) => {
+    if(f.name === 'stage_config'){
+      return <StageConfigSelector
+        value={values[f.name]}
+        onSelect={(data: any) => {
           setValues((prev: any) => ({
             ...prev,
             week_count: data.week_count,
-            known_weeks: data.known_weeks,
-            selected_weeks: data.selected_weeks
+            selected_weeks: data.selected_weeks,
+            stage_config_valid: data.isValid, // Stocker l'état de validation
+            [f.name]: data
           }));
         }}
       />
@@ -423,18 +426,8 @@ export const RenderField : React.FC<RenderFieldProps> = ({f, values, setValues, 
       />
     }
 
-    if(f.name === 'discount') {
-      return <GroupedInputs
-        fields={[
-          { name: 'discount', label: 'Reduction',
-            type: 'text',
-            value: values.discount,
-            onChange: handleChange,
-            defaultValue: '0',   
-          }
-        ]}
-      />
-    }
+    // Laisser le champ discount utiliser la définition standard du schema pour les stages
+    // (pas de custom input pour discount dans les stages)
 
 
 

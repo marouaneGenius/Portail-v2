@@ -18,7 +18,7 @@ import AddressAutocomplete from './AddressAutocomplete';
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array' | 'datetime-local';
+  type: 'text' | 'email' | 'select' | 'date' | 'checkbox' | 'password' | 'radio' | 'time' | 'array' | 'datetime-local' | 'custom';
   options?: { value: any; label: string }[]; // pour les select
   required?: boolean;
   className?: String;

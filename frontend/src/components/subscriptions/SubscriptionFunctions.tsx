@@ -67,15 +67,16 @@ import api from "../../api/aixos";
   };
 
 
-  export const getStagePrice = (    week_count: any,
-    hasPreinscription: boolean,
-    isMember: boolean) => {
-     
-    const baseTarifs:any = hasPreinscription || isMember
-    ? { 1: 280, 2: 500, 3: 800 }
-    : { 1: 350, 2: 620, 3: 930 };
-
-    return baseTarifs[week_count];
+  export const getStagePrice = (week_count: any, hasPreinscription: boolean, isMember: boolean) => {
+    // Support pour le nouveau format stage_selection
+    if (typeof week_count === 'string' && week_count.includes('_week')) {
+      if (week_count.startsWith('1_week')) return 400;
+      if (week_count.startsWith('2_weeks')) return 600;
+    }
+    
+    // Nouveaux tarifs uniformes (400€ et 600€)
+    const baseTarifs:any = { 1: 400, 2: 600 };
+    return baseTarifs[week_count] || 400;
   }
 
 
@@ -84,34 +85,33 @@ import api from "../../api/aixos";
     hasPreinscription: boolean,
     isMember: boolean
   ) {
-    // 1) Base tarifs
-    const baseTarifs:any = hasPreinscription || isMember
-      ? { 1: 280, 2: 500, 3: 800 }
-      : { 1: 350, 2: 620, 3: 930 };
-    const suppl = hasPreinscription || isMember ? 200 : 300;
+    // 1) Déterminer le nombre de semaines et le prix à partir de stage_selection
+    let nbSemaines = 1;
+    let prixTotalAvantRemise = 400;
+    
+    if (data.stage_selection) {
+      if (data.stage_selection.startsWith('1_week')) {
+        nbSemaines = 1;
+        prixTotalAvantRemise = 400;
+      } else if (data.stage_selection.startsWith('2_weeks')) {
+        nbSemaines = 2;
+        prixTotalAvantRemise = 600;
+      }
+    } else if (data.week_count) {
+      // Fallback pour l'ancien format
+      nbSemaines = parseInt(data.week_count);
+      const baseTarifs:any = { 1: 400, 2: 600 };
+      prixTotalAvantRemise = baseTarifs[nbSemaines] ?? baseTarifs[1];
+    }
   
-    // 2) Prix total avant remise
-    const nbSemaines = data.week_count;
-    const prixTotalAvantRemise =
-      nbSemaines <= 3
-        ? baseTarifs[nbSemaines] ?? baseTarifs[1]
-        : baseTarifs[3] + (nbSemaines - 3) * suppl;
-  
-    // 3) Appliquer la remise
+    // 2) Appliquer la remise (20% si sélectionnée)
+    const discount = parseInt(data.discount || '0');
     const prixReduit = Math.round(
-      prixTotalAvantRemise * (1 - (data.discount ?? 0) / 100)
+      prixTotalAvantRemise * (1 - discount / 100)
     );
   
-    // 4) Déterminer le nombre d’échéances
-    const nbEcheances =
-      data.installment_count && data.installment_count > 0
-        ? data.installment_count
-        : data.selected_weeks.length;
-  
-    // 5) Répartition
-
-    const prixAvantEch = Math.round((prixReduit * 2) / nbEcheances);
-    const prixApresEch = Math.round(prixAvantEch / 2);
+    // 4) Paiement en une seule fois pour les stages
+    const nbEcheances = 1;
   
     const rawDatesIso = buildPaymentDates(
       data.first_debit_date,   // ta première date de prélèvement
@@ -128,16 +128,34 @@ import api from "../../api/aixos";
            + `${frenchMonths[d.getMonth()]} ${d.getFullYear()}`;
     };
 
-    // 8) Construire les lignes
-    const lignes: any[] = rawDatesIso.map((iso:any, idx:any) => ({
-      description: `Échéance ${idx + 1}`,
+    // 8) Construire les lignes pour stages
+    const semaines = nbSemaines === 1 ? '1 semaine' : `${nbSemaines} semaines`;
+    let descriptionBase = `Contrat de ${semaines} de stage`;
+    
+    // Ajouter les semaines sélectionnées
+    if (data.selected_weeks && Array.isArray(data.selected_weeks)) {
+      const semainesFormatees = data.selected_weeks.map((week: string) => {
+        if (week === '2024-10-20') return 'du 20/10 au 24/10';
+        if (week === '2024-10-27') return 'du 27/10 au 31/10';
+        if (week === 'unknown') return 'dates à définir';
+        return week;
+      }).join(' et ');
+      descriptionBase += ` (${semainesFormatees})`;
+    }
+    
+    if (discount > 0) {
+      descriptionBase += ` - Remise de ${discount}%`;
+    }
+    
+    const lignes: any[] = rawDatesIso.map((iso:any) => ({
+      description: descriptionBase,
       datePrelevement: formatFR(iso),
-      tarifAvant: prixAvantEch,
-      tarifApres: prixApresEch,
+      tarifAvant: prixReduit, // Utiliser le prix final réduit
+      tarifApres: prixReduit,
     }));
   
-    // 9) Totaux
-    const totalApresReduction = prixApresEch * nbEcheances;
+    // 9) Totaux corrigés
+    const totalApresReduction = prixReduit; // Le prix total est le prix réduit (paiement en une fois)
     const totalHeures = nbSemaines * 5 * 3; // 3h/jour, 5j/sem
     const coutHoraire =
       totalHeures > 0 ? Number((totalApresReduction / totalHeures).toFixed(2)) : 0;
@@ -560,10 +578,10 @@ import api from "../../api/aixos";
     };
 
     // Tarifs pour "stage" (semaines)
-    const stageMember =    { 1: 280, 2: 500, 3: 800 };
-    const stageNonMember = { 1: 350, 2: 620, 3: 930 };
+    const stageMember =    { 1: 400, 2: 600 };
+    const stageNonMember = { 1: 400, 2: 600 };
     const extraMember      = 200;  // euros / semaine supplémentaire
-    const extraNonMember   = 300;
+    const extraNonMember   = 200;
 
     // Tarifs pour "genius" (prix mensuels selon le type)
     const genius = {
@@ -610,11 +628,11 @@ import api from "../../api/aixos";
           const baseTable:any = isMember ? stageMember : stageNonMember;
           const extraRate = isMember ? extraMember : extraNonMember;
           if (weeks <= 0) return null;
-          if (weeks <= 3) {
+          if (weeks <= 2) {
             return baseTable[weeks] || null;
           }
-          // plus de 3 semaines : tarif pour 3 + extras
-          return baseTable[3] + extraRate * (weeks - 3);
+          // plus de 2 semaines : tarif pour 2 + extras
+          return baseTable[2] + extraRate * (weeks - 2);
 
         case 'genius_access':
           // Pour les contrats Genius, on utilise l'offer_type pour déterminer la grille

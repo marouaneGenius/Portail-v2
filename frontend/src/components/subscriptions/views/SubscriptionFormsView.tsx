@@ -68,6 +68,30 @@ const SubscriptionsFormView: React.FC<any> = () => {
       processedRaw.membership_fee = parseInt(processedRaw.membership_fee) || 0;
     }
 
+    // Traitement spécial pour les stages
+    if (type === 'stage' && processedRaw.stage_selection) {
+      const stageSelection = processedRaw.stage_selection;
+      
+      // Extraire week_count et selected_weeks du stage_selection
+      if (stageSelection.startsWith('1_week')) {
+        processedRaw.week_count = 1;
+        if (stageSelection === '1_week_20oct') {
+          processedRaw.selected_weeks = ['2024-10-20'];
+        } else if (stageSelection === '1_week_27oct') {
+          processedRaw.selected_weeks = ['2024-10-27'];
+        } else if (stageSelection === '1_week_unknown') {
+          processedRaw.selected_weeks = ['unknown'];
+        }
+      } else if (stageSelection.startsWith('2_weeks')) {
+        processedRaw.week_count = 2;
+        if (stageSelection === '2_weeks_both') {
+          processedRaw.selected_weeks = ['2024-10-20', '2024-10-27'];
+        } else if (stageSelection === '2_weeks_unknown') {
+          processedRaw.selected_weeks = ['unknown'];
+        }
+      }
+    }
+
     const common = {
       ...processedRaw,
       subscription_type: type,
@@ -75,6 +99,7 @@ const SubscriptionsFormView: React.FC<any> = () => {
       created_by      : author,
       combined_id       : combined ?? null,
     };
+    
     if (type === 'annuel') {
       return {
         ...common,
@@ -82,7 +107,6 @@ const SubscriptionsFormView: React.FC<any> = () => {
                           ? raw.favorite_slots.length
                           : undefined,
         subscription_end_date: formatDateToYYYYMMDD(FIXED_END_DATE)
-
       };
     }
 

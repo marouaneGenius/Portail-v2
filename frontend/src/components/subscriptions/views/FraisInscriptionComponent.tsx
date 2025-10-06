@@ -36,7 +36,8 @@ const FraisInscriptionComponent: React.FC<ContractHeaderProps> = ({student, subs
     <div className="space-y-4 m-1 py-2">
       <h6 className="font-semibold">Application du taux de TVA en vigueur.</h6>
 
-      {membershipFee > 0 && (
+      {/* Ne pas afficher les frais d'inscription pour les stages */}
+      {membershipFee > 0 && subscriptionType !== 'stage' && (
         <p>
           <strong>Frais d&apos;inscription&nbsp;</strong> de {membershipFee}€
           {/* , facturés&nbsp; le{" "}

@@ -119,22 +119,15 @@ export const TrialSession: FormField[] = [
 ];
 
 export const StageFields: FormField[] = [
-  { name: 'week_count', label: '', type: 'select', required: true, options:WeeksOptions},
-  { name: 'subscription_start_date', label: '', type: 'date', required: true},
-  { name: 'installment_count', label: 'Échelonnement du paiement ', type: 'select', required: true,
-    options: [ 
-      { value: '1', label: 'Paiement en une seule fois' }, 
-      { value: '2', label: 'Paiement en 2 fois (mensuel)' }, 
-      { value: '3', label: 'Paiement en 3 fois (mensuel)' }, 
-    ] },
-  { name: 'first_debit_date', label: ' ', type: 'date', required: true},
-  { name: 'school_subjects', label: 'Matieres', type: 'select',  multiple: true, required: true },
-  { name: 'discount', label: '', type: 'text'},
-  // { name: 'known_weeks', label: 'semaines choisis', type: 'select', required: true, options: [
-  //   { value: 'known', label: 'Je connais toutes mes semaines' },
-  //   { value: 'unknown', label: 'Dates non connues pour le moment' },
-  //   { value: 'partial', label: 'Une partie connue, le reste à définir plus tard' },
-  // ] },
+  { name: 'stage_config', label: 'Configuration du stage', type: 'custom', required: true },
+  { name: 'school_subjects', label: 'Matières', type: 'select', multiple: true, required: true },
+  { name: 'discount', label: 'Remise', type: 'select', required: true,
+    options: [
+      { value: '0', label: '0 (pas de remise)' },
+      { value: '20', label: '20% de remise' }
+    ]
+  },
+  { name: 'first_debit_date', label: 'Date de paiement', type: 'date', required: true},
 ]
 
 export const PreinscriptionFields: FormField[] = [
@@ -175,7 +168,7 @@ export const UpdateSlotForm: FormField[] = [
 
 // Champs pour le formulaire contrat Genius
 export const GeniusContractStep0: FormField[] = [
-  { name: 'favorite_slots_annuel', label: 'Créneaux et tuteur', type: 'custom', required: true },
+  { name: 'favorite_slots_annuel', label: 'Créneaux et tuteur', type: 'text', required: true },
 ];
 
 export const GeniusContractStep1: FormField[] = [

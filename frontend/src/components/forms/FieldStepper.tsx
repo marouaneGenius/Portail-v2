@@ -61,9 +61,10 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
 
   // check si le champ requis est vide
   const isRequiredAndEmpty = required && (
-    value === undefined ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
+    // Validation spéciale pour le champ stage_config
+    title === 'Stage' && current.name === 'stage_config' 
+      ? values.stage_config_valid !== true
+      : (value === undefined || value === '' || (Array.isArray(value) && value.length === 0))
   );
 
   useEffect(() => {
@@ -123,6 +124,12 @@ const FieldStepper: React.FC<Props> = ({ title, fields, onBack, onNext, initialV
     const allFieldsValid = fields.every(field => {
       const fieldValue = values[field.name];
       const fieldRequired = field.required;
+      
+      // Validation spéciale pour les stages
+      if (title === 'Stage' && field.name === 'stage_config') {
+        return values.stage_config_valid === true;
+      }
+      
       return !fieldRequired || (fieldValue !== undefined && fieldValue !== '' && (!Array.isArray(fieldValue) || fieldValue.length > 0));
     });
 
