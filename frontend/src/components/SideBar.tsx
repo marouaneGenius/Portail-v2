@@ -147,7 +147,7 @@ const CustomSidebar: React.FC = () => {
         `}
       >
         <SidebarHeader className="border-b border-fading-grey p-4 sm:p-6">
-          <div className="flex items-center gap-2 sm:gap-3">
+          <NavLink to="/dashboard" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
             <img
               src="/logo/GENIUS-THUNDERBOLD-BIG.png"
               alt="Logo Genius"
@@ -157,7 +157,7 @@ const CustomSidebar: React.FC = () => {
               <h2 className="text-base sm:text-lg font-bold text-mister-anthracite">Genius</h2>
               <p className="text-xs sm:text-sm text-mister-anthracite/70">Soutien scolaire</p>
             </div>
-          </div>
+          </NavLink>
           {/* Bouton fermer sur mobile */}
           <button
             className="absolute top-4 right-4 sm:hidden text-mister-anthracite"

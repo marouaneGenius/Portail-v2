@@ -38,3 +38,8 @@ export const getUser = async (id:string) => {
   const response = await api.get<any[]>(`/api/user/${id}`);
   return response.data;
 }
+
+export const getDashboardStats = async () => {
+  const response = await api.get('/api/dashboard/stats');
+  return response.data;
+}
