@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@mui/material";
-import { Calendar, CreditCard, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Calendar, CreditCard, CheckCircle, Clock, AlertCircle, Copy, Check } from "lucide-react";
 import api from '../api/aixos';
 import { getDate } from '../services/functions';
 import { useAuth } from '@/Hooks/auth';
@@ -12,6 +12,7 @@ interface TrialSession {
   is_canceled: boolean;
   is_paid: boolean;
   session_type: string;
+  payment_link?: string; // Lien de paiement Stripe
   id_tutor?: any; // Pour vérifier si la séance a été programmée
 }
 
@@ -21,14 +22,26 @@ interface TrialSessionCardProps {
   onSessionUpdate: () => void;
 }
 
-export const PaymentStatus: React.FC<TrialSessionCardProps> = ({ 
-  studentId, 
-  sessions, 
-  onSessionUpdate 
+export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
+  studentId,
+  sessions,
+  onSessionUpdate
 }) => {
   const [paymentStatuses, setPaymentStatuses] = useState<{[key: number]: any}>({});
   const [loading, setLoading] = useState<{[key: number]: boolean}>({});
+  const [copiedLink, setCopiedLink] = useState<number | null>(null);
   const { user }:any = useAuth();
+
+  const copyToClipboard = async (link: string, sessionId: number) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedLink(sessionId);
+      setTimeout(() => setCopiedLink(null), 2000);
+    } catch (error) {
+      console.error('Erreur lors de la copie:', error);
+      alert('Erreur lors de la copie du lien');
+    }
+  };
 
   const upcomingTrialSessions = sessions.filter(session => 
     session.session_type === 'trial_session'
@@ -185,8 +198,8 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
                         ⏳ En attente du paiement pour programmer cette séance
                       </p>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outlined" 
+                        <Button
+                          variant="outlined"
                           color="primary"
                           size="small"
                           onClick={() => checkPaymentStatus(session.id)}
@@ -197,8 +210,8 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
                           {isLoading ? 'Vérification...' : 'Vérifier paiement'}
                         </Button>
                         {paymentStatus?.payment_link_url && (
-                          <Button 
-                            variant="outlined" 
+                          <Button
+                            variant="outlined"
                             color="warning"
                             size="small"
                             onClick={() => window.open(paymentStatus.payment_link_url, '_blank')}
@@ -208,6 +221,29 @@ export const PaymentStatus: React.FC<TrialSessionCardProps> = ({
                           </Button>
                         )}
                       </div>
+
+                      {/* Bouton pour copier le lien de paiement */}
+                      {session.payment_link && (
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          size="small"
+                          onClick={() => copyToClipboard(session.payment_link!, session.id)}
+                          startIcon={copiedLink === session.id ? <Check /> : <Copy />}
+                          sx={{
+                            borderColor: copiedLink === session.id ? '#10b981' : '#d1d5db',
+                            color: copiedLink === session.id ? '#10b981' : '#6b7280',
+                            '&:hover': {
+                              borderColor: copiedLink === session.id ? '#059669' : '#9ca3af',
+                              backgroundColor: copiedLink === session.id ? '#f0fdf4' : '#f9fafb',
+                            },
+                            textTransform: 'none',
+                            fontWeight: 400,
+                          }}
+                        >
+                          {copiedLink === session.id ? 'Lien copié !' : 'Copier le lien de paiement'}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

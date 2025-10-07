@@ -87,6 +87,9 @@ class Session
     #[ORM\ManyToOne(inversedBy: 'sessions')]
     private ?Center $center = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $payment_link = null;
+
     public function __construct()
     {
         $this->id_student = new ArrayCollection();
@@ -400,6 +403,18 @@ class Session
     public function setCenter(?Center $center): static
     {
         $this->center = $center;
+
+        return $this;
+    }
+
+    public function getPaymentLink(): ?string
+    {
+        return $this->payment_link;
+    }
+
+    public function setPaymentLink(?string $payment_link): static
+    {
+        $this->payment_link = $payment_link;
 
         return $this;
     }

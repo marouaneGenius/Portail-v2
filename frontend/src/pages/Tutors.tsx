@@ -162,7 +162,7 @@ export default function Tutors() {
     <div className="p-6 space-y-8">
       <h2 className="text-3xl font-bold mb-6 text-mister-anthracite flex items-center gap-3">
         <Users className="w-8 h-8 text-hello-yellow" />
-        Planing des Tuteurs
+        Planning des Tuteurs
       </h2>
 
       {/* Filtres */}

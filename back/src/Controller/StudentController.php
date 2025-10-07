@@ -329,6 +329,7 @@ class StudentController extends AbstractController
                 'is_absent'      => $s->isIsAbsent(),
                 'absent_by'      => $s->getAbsentBy(),
                 'canceled_by'    => $s->getCanceledBy(),
+                'payment_link'   => $s->getPaymentLink(),
             ];
         })->toArray();
 

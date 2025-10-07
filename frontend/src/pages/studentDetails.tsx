@@ -7,6 +7,7 @@ import { ActionGrid } from "../components/CustomAlert";
 import { getDate } from "../services/functions";
 import { GradientCard } from "../components/GardientCard";
 import { useAuth } from "@/Hooks/auth";
+import { PaymentStatus } from "../components/TrialSessionCard";
 
 interface StudentItem {
     id: string;
@@ -314,43 +315,11 @@ interface StudentItem {
                                 )}
 
                                 {activeTab === 'trial' && (
-                                    trialSessions.length > 0 ? (
-                                        trialSessions.map((session: any) => (
-                                            <div key={session.id} className="bg-blue-50 p-3 rounded border border-blue-200 shadow-sm">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="font-medium">Séance d'essai</span>
-                                                            <span className="text-blue-600">{getDate(session.date_slot)}</span>
-                                                        </div>
-                                                        <div className="text-sm text-gray-600">
-                                                            {session.school_subjects && Array.isArray(session.school_subjects)
-                                                                ? session.school_subjects.join(', ')
-                                                                : session.school_subjects || 'Matière non spécifiée'}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`px-2 py-1 rounded text-xs ${
-                                                            session.is_canceled
-                                                                ? 'bg-red-100 text-red-800'
-                                                                : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                            {session.is_canceled ? 'Annulée' : 'Active'}
-                                                        </span>
-                                                        <Button variant="outlined" color={session.is_canceled ? 'info': 'error'} size="small" onClick={() => sessionAction(session)}>
-                                                            <span className="text-xs">
-                                                                {session.is_canceled ? 'Activer' : 'Annuler'}
-                                                            </span>
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500">
-                                            Aucune séance d'essai
-                                        </div>
-                                    )
+                                    <PaymentStatus
+                                        studentId={studentId}
+                                        sessions={trialSessions}
+                                        onSessionUpdate={() => setRefreshKey(prev => prev + 1)}
+                                    />
                                 )}
                             </div>
                         </div>

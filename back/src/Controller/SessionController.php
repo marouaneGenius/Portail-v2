@@ -412,12 +412,22 @@ class SessionController extends AbstractController
                 ]
             );
 
-            // 3) Mise à jour de la session avec l'ID de session Stripe
+            // 3) Récupération de l'URL de paiement
+            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($sessionId);
+            error_log("Payment URL récupérée: " . $paymentUrl);
+
+            // 4) Mise à jour de la session avec l'ID Stripe et le lien de paiement
             $session->setStripeNumber($sessionId);
+            $session->setPaymentLink($paymentUrl);
+            error_log("Avant flush - Session ID: " . $session->getId() . ", Payment Link: " . $session->getPaymentLink());
+
+            // Persister explicitement la session avant le flush
+            $this->em->persist($session);
             $this->em->flush();
 
-            // 4) Récupération de l'URL pour l'envoi SMS et réponse
-            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($sessionId);
+            // Rafraîchir l'entité depuis la BDD pour vérifier
+            $this->em->refresh($session);
+            error_log("Après flush et refresh - Payment link en BDD: " . ($session->getPaymentLink() ?? 'NULL'));
 
             // 5) Préparation des données pour le SMS
             $phone = $parent->getPhone();
@@ -526,14 +536,15 @@ class SessionController extends AbstractController
                 ]
             );
 
-            // 5) Mise à jour de toutes les sessions avec le même ID Stripe
+            // 5) Récupération de l'URL de paiement
+            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($stripeSessionId);
+
+            // 6) Mise à jour de toutes les sessions avec le même ID Stripe et le lien de paiement
             foreach ($sessions as $session) {
                 $session->setStripeNumber($stripeSessionId);
+                $session->setPaymentLink($paymentUrl);
             }
             $this->em->flush();
-
-            // 6) Récupération de l'URL de paiement
-            $paymentUrl = $this->stripeCustomerService->getCheckoutSessionUrl($stripeSessionId);
 
             // 7) Préparation des données pour le SMS
             $phone = $parentInfo['phone'];
