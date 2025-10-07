@@ -90,25 +90,31 @@ class DashboardController extends AbstractController
                 ->getQuery()
                 ->getResult();
 
-            // KPI 7: Séances du jour
+            // KPI 7: Séances du jour (créneaux avec tuteur + au moins 1 élève)
             $startOfDay = new \DateTime('today 00:00:00');
             $endOfDay = new \DateTime('today 23:59:59');
 
             $sessionsToday = $this->sessionRepo->createQueryBuilder('s')
-                ->select('COUNT(s.id)')
+                ->select('COUNT(DISTINCT s.id)')
+                ->leftJoin('s.id_student', 'student')
                 ->where('s.date_slot >= :start')
                 ->andWhere('s.date_slot <= :end')
+                ->andWhere('s.idTutor IS NOT NULL')
+                ->andWhere('student.id IS NOT NULL')
                 ->setParameter('start', $startOfDay)
                 ->setParameter('end', $endOfDay)
                 ->getQuery()
                 ->getSingleScalarResult();
 
-            // KPI 8: Revenus du mois (séances payées) - stripe_number est un VARCHAR, on compte les séances payées
+            // KPI 8: Séances payées du mois (créneaux avec tuteur + au moins 1 élève + payées)
             $monthlyRevenue = $this->sessionRepo->createQueryBuilder('s')
-                ->select('COUNT(s.id)')
+                ->select('COUNT(DISTINCT s.id)')
+                ->leftJoin('s.id_student', 'student')
                 ->where('s.date_slot >= :start')
                 ->andWhere('s.date_slot <= :end')
                 ->andWhere('s.is_paid = :paid')
+                ->andWhere('s.idTutor IS NOT NULL')
+                ->andWhere('student.id IS NOT NULL')
                 ->setParameter('start', $firstDayOfMonth)
                 ->setParameter('end', $lastDayOfMonth)
                 ->setParameter('paid', true)
@@ -131,11 +137,14 @@ class DashboardController extends AbstractController
                 ? round((($totalStudents - $studentsLastMonth) / $studentsLastMonth) * 100, 1)
                 : 0;
 
-            // KPI 10: Séances ce mois vs mois dernier
+            // KPI 10: Séances mois dernier (créneaux avec tuteur + au moins 1 élève)
             $sessionsLastMonth = $this->sessionRepo->createQueryBuilder('s')
-                ->select('COUNT(s.id)')
+                ->select('COUNT(DISTINCT s.id)')
+                ->leftJoin('s.id_student', 'student')
                 ->where('s.date_slot >= :start')
                 ->andWhere('s.date_slot <= :end')
+                ->andWhere('s.idTutor IS NOT NULL')
+                ->andWhere('student.id IS NOT NULL')
                 ->setParameter('start', $firstDayLastMonth)
                 ->setParameter('end', $lastDayLastMonth)
                 ->getQuery()
