@@ -91,7 +91,6 @@ const menuItems = [
     title: 'Contrats résiliés',
     url: '/canceled-subscriptions',
     icon: XCircle,
-    permission: 'subscription:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent voir les contrats résiliés
   },
   {
