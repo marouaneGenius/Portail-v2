@@ -384,7 +384,7 @@ const ParentDashboard: React.FC = () => {
     const now = new Date();
     return sessions.filter(session => {
       const sessionDate = new Date(session.scheduled_at);
-      return sessionDate > now && !session.is_suspended;
+      return sessionDate > now;
     }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   };
 
@@ -392,7 +392,7 @@ const ParentDashboard: React.FC = () => {
     const now = new Date();
     return sessions.filter(session => {
       const sessionDate = new Date(session.scheduled_at);
-      return sessionDate <= now && !session.is_suspended;
+      return sessionDate <= now;
     }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
 
@@ -445,10 +445,10 @@ const ParentDashboard: React.FC = () => {
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(day);
     dayEnd.setHours(23, 59, 59, 999);
-    
+
     return sessions.filter(session => {
       const sessionDate = new Date(session.scheduled_at);
-      return sessionDate >= dayStart && sessionDate <= dayEnd && !session.is_suspended;
+      return sessionDate >= dayStart && sessionDate <= dayEnd;
     });
   };
 

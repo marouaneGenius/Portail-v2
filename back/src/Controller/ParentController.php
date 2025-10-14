@@ -60,7 +60,7 @@ class ParentController extends AbstractController
                 $scheduledAt = $session->getScheduledAt();
                 if (!$scheduledAt) continue;
 
-                // Exclure les séances des contrats suspendus ou après la date de résiliation
+                // Exclure les séances des contrats suspendus ou prévues après la date de résiliation
                 $shouldHideSession = false;
                 foreach ($session->getIdSubscription() as $subscription) {
                     // Si suspendu ET pas de date de résiliation = vraiment suspendu
@@ -68,11 +68,23 @@ class ParentController extends AbstractController
                         $shouldHideSession = true;
                         break;
                     }
-                    
-                    // Vérifier si la session est après la date de résiliation
-                    if ($subscription->getResiliationDate() && $scheduledAt > $subscription->getResiliationDate()) {
-                        $shouldHideSession = true;
-                        break;
+
+                    // Vérifier si la séance est prévue après la date de résiliation
+                    // On affiche toutes les séances dont la date est AVANT ou ÉGALE à la date de résiliation
+                    if ($subscription->getResiliationDate()) {
+                        $sessionDateSlot = $session->getDateSlot();
+                        if ($sessionDateSlot) {
+                            // Comparer uniquement les dates (sans heure)
+                            $resiliationDate = $subscription->getResiliationDate();
+                            $resiliationDate->setTime(0, 0, 0);
+                            $sessionDate = clone $sessionDateSlot;
+                            $sessionDate->setTime(0, 0, 0);
+
+                            if ($sessionDate > $resiliationDate) {
+                                $shouldHideSession = true;
+                                break;
+                            }
+                        }
                     }
                 }
                 if ($shouldHideSession) continue;

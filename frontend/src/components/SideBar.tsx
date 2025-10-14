@@ -11,7 +11,8 @@ import {
   CalendarRange,
   HistoryIcon,
   GraduationCap as TutorIcon,
-  ClipboardList
+  ClipboardList,
+  XCircle
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -86,9 +87,16 @@ const menuItems = [
     permission: 'session:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent voir les séances d'essai
   },
-  { 
-    title: 'Mon profil', 
-    url: '/profile', 
+  {
+    title: 'Contrats résiliés',
+    url: '/canceled-subscriptions',
+    icon: XCircle,
+    permission: 'subscription:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent voir les contrats résiliés
+  },
+  {
+    title: 'Mon profil',
+    url: '/profile',
     icon: User,
     roles: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_TUTOR', 'ROLE_PARENT'] // Tous les rôles
   },

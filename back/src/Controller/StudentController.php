@@ -315,6 +315,20 @@ class StudentController extends AbstractController
             $tutor = $s->getIdTutor();
             $center = $s->getCenter();
 
+            // Récupérer la date de résiliation du contrat associé
+            $subscriptions = $s->getIdSubscription();
+            $resiliationDate = null;
+            $isSubscriptionCanceled = false;
+
+            if ($subscriptions && $subscriptions->count() > 0) {
+                // Prendre le premier contrat (une session peut avoir plusieurs contrats en théorie)
+                $subscription = $subscriptions->first();
+                if ($subscription) {
+                    $resiliationDate = $subscription->getResiliationDate();
+                    $isSubscriptionCanceled = $subscription->isIsCanceled();
+                }
+            }
+
             return [
                 'id'             => $s->getId(),
                 'date_slot'      => $s->getDateSlot()->format('Y-m-d'),
@@ -330,6 +344,8 @@ class StudentController extends AbstractController
                 'absent_by'      => $s->getAbsentBy(),
                 'canceled_by'    => $s->getCanceledBy(),
                 'payment_link'   => $s->getPaymentLink(),
+                'resiliation_date' => $resiliationDate?->format('Y-m-d'),
+                'is_subscription_canceled' => $isSubscriptionCanceled,
             ];
         })->toArray();
 

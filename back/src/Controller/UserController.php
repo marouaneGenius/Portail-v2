@@ -203,9 +203,109 @@ class UserController extends AbstractController
     {
         $user = $this->userRepository->find($id);
         if (!$user) { return $this->json(['message'=>'Pas trouvé'],404); }
-        
+
         // Vérifier les permissions
         $this->denyAccessUnlessGranted(UserVoter::VIEW, $user);
+
+        // Récupérer toutes les sessions du tuteur (si c'est un tuteur)
+        $sessions = [];
+        $upcomingSessions = [];
+        $pastSessions = [];
+
+        if (in_array('ROLE_TUTOR', $user->getRoles())) {
+            // Récupérer toutes les sessions du tuteur via une requête
+            $allSessions = $this->em->getRepository(\App\Entity\Session::class)
+                ->createQueryBuilder('s')
+                ->leftJoin('s.id_subscription', 'sub')
+                ->where('s.idTutor = :tutor')
+                ->andWhere('(sub IS NULL OR (sub.is_suspended = false OR (sub.is_canceled = true AND sub.resiliation_date IS NOT NULL)))')
+                ->andWhere('(sub IS NULL OR sub.resiliation_date IS NULL OR s.scheduled_at <= sub.resiliation_date)')
+                ->setParameter('tutor', $user)
+                ->orderBy('s.scheduled_at', 'DESC')
+                ->getQuery()
+                ->getResult();
+
+            $now = new \DateTimeImmutable();
+
+            // Calculer le nombre total d'élèves par créneau horaire
+            $studentCountBySlot = [];
+            foreach ($allSessions as $session) {
+                if ($session->getScheduledAt() && !$session->isIsCanceled()) {
+                    $slotKey = $session->getScheduledAt()->format('Y-m-d H:i:s');
+                    if (!isset($studentCountBySlot[$slotKey])) {
+                        $studentCountBySlot[$slotKey] = 0;
+                    }
+                    $studentCountBySlot[$slotKey] += $session->getIdStudent()->count();
+                }
+            }
+
+            foreach ($allSessions as $session) {
+                $students = $session->getIdStudent()->toArray();
+
+                // Récupérer le nombre total d'élèves pour ce créneau
+                $totalStudentsForSlot = 0;
+                if ($session->getScheduledAt() && !$session->isIsCanceled()) {
+                    $slotKey = $session->getScheduledAt()->format('Y-m-d H:i:s');
+                    $totalStudentsForSlot = $studentCountBySlot[$slotKey] ?? count($students);
+                }
+
+                $sessionData = [
+                    'id' => $session->getId(),
+                    'date_slot' => $session->getDateSlot()?->format('Y-m-d'),
+                    'scheduled_at' => $session->getScheduledAt(),
+                    'session_type' => $session->getSessionType(),
+                    'is_canceled' => $session->isIsCanceled(),
+                    'is_paid' => $session->isIsPaid(),
+                    'is_absent' => $session->isIsAbsent(),
+                    'absent_by' => $session->getAbsentBy(),
+                    'canceled_by' => $session->getCanceledBy(),
+                    'school_subjects' => $session->getSchoolSubjects(),
+                    'payment_link' => $session->getPaymentLink(),
+                    'student_count' => count($students),
+                    'total_students_expected' => $totalStudentsForSlot,
+                    'center_name' => $session->getCenter() ? $session->getCenter()->getName() : null,
+                    'center' => $session->getCenter() ? [
+                        'id' => $session->getCenter()->getId(),
+                        'name' => $session->getCenter()->getName(),
+                        'city' => $session->getCenter()->getCity(),
+                    ] : null,
+                    'students' => array_map(function($student) {
+                        return [
+                            'id' => $student->getId(),
+                            'firstname' => $student->getFirstname(),
+                            'lastname' => $student->getLastname(),
+                            'class' => $student->getClass(),
+                        ];
+                    }, $students),
+                ];
+
+                $sessions[] = $sessionData;
+
+                // Séparer les prochaines séances et les séances passées
+                if ($session->getScheduledAt() && $session->getScheduledAt() >= $now) {
+                    $upcomingSessions[] = $sessionData;
+                } else if ($session->getScheduledAt()) {
+                    $pastSessions[] = $sessionData;
+                }
+            }
+
+            // Trier les prochaines séances par ordre croissant (les plus proches en premier)
+            usort($upcomingSessions, function($a, $b) {
+                return $a['scheduled_at'] <=> $b['scheduled_at'];
+            });
+
+            // Limiter aux 10 prochaines séances
+            $upcomingSessions = array_slice($upcomingSessions, 0, 10);
+
+            // Trier les séances passées par ordre décroissant (les plus récentes en premier)
+            usort($pastSessions, function($a, $b) {
+                return $b['scheduled_at'] <=> $a['scheduled_at'];
+            });
+
+            // Limiter aux 10 dernières séances passées
+            $pastSessions = array_slice($pastSessions, 0, 10);
+        }
+
         return $this->json([
             'id'                => $user->getId(),
             'email'             => $user->getEmail(),
@@ -253,8 +353,9 @@ class UserController extends AbstractController
                 'email' => $c->getEmail(),
             ], $user->getCentres()->toArray()),
 
-
-            
+            'sessions' => $sessions,
+            'upcoming_sessions' => $upcomingSessions,
+            'past_sessions' => $pastSessions,
         ]);
     }
 

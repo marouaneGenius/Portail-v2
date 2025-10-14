@@ -41,7 +41,6 @@ interface StudentItem {
         setLoading(true);
         api.get(`/api/student/${studentId}`)
           .then(({ data }:any) => {
-            console.log(data)
             const trial_sessions = data.sessions?.filter((s: any) => s.session_type === 'trial_session') || [];
             const standard_sessions = data.sessions?.filter((s: any) => s.session_type !== 'trial_session') || [];
             setTrialSessions(trial_sessions)
@@ -59,6 +58,14 @@ interface StudentItem {
     const getUpcomingSessions = () => {
         const now = new Date();
         return allSessions.filter((session: any) => {
+            // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+            if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+                // Comparer directement les dates au format YYYY-MM-DD
+                if (session.date_slot >= session.resiliation_date) {
+                    return false;
+                }
+            }
+
             const sessionDate = new Date(session.scheduled_at);
             return sessionDate > now && !session.is_canceled && !session.is_suspended;
         }).sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
@@ -67,6 +74,14 @@ interface StudentItem {
     const getPastSessions = () => {
         const now = new Date();
         return allSessions.filter((session: any) => {
+            // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+            if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+                // Comparer directement les dates au format YYYY-MM-DD
+                if (session.date_slot >= session.resiliation_date) {
+                    return false;
+                }
+            }
+
             const sessionDate = new Date(session.scheduled_at);
             return sessionDate <= now && !session.is_suspended;
         }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
@@ -74,6 +89,14 @@ interface StudentItem {
 
     const getCatchupSessions = () => {
         return allSessions.filter((session: any) => {
+            // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+            if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+                // Comparer directement les dates au format YYYY-MM-DD
+                if (session.date_slot >= session.resiliation_date) {
+                    return false;
+                }
+            }
+
             return session.is_canceled && !session.is_suspended;
         }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
     };

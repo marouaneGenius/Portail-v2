@@ -498,6 +498,45 @@ class SubscriptionController extends AbstractController
     }
 
     /**
+     * Récupérer tous les contrats résiliés avec les informations de résiliation
+     */
+    #[Route('/canceled', name: 'get_canceled', methods: ['GET'])]
+    public function getCanceledSubscriptions(): JsonResponse
+    {
+        // Récupérer tous les abonnements annulés
+        $canceledSubs = $this->subscriptionRepository->findBy(['is_canceled' => true], ['canceled_at' => 'DESC']);
+
+        $data = array_map(function($subscription) {
+            $student = $subscription->getIdStudent();
+
+            return [
+                'id'                     => $subscription->getId(),
+                'combined_id'            => $subscription->getCombinedId(),
+                'subscription_type'      => $subscription->getSubscriptionType(),
+                'subscription_start_date'=> $subscription->getSubscriptionStartDate()?->format('Y-m-d'),
+                'subscription_end_date'  => $subscription->getSubscriptionEndDate()?->format('Y-m-d'),
+                'resiliation_date'       => $subscription->getResiliationDate()?->format('Y-m-d'),
+                'is_canceled'            => $subscription->isIsCanceled(),
+                'canceled_by'            => $subscription->getCanceledBy(),
+                'canceled_at'            => $subscription->getCanceledAt()?->format('Y-m-d H:i:s'),
+                'is_suspended'           => $subscription->isIsSuspended(),
+                'student' => $student ? [
+                    'id'        => $student->getId(),
+                    'firstname' => $student->getFirstname(),
+                    'lastname'  => $student->getLastname(),
+                    'class'     => $student->getClass(),
+                    'email'     => $student->getEmail(),
+                    'phone'     => $student->getPhone(),
+                ] : null,
+                'created_at'             => $subscription->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'created_by'             => $subscription->getCreatedBy(),
+            ];
+        }, $canceledSubs);
+
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
+
+    /**
      * Créer un contrat Genius
      */
     #[Route('/genius', name: 'create_genius', methods: ['POST'])]

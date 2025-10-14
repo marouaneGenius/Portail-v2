@@ -378,6 +378,14 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
   const getUpcomingSessions = () => {
     const now = new Date();
     return standardSessions.filter((session: any) => {
+      // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+      if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+        // Comparer directement les dates au format YYYY-MM-DD
+        if (session.date_slot >= session.resiliation_date) {
+          return false;
+        }
+      }
+
       const sessionDate = new Date(session.scheduled_at);
       return sessionDate > now && !session.is_canceled && !session.is_suspended;
     }).sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
@@ -386,6 +394,14 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
   const getPastSessions = () => {
     const now = new Date();
     return standardSessions.filter((session: any) => {
+      // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+      if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+        // Comparer directement les dates au format YYYY-MM-DD
+        if (session.date_slot >= session.resiliation_date) {
+          return false;
+        }
+      }
+
       const sessionDate = new Date(session.scheduled_at);
       return sessionDate <= now && !session.is_suspended;
     }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
@@ -393,6 +409,14 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
 
   const getCatchupSessions = () => {
     return standardSessions.filter((session: any) => {
+      // Vérifier si le contrat est résilié et masquer les séances à partir de la date de résiliation
+      if (session.is_subscription_canceled && session.resiliation_date && session.date_slot) {
+        // Comparer directement les dates au format YYYY-MM-DD
+        if (session.date_slot >= session.resiliation_date) {
+          return false;
+        }
+      }
+
       return session.is_canceled && !session.is_suspended;
     }).sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   };
@@ -519,6 +543,11 @@ export const CustomSessionComponent = ({ value, currentkey, student }:any) => {
                         {Array.isArray(session.school_subjects)
                           ? session.school_subjects.join(', ')
                           : session.school_subjects}
+                      </div>
+                    )}
+                    {session.total_students_expected && (
+                      <div className="text-blue-600 text-xs mt-1 font-medium">
+                        👥 {session.total_students_expected} élève{session.total_students_expected > 1 ? 's' : ''} attendu{session.total_students_expected > 1 ? 's' : ''}
                       </div>
                     )}
                     {session.tutor_name && (

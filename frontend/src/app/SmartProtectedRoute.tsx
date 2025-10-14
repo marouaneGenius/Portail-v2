@@ -19,7 +19,8 @@ const is404Route = (pathname: string): boolean => {
     '/tutors',
     '/historique',
     '/parent-dashboard',
-    '/trial-sessions'
+    '/trial-sessions',
+    '/canceled-subscriptions'
   ];
 
   // Routes avec paramètres spécifiques
