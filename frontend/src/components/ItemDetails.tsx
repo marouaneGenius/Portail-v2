@@ -26,6 +26,7 @@ import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAn
 import { actions } from '../mocks/mocks'; // Assure-toi que le chemin est correct
 import { getLevelOfClass } from './subscriptions/SubscriptionFunctions';
 import { PaymentStatus } from './TrialSessionCard';
+import { StudentDepositManager } from './StudentDepositManager';
 
 export interface DetailPageParams {
   resource: string;
@@ -410,11 +411,25 @@ const ItemDetails: React.FC = () => {
 
           {/* Séances d'essai - Seulement pour les étudiants */}
           {resource === "student" && item.sessions && (
-            <PaymentStatus 
+            <PaymentStatus
               studentId={item.id}
               sessions={item.sessions}
               onSessionUpdate={() => setRefreshKey(prev => prev + 1)}
             />
+          )}
+
+          {/* Gestion de la caution - Seulement pour les étudiants */}
+          {resource === "student" && (
+            <Card className="border-fading-grey">
+              <CardContent className="p-4">
+                <StudentDepositManager
+                  studentId={item.id}
+                  currentAmount={item.deposit_amount}
+                  currentStatus={item.deposit_status}
+                  onUpdate={() => setRefreshKey(prev => prev + 1)}
+                />
+              </CardContent>
+            </Card>
           )}
 
           {/* Actions rapides */}

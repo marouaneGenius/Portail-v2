@@ -78,14 +78,14 @@ class StudentVoter extends Voter
 
     private function canCreate(UserInterface $user): bool
     {
-        // TUTOR ne peut pas créer d'étudiants
-        if (in_array('ROLE_TUTOR', $user->getRoles())) {
+        // TUTOR ne peut pas créer d'étudiants (sauf si ADMIN via hiérarchie)
+        if (in_array('ROLE_TUTOR', $user->getRoles()) && !in_array('ROLE_ADMIN', $user->getRoles())) {
             return false;
         }
 
-        // USER et ADMIN peuvent créer des étudiants
-        return in_array('ROLE_USER', $user->getRoles()) || 
-               in_array('ROLE_ADMIN', $user->getRoles());
+        // USER peut créer des étudiants
+        // Note: ADMIN hérite de ROLE_USER grâce à role_hierarchy
+        return in_array('ROLE_USER', $user->getRoles());
     }
 
     private function canEdit(?Student $student, UserInterface $user): bool

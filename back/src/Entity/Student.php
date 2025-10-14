@@ -84,6 +84,12 @@ class Student
     #[ORM\OneToMany(mappedBy: 'student', targetEntity: SubscriptionURL::class)]
     private Collection $subscriptionURLs;
 
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $deposit_amount = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $deposit_status = null;
+
     public function __construct()
     {
         $this->id_parent = new ArrayCollection();
@@ -584,5 +590,47 @@ class Student
         }
 
         return $this;
+    }
+
+    public function getDepositAmount(): ?string
+    {
+        return $this->deposit_amount;
+    }
+
+    public function setDepositAmount(?string $deposit_amount): static
+    {
+        $this->deposit_amount = $deposit_amount;
+
+        return $this;
+    }
+
+    public function getDepositStatus(): ?string
+    {
+        return $this->deposit_status;
+    }
+
+    public function setDepositStatus(?string $deposit_status): static
+    {
+        // Valider que le statut est l'un des statuts autorisés
+        $allowedStatuses = [
+            'en_attente_reception',
+            'reception_centre',
+            'reception_siege',
+            'rendu_parent',
+            null
+        ];
+
+        if (!in_array($deposit_status, $allowedStatuses, true)) {
+            throw new \InvalidArgumentException('Statut de caution invalide');
+        }
+
+        $this->deposit_status = $deposit_status;
+
+        return $this;
+    }
+
+    public function hasDeposit(): bool
+    {
+        return $this->deposit_amount !== null && $this->deposit_amount !== '0.00';
     }
 }

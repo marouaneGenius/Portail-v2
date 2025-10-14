@@ -15,7 +15,6 @@ import Parents from "../pages/Parents";
 import CreationForm from "../components/CreationForm";
 import EditionForm from "../components/EditionForm";
 import Subscriptions from "../pages/Subscriptions";
-import { StudentDetails } from "../pages/studentDetails";
 import { Planing } from "../pages/Planing";
 import Planning from "../pages/Planning";
 import SubscriptionsFormView from "../components/subscriptions/views/SubscriptionFormsView";
@@ -33,6 +32,7 @@ import SmartProtectedRoute from "./SmartProtectedRoute";
 import GeniusContracts from "@/components/subscriptions/GeniusContracts";
 import TrialSessions from "../pages/TrialSessions";
 import CanceledSubscriptions from "../pages/CanceledSubscriptions";
+import Deposits from "../pages/Deposits";
 
 export const router = createBrowserRouter([
     {
@@ -61,7 +61,6 @@ export const router = createBrowserRouter([
                 { path: "/abonnements/:id", element: <Subscriptions /> },
                 { path: '/parents', element: <Parents /> },
                 { path: '/form/:resource/:id?', element: <CreationForm /> },
-                { path: '/studentDetails/:id', element: <StudentDetails />},
                 { path: '/planing', element: <Planing/>},
                 { path: '/planning', element: <Planning/>},
                 { path: '/subscriptions/:id', element: <SubscriptionsFormView/>},
@@ -74,6 +73,7 @@ export const router = createBrowserRouter([
                 { path: '/genius-contract/:id', element: <GeniusContracts /> },
                 { path: '/trial-sessions', element: <TrialSessions /> },
                 { path: '/canceled-subscriptions', element: <CanceledSubscriptions /> },
+                { path: '/deposits', element: <Deposits /> },
                 // Routes génériques à la fin
                 { path: '/:resource/:id', element: <ItemDetails /> },
                 { path: '/:resource/:id/edit', element: <EditionForm /> },

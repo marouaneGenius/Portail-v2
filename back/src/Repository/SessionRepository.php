@@ -173,8 +173,8 @@ class SessionRepository extends ServiceEntityRepository
                         'firstname' => $student->getFirstname(),
                         'lastname'  => $student->getLastname(),
                         'email'     => $student->getEmail(),
-                        'session_id' => $session->getId(), 
-                        'class' => $student->getClass(), 
+                        'session_id' => $session->getId(),
+                        'class' => $student->getClass(),
                         'centers' => $student->getIdCenter()
                         ? [
                             'id'      => $student->getIdCenter()->getId(),
@@ -183,6 +183,7 @@ class SessionRepository extends ServiceEntityRepository
                             'city'    => $student->getIdCenter()->getCity(),
                         ]
                         : null,
+                        'deposit_status' => $student->getDepositStatus(),
                         // Ajoute ici ce que tu veux
                     ];
                 }
@@ -276,6 +277,7 @@ class SessionRepository extends ServiceEntityRepository
                                 'city'    => $student->getIdCenter()->getCity(),
                             ]
                             : null,
+                        'deposit_status' => $student->getDepositStatus(),
                     ];
                 }
                 

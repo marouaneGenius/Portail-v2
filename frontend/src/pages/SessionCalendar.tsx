@@ -653,6 +653,16 @@ export default function SessionCalendar() {
                                                     <span className={`text-[10px] font-medium ${currentSession?.is_canceled ? 'line-through text-slate-500' : 'text-mister-anthracite'}`}>
                                                       {student.firstname} {student.lastname}
                                                     </span>
+                                                    {student.deposit_status === 'en_attente_reception' && (
+                                                      <span
+                                                        role="img"
+                                                        aria-label="deposit-pending"
+                                                        title="Caution en attente de réception"
+                                                        className="cursor-pointer"
+                                                      >
+                                                        💰
+                                                      </span>
+                                                    )}
                                                     <div className='flex flex-row text-xs'>
                                                       {student.class && (
                                                         <Badge

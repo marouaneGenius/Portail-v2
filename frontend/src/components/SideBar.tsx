@@ -12,7 +12,8 @@ import {
   HistoryIcon,
   GraduationCap as TutorIcon,
   ClipboardList,
-  XCircle
+  XCircle,
+  Coins
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -92,6 +93,13 @@ const menuItems = [
     url: '/canceled-subscriptions',
     icon: XCircle,
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent voir les contrats résiliés
+  },
+  {
+    title: 'Cautions',
+    url: '/deposits',
+    icon: Coins,
+    permission: 'student:view',
+    roles: ['ROLE_ADMIN', 'ROLE_USER'] // ADMIN et USER peuvent gérer les cautions
   },
   {
     title: 'Mon profil',

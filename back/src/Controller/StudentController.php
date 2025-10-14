@@ -398,6 +398,9 @@ class StudentController extends AbstractController
             'created_by'        => $user->getCreatedBy(),
             'updated_at'        => $user->getUpdatedAt(),
             'updated_by'        => $user->getUpdatedBy(),
+            'deposit_amount'    => $user->getDepositAmount(),
+            'deposit_status'    => $user->getDepositStatus(),
+            'has_deposit'       => $user->hasDeposit(),
             'reports' => array_map(fn($r) => [
                 'id'          => $r->getId(),
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
@@ -443,6 +446,18 @@ class StudentController extends AbstractController
             if (array_key_exists($field, $data)) {
                 $setter = 'set' . ucfirst($field);
                 $student->$setter($data[$field]);
+            }
+        }
+
+        // 3.1 Gérer les champs de caution
+        if (array_key_exists('deposit_amount', $data)) {
+            $student->setDepositAmount($data['deposit_amount']);
+        }
+        if (array_key_exists('deposit_status', $data)) {
+            try {
+                $student->setDepositStatus($data['deposit_status']);
+            } catch (\InvalidArgumentException $e) {
+                return $this->json(['error' => $e->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
             }
         }
 
@@ -717,6 +732,197 @@ class StudentController extends AbstractController
         $response->headers->set('Content-Disposition', 'attachment; filename="export_eleves_' . date('Y-m-d_H-i-s') . '.csv"');
 
         return $response;
+    }
+
+    /**
+     * Met à jour les informations de caution d'un étudiant
+     */
+    #[Route('/{id}/deposit', name: 'api_student_update_deposit', methods: ['PATCH'])]
+    #[IsGranted('ROLE_USER')]
+    public function updateDeposit(int $id, Request $request): JsonResponse
+    {
+        $student = $this->studentRepo->find($id);
+        if (!$student) {
+            return $this->json(['error' => 'Élève non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error' => 'JSON invalide'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Mettre à jour le montant de la caution
+        if (array_key_exists('deposit_amount', $data)) {
+            $student->setDepositAmount($data['deposit_amount']);
+        }
+
+        // Mettre à jour le statut de la caution
+        if (array_key_exists('deposit_status', $data)) {
+            try {
+                $student->setDepositStatus($data['deposit_status']);
+            } catch (\InvalidArgumentException $e) {
+                return $this->json([
+                    'error' => $e->getMessage(),
+                    'allowed_statuses' => [
+                        'en_attente_reception' => 'En attente de réception de la caution',
+                        'reception_centre' => 'Caution réceptionnée en centre',
+                        'reception_siege' => 'Caution réceptionnée au siège',
+                        'rendu_parent' => 'Caution rendue au parent'
+                    ]
+                ], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
+
+        // Mettre à jour les métadonnées
+        $student->setUpdatedAt(new \DateTimeImmutable());
+        $student->setUpdatedBy($this->getUser()->getUserIdentifier());
+
+        $this->em->flush();
+
+        return $this->json([
+            'id' => $student->getId(),
+            'deposit_amount' => $student->getDepositAmount(),
+            'deposit_status' => $student->getDepositStatus(),
+            'has_deposit' => $student->hasDeposit(),
+            'message' => 'Informations de caution mises à jour avec succès'
+        ]);
+    }
+
+    /**
+     * Retourne les statuts de caution disponibles
+     */
+    #[Route('/deposit/statuses', name: 'api_deposit_statuses', methods: ['GET'])]
+    public function getDepositStatuses(): JsonResponse
+    {
+        return $this->json([
+            'statuses' => [
+                [
+                    'value' => 'en_attente_reception',
+                    'label' => 'En attente de réception de la caution',
+                    'color' => 'warning'
+                ],
+                [
+                    'value' => 'reception_centre',
+                    'label' => 'Caution réceptionnée en centre',
+                    'color' => 'info'
+                ],
+                [
+                    'value' => 'reception_siege',
+                    'label' => 'Caution réceptionnée au siège',
+                    'color' => 'primary'
+                ],
+                [
+                    'value' => 'rendu_parent',
+                    'label' => 'Caution rendue au parent',
+                    'color' => 'success'
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Retourne tous les étudiants qui ont une caution avec possibilité de filtrer par centre
+     */
+    #[Route('/deposits', name: 'api_student_deposits_list', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function listDeposits(Request $request): JsonResponse
+    {
+        $centerId = $request->query->get('center_id');
+
+        // Construire la requête DQL
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('s')
+            ->from(\App\Entity\Student::class, 's')
+            ->leftJoin('s.id_center', 'c')
+            ->where('s.deposit_amount IS NOT NULL')
+            ->andWhere('s.deposit_amount != :zero')
+            ->setParameter('zero', '0.00')
+            ->orderBy('s.lastname', 'ASC')
+            ->addOrderBy('s.firstname', 'ASC');
+
+        // Filtrer par centre si spécifié
+        if ($centerId) {
+            $qb->andWhere('c.id = :centerId')
+               ->setParameter('centerId', $centerId);
+        }
+
+        $students = $qb->getQuery()->getResult();
+
+        // Formater les données
+        $data = array_map(function(\App\Entity\Student $student) {
+            $center = $student->getIdCenter();
+            $parents = $student->getIdParent();
+            $firstParent = $parents->count() > 0 ? $parents->first() : null;
+
+            // Compter le nombre de séances effectuées (non annulées, non absentes, dans le passé)
+            $sessions = $student->getSessions();
+            $now = new \DateTimeImmutable();
+            $completedSessionsCount = 0;
+            $nextSession = null;
+
+            foreach ($sessions as $session) {
+                $scheduledAt = $session->getScheduledAt();
+                if (!$scheduledAt) {
+                    continue;
+                }
+
+                // Compter les sessions passées non annulées et non absentes
+                if ($scheduledAt < $now && !$session->isIsCanceled() && !$session->isIsAbsent()) {
+                    $completedSessionsCount++;
+                }
+
+                // Trouver la prochaine session (future, non annulée)
+                if ($scheduledAt >= $now && !$session->isIsCanceled()) {
+                    if (!$nextSession || $scheduledAt < $nextSession->getScheduledAt()) {
+                        $nextSession = $session;
+                    }
+                }
+            }
+
+            // Formater les informations de la prochaine séance
+            $nextSessionData = null;
+            if ($nextSession) {
+                $tutor = $nextSession->getIdTutor();
+                $nextSessionData = [
+                    'scheduled_at' => $nextSession->getScheduledAt()?->format('Y-m-d H:i:s'),
+                    'tutor' => $tutor ? [
+                        'firstname' => $tutor->getFirstname(),
+                        'lastname' => $tutor->getLastname()
+                    ] : null,
+                    'subjects' => $nextSession->getSchoolSubjects()
+                ];
+            }
+
+            return [
+                'id' => $student->getId(),
+                'firstname' => $student->getFirstname(),
+                'lastname' => $student->getLastname(),
+                'class' => $student->getClass(),
+                'phone' => $student->getPhone(),
+                'deposit_amount' => $student->getDepositAmount(),
+                'deposit_status' => $student->getDepositStatus(),
+                'center' => $center ? [
+                    'id' => $center->getId(),
+                    'name' => $center->getName(),
+                    'city' => $center->getCity()
+                ] : null,
+                'parent' => $firstParent ? [
+                    'id' => $firstParent->getId(),
+                    'firstname' => $firstParent->getFirstname(),
+                    'lastname' => $firstParent->getLastname(),
+                    'phone' => $firstParent->getPhone(),
+                    'email' => $firstParent->getEmail()
+                ] : null,
+                'created_at' => $student->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'completed_sessions_count' => $completedSessionsCount,
+                'next_session' => $nextSessionData
+            ];
+        }, $students);
+
+        return $this->json([
+            'deposits' => $data,
+            'total' => count($data)
+        ]);
     }
 
     // private function isProdEnv(): bool

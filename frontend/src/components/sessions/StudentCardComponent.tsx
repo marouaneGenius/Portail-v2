@@ -201,6 +201,16 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             <div className="flex items-center gap-2">
               <span className={`font-semibold text-mister-anthracite ${isCanceled ? 'line-through text-gray-400' : ''}`}>
                 <GraduationCap className="h-4 w-4 text-mister-anthracite inline-block" /> {currentStudent.firstname} {currentStudent.lastname}
+                {currentStudent.deposit_status === 'en_attente_reception' && (
+                  <span
+                    role="img"
+                    aria-label="deposit-pending"
+                    title="Caution en attente de réception"
+                    className="cursor-pointer ml-1"
+                  >
+                    💰
+                  </span>
+                )}
                 {currentStudent.class && (
                   <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700 border-orange-200">
                     {currentStudent.class}
