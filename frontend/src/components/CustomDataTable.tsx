@@ -22,12 +22,14 @@ interface DataTableProps {
   endpoint: string;
   title?: string;
   addLabel?: string; // <- Texte personnalisable pour le bouton "Ajouter"
+  extraActions?: JSX.Element; // <- Boutons supplémentaires à afficher
 }
 
 export default function CustomDataTable({
   endpoint,
   title = '',
   addLabel = 'Ajouter',
+  extraActions,
 }: DataTableProps) {
   const [data, setData] = useState<any[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -207,6 +209,7 @@ export default function CustomDataTable({
             <Download className="w-4 h-4" />
             Exporter
           </Button>
+          {extraActions}
         </div>
       </div>
 

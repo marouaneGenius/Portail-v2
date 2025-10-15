@@ -22,6 +22,7 @@ const is404Route = (pathname: string): boolean => {
     '/trial-sessions',
     '/canceled-subscriptions',
     '/deposits',
+    '/student-export'
   ];
 
   // Routes avec paramètres spécifiques

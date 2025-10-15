@@ -46,16 +46,16 @@ const menuItems = [
     permission: 'center:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
   },
-  { 
-    title: 'Élèves', 
-    url: '/students', 
+  {
+    title: 'Élèves',
+    url: '/students',
     icon: GraduationCap,
     permission: 'student:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'y a plus accès
   },
-  { 
-    title: 'Parents', 
-    url: '/parents', 
+  {
+    title: 'Parents',
+    url: '/parents',
     icon: UserCheck,
     permission: 'parent:view',
     roles: ['ROLE_ADMIN', 'ROLE_USER'] // TUTOR n'a pas accès aux parents
