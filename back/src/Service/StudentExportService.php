@@ -50,20 +50,11 @@ class StudentExportService
         $statusFilters = $filters['statuses'] ?? [];
 
         foreach ($students as $student) {
-            $studentStatuses = $this->determineStudentStatuses($student);
+            $studentStatus = $this->determineStudentStatus($student);
 
-            // Si des filtres de statut sont définis, vérifier si l'élève a au moins un des statuts recherchés
-            if (!empty($statusFilters)) {
-                $hasMatchingStatus = false;
-                foreach ($statusFilters as $filterStatus) {
-                    if (in_array($filterStatus, $studentStatuses)) {
-                        $hasMatchingStatus = true;
-                        break;
-                    }
-                }
-                if (!$hasMatchingStatus) {
-                    continue;
-                }
+            // Si des filtres de statut sont définis, vérifier si l'élève correspond
+            if (!empty($statusFilters) && !in_array($studentStatus, $statusFilters)) {
+                continue;
             }
 
             // Récupérer les informations des parents
@@ -93,7 +84,7 @@ class StudentExportService
                 'student_lastname' => $student->getLastname(),
                 'student_class' => $student->getClass(),
                 'center_name' => $student->getIdCenter() ? $student->getIdCenter()->getName() : 'N/A',
-                'statuses' => $studentStatuses, // Tableau de statuts au lieu d'un seul
+                'status' => $studentStatus, // Un seul statut
                 'parents' => $parentData,
                 'subscription_type' => $subscriptionType,
                 'hours_per_week' => $hoursPerWeek,
@@ -105,55 +96,52 @@ class StudentExportService
     }
 
     /**
-     * Détermine tous les statuts d'un élève (peut avoir plusieurs statuts simultanés)
+     * Détermine le statut principal d'un élève (priorité au statut le plus récent/pertinent)
      */
-    private function determineStudentStatuses($student): array
+    private function determineStudentStatus($student): string
     {
-        $statuses = [];
+        $subscriptions = $student->getSubscriptions();
+        $now = new \DateTime();
 
-        // Statut de base : tous les élèves sont inscrits
-        $statuses[] = 'registered';
+        // Priorité 1 : Abonnement en cours (valide, programmé, non annulé, non résilié)
+        foreach ($subscriptions as $subscription) {
+            if ($subscription->isIsValide() &&
+                $subscription->isIsProgramed() &&
+                !$subscription->isIsCanceled() &&
+                $subscription->getResiliationDate() === null) {
+                return 'active_subscription';
+            }
+        }
 
-        // Vérifier s'il a eu une séance d'essai
+        // Priorité 2 : Abonnement résilié (valide mais avec date de résiliation)
+        foreach ($subscriptions as $subscription) {
+            if ($subscription->isIsValide() &&
+                $subscription->isIsProgramed() &&
+                !$subscription->isIsCanceled() &&
+                $subscription->getResiliationDate() !== null) {
+                return 'resiliated_subscription';
+            }
+        }
+
+        // Priorité 3 : Abonnement terminé (date de fin dépassée ET pas valide/programmé)
+        foreach ($subscriptions as $subscription) {
+            if ($subscription->getSubscriptionEndDate() &&
+                $subscription->getSubscriptionEndDate() < $now &&
+                (!$subscription->isIsValide() || !$subscription->isIsProgramed())) {
+                return 'terminated_subscription';
+            }
+        }
+
+        // Priorité 4 : A effectué une séance d'essai (mais pas d'abonnement)
         $sessions = $student->getSessions();
         foreach ($sessions as $session) {
-            if ($session->getSessionType() === 'trial_session') {
-                $statuses[] = 'trial_session';
-                break; // Une seule fois suffit
+            if ($session->getSessionType() === 'Séance d\'essai') {
+                return 'trial_session';
             }
         }
 
-        // Parcourir les abonnements pour déterminer les statuts liés aux abonnements
-        $subscriptions = $student->getSubscriptions();
-        $hasActiveSubscription = false;
-        $hasResiliatedSubscription = false;
-        $hasTerminatedSubscription = false;
-
-        foreach ($subscriptions as $subscription) {
-            if ($subscription->isIsValide() && $subscription->isIsProgramed() && !$subscription->isIsCanceled()) {
-                // Vérifier si l'abonnement est résilié
-                if ($subscription->getResiliationDate() !== null) {
-                    $hasResiliatedSubscription = true;
-                } else {
-                    $hasActiveSubscription = true;
-                }
-            } elseif ($subscription->getSubscriptionEndDate() && $subscription->getSubscriptionEndDate() < new \DateTime()) {
-                $hasTerminatedSubscription = true;
-            }
-        }
-
-        // Ajouter les statuts d'abonnement
-        if ($hasActiveSubscription) {
-            $statuses[] = 'active_subscription';
-        }
-        if ($hasResiliatedSubscription) {
-            $statuses[] = 'resiliated_subscription';
-        }
-        if ($hasTerminatedSubscription) {
-            $statuses[] = 'terminated_subscription';
-        }
-
-        return array_unique($statuses);
+        // Priorité 5 : Simplement inscrit (cas par défaut)
+        return 'registered';
     }
 
     /**
@@ -219,13 +207,13 @@ class StudentExportService
             'Nom Élève',
             'Classe',
             'Centre',
-            'Statut(s)',
+            'Statut',
             'Prénom Parent(s)',
             'Nom Parent(s)',
             'Email Parent(s)',
             'Téléphone Parent(s)',
             'Type Abonnement',
-            'Nombre de séances par semaine',
+            'Nombres de séances par semaine',
             'Montant total dépenses (€)'
         ], ';');
 
@@ -244,12 +232,8 @@ class StudentExportService
                 $parentsPhones[] = $parent['phone'];
             }
 
-            // Traduire tous les statuts et les joindre
-            $statusLabels = [];
-            foreach ($row['statuses'] as $status) {
-                $statusLabels[] = $this->translateStatus($status);
-            }
-            $statusLabel = implode(' / ', $statusLabels);
+            // Traduire le statut
+            $statusLabel = $this->translateStatus($row['status']);
 
             fputcsv($output, [
                 $row['student_firstname'],
