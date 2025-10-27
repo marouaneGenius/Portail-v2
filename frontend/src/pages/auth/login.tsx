@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { getCurrentUser, login } from '../../api/api';
 import { useAuth, User } from '../../Hooks/auth';
+import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { user } = useAuth();
 
   if (user?.roles?.includes('ROLE_TUTOR')) {
@@ -184,9 +186,11 @@ const Login: React.FC = () => {
 
   return (
     <div className="flex w-full h-screen">
+      {/* Left Panel - Logo with Gradient */}
       <div className="
-          flex
-          w-1/2
+          hidden
+          md:flex
+          md:w-1/2
           justify-center
           items-center
           bg-gradient-to-br
@@ -194,72 +198,130 @@ const Login: React.FC = () => {
           via-pink-500
           to-red-500
           animate-gradient
+          relative
+          overflow-hidden
             ">
-        <img
-          src="/logo/GENIUS-THUNDERBOLD-BIG.png"
-          alt="Logo"
-          className="h-96 w-96 object-contain"
-        />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+        <div className="relative z-10 flex flex-col items-center space-y-8">
+          <img
+            src="/logo/GENIUS-THUNDERBOLD-BIG.png"
+            alt="Logo"
+            className="h-96 w-96 object-contain drop-shadow-2xl animate-fade-in"
+          />
+          <div className="text-center text-white space-y-2">
+            <h2 className="text-3xl font-bold">Genius</h2>
+            <p className="text-lg opacity-90">Notre secret, c’est la Méthode</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex w-1/2 items-center justify-center bg-gray-100">
+      {/* Right Panel - Login Form */}
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md space-y-6 p-8"
+          className="w-full max-w-md space-y-8 p-8 bg-white rounded-2xl shadow-2xl animate-slide-up"
         >
-          <h1 className="text-5xl font-bold text-center">
-            Bienvenue
-          </h1>
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Bienvenue
+            </h1>
+            <p className="text-gray-600 text-sm">Connectez-vous à votre compte</p>
+          </div>
 
+          {/* Error Message */}
           {error && (
-            <p className="rounded bg-red-100 px-4 py-2 text-sm text-red-700">
-              {error}
-            </p>
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-start space-x-2 animate-shake">
+              <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
           )}
 
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium">
+          {/* Email Input */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
               Adresse e-mail
             </label>
-            <input
-              id="email"
-              type="email"
-              required
-              className="w-full rounded border border-indigo-400 bg-indigo-50 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <div className="relative group">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+              <input
+                id="email"
+                type="email"
+                required
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 pl-11 pr-4 py-3 outline-none transition-all focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:bg-white hover:border-gray-400"
+                placeholder="votre@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium">
+          {/* Password Input */}
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              className="w-full rounded border border-indigo-400 bg-indigo-50 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative group">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 pl-11 pr-12 py-3 outline-none transition-all focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:bg-white hover:border-gray-400"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
+          {/* Buttons */}
+          <div className="space-y-3 pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded bg-border py-2 font-medium text-indigo-600 transition hover:bg-gray-100 disabled:opacity-50"
+              className="w-full rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 py-3 font-semibold text-white transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
             >
-              {loading ? 'Connexion…' : 'Se connecter'}
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Connexion en cours...</span>
+                </>
+              ) : (
+                <span>Se connecter</span>
+              )}
             </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-medium">Ou continuer avec</span>
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={handleGoogleLogin} 
-              className="flex w-full color-border items-center justify-center rounded border bg-transparent py-2 font-medium  transition hover:bg-white/20"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="flex w-full items-center justify-center space-x-2 rounded-lg border-2 border-gray-300 bg-white py-3 font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <img src="logo/logo-google.svg" alt="Google" className="mr-2 h-5 w-5" />
-              Connexion Google
+              <img src="logo/logo-google.svg" alt="Google" className="h-5 w-5" />
+              <span>Connexion Google</span>
             </button>
           </div>
         </form>
