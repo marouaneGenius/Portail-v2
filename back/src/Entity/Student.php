@@ -90,6 +90,18 @@ class Student
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $deposit_status = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $school_app = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $school_app_url = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $school_app_username = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $school_app_password = null;
+
     public function __construct()
     {
         $this->id_parent = new ArrayCollection();
@@ -632,5 +644,60 @@ class Student
     public function hasDeposit(): bool
     {
         return $this->deposit_amount !== null && $this->deposit_amount !== '0.00';
+    }
+
+    public function getSchoolApp(): ?string
+    {
+        return $this->school_app;
+    }
+
+    public function setSchoolApp(?string $school_app): static
+    {
+        // Valider que l'app est l'une des apps autorisées
+        $allowedApps = ['pronote', 'ecole_directe', null];
+
+        if (!in_array($school_app, $allowedApps, true)) {
+            throw new \InvalidArgumentException('Application de vie scolaire invalide');
+        }
+
+        $this->school_app = $school_app;
+
+        return $this;
+    }
+
+    public function getSchoolAppUrl(): ?string
+    {
+        return $this->school_app_url;
+    }
+
+    public function setSchoolAppUrl(?string $school_app_url): static
+    {
+        $this->school_app_url = $school_app_url;
+
+        return $this;
+    }
+
+    public function getSchoolAppUsername(): ?string
+    {
+        return $this->school_app_username;
+    }
+
+    public function setSchoolAppUsername(?string $school_app_username): static
+    {
+        $this->school_app_username = $school_app_username;
+
+        return $this;
+    }
+
+    public function getSchoolAppPassword(): ?string
+    {
+        return $this->school_app_password;
+    }
+
+    public function setSchoolAppPassword(?string $school_app_password): static
+    {
+        $this->school_app_password = $school_app_password;
+
+        return $this;
     }
 }

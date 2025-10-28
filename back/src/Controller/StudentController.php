@@ -401,6 +401,9 @@ class StudentController extends AbstractController
             'deposit_amount'    => $user->getDepositAmount(),
             'deposit_status'    => $user->getDepositStatus(),
             'has_deposit'       => $user->hasDeposit(),
+            'school_app'        => $user->getSchoolApp(),
+            'school_app_url'    => $user->getSchoolAppUrl(),
+            'school_app_username' => $user->getSchoolAppUsername(),
             'reports' => array_map(fn($r) => [
                 'id'          => $r->getId(),
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
@@ -459,6 +462,24 @@ class StudentController extends AbstractController
             } catch (\InvalidArgumentException $e) {
                 return $this->json(['error' => $e->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
             }
+        }
+
+        // 3.2 Gérer les champs d'accès vie scolaire
+        if (array_key_exists('school_app', $data)) {
+            try {
+                $student->setSchoolApp($data['school_app']);
+            } catch (\InvalidArgumentException $e) {
+                return $this->json(['error' => $e->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
+        if (array_key_exists('school_app_url', $data)) {
+            $student->setSchoolAppUrl($data['school_app_url']);
+        }
+        if (array_key_exists('school_app_username', $data)) {
+            $student->setSchoolAppUsername($data['school_app_username']);
+        }
+        if (array_key_exists('school_app_password', $data)) {
+            $student->setSchoolAppPassword($data['school_app_password']);
         }
 
         // 4. Mettre à jour le center si fourni

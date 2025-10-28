@@ -197,7 +197,7 @@ export const TranslateHeaderNames = (value:String) => {
       case 'gender':
         return 'Genre'
       case 'phone':
-        return 'Télèphone'
+        return 'Téléphone'
       case 'id_center':
         return 'Centre'
       case 'password':
@@ -275,7 +275,9 @@ export const TranslateHeaderNames = (value:String) => {
       case 'caution':
         return 'Caution'
       case 'favorite_slots_mode':
-        return 'Creneaux choisis'
+        return 'Créneaux choisis'
+      case 'stripe_key':
+        return 'Clé stripe'
 
     }
 }

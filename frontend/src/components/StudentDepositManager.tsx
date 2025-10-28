@@ -4,7 +4,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
+  Button as MuiButton,
   TextField,
   FormControl,
   InputLabel,
@@ -16,6 +16,10 @@ import {
   Alert,
   InputAdornment
 } from '@mui/material';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Wallet, Edit } from 'lucide-react';
 import api from '../api/aixos';
 
 interface DepositStatus {
@@ -115,52 +119,67 @@ export const StudentDepositManager: React.FC<StudentDepositManagerProps> = ({
 
   const currentStatusInfo = getStatusInfo(currentStatus || null);
 
+  const getStatusBadgeColor = (status: string | null) => {
+    if (!status) return 'bg-gray-100 text-gray-600 border-gray-200';
+    switch (status) {
+      case 'en_attente_reception':
+        return 'bg-orange-100 text-orange-600 border-orange-200';
+      case 'reception_centre':
+        return 'bg-blue-100 text-blue-600 border-blue-200';
+      case 'reception_siege':
+        return 'bg-purple-100 text-purple-600 border-purple-200';
+      case 'rendu_parent':
+        return 'bg-green-100 text-green-600 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-600 border-gray-200';
+    }
+  };
+
   return (
     <>
-      <Box className="bg-gray-50 p-4 rounded-lg">
-        <div className="flex justify-between items-start mb-2">
-          <Typography variant="h6" className="font-medium text-gray-700">
-            Caution
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleOpen}
-          >
-            Gérer
-          </Button>
-        </div>
-
-        {currentAmount && parseFloat(currentAmount) > 0 ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Typography variant="body2" className="text-gray-600">
-                Montant:
-              </Typography>
-              <Typography variant="body1" className="font-semibold">
-                {parseFloat(currentAmount).toFixed(2)} €
-              </Typography>
-            </div>
-
-            {currentStatusInfo && (
-              <div className="flex items-center justify-between">
-                <Typography variant="body2" className="text-gray-600">
-                  Statut:
-                </Typography>
-                <Chip
-                  label={currentStatusInfo.label}
-                  color={currentStatusInfo.color}
-                  size="small"
-                />
-              </div>
-            )}
+      <Card className="border-fading-grey">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg text-mister-anthracite flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-green-500" />
+              Caution
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpen}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Gérer
+            </Button>
           </div>
-        ) : (
-          <Typography variant="body2" className="text-gray-500 italic">
-            Aucune caution définie
-          </Typography>
-        )}
-      </Box>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {currentAmount && parseFloat(currentAmount) > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-mister-anthracite/70">Montant</p>
+                <p className="font-semibold text-mister-anthracite">
+                  {parseFloat(currentAmount).toFixed(2)} €
+                </p>
+              </div>
+
+              {currentStatusInfo && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-mister-anthracite/70">Statut</p>
+                  <Badge className={getStatusBadgeColor(currentStatus)}>
+                    {currentStatusInfo.label}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-mister-anthracite/70 italic">
+              Aucune caution définie
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Gérer la caution de l'élève</DialogTitle>
@@ -226,16 +245,16 @@ export const StudentDepositManager: React.FC<StudentDepositManagerProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} disabled={loading}>
+          <MuiButton onClick={handleClose} disabled={loading}>
             Annuler
-          </Button>
-          <Button
+          </MuiButton>
+          <MuiButton
             onClick={handleSave}
             variant="contained"
             disabled={loading}
           >
             {loading ? 'Enregistrement...' : 'Enregistrer'}
-          </Button>
+          </MuiButton>
         </DialogActions>
       </Dialog>
     </>

@@ -22,11 +22,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StudentsSubscriptions } from './subscriptions/StudentsSubscriptions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars, FileText, Building, CalendarCheck, CreditCard, CalendarDays, Zap, ShieldCheck, UserRound, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Shield, MapPin, Calendar, VenusAndMars, FileText, Building, CalendarCheck, CreditCard, CalendarDays, Zap, ShieldCheck, UserRound, GraduationCap, KeySquare } from 'lucide-react';
 import { actions } from '../mocks/mocks'; // Assure-toi que le chemin est correct
 import { getLevelOfClass } from './subscriptions/SubscriptionFunctions';
 import { PaymentStatus } from './TrialSessionCard';
 import { StudentDepositManager } from './StudentDepositManager';
+import { SchoolAppCredentials } from './SchoolAppCredentials';
 
 export interface DetailPageParams {
   resource: string;
@@ -126,13 +127,13 @@ const ItemDetails: React.FC = () => {
   if (error) return <p className="text-red-600">{error}</p>;
   if (!item) return <Page404 />;
 
-  const mainFields = ['firstname', 'lastname', 'email', 'phone', 'gender'];
+  const mainFields = ['firstname', 'lastname', 'email', 'phone', 'gender', 'stripe_key'];
   const addressFields = ['address', 'city', 'zip_code', 'country'];
   const otherFields = Object.keys(item).filter(
     (key) =>
       !mainFields.includes(key) &&
       !addressFields.includes(key) &&
-      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active'].includes(key)
+      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active', 'school_app', 'school_app_url', 'school_app_username', 'deposit_amount', 'deposit_status', 'has_deposit'].includes(key)
   );
 
   // Pour le badge statut
@@ -192,6 +193,7 @@ const ItemDetails: React.FC = () => {
                       {key === 'email' && <Mail className="w-5 h-5 text-mister-anthracite/50" />}
                       {key === 'phone' && <Phone className="w-5 h-5 text-mister-anthracite/50" />}
                       {key === 'gender' && <VenusAndMars className="w-5 h-5 text-mister-anthracite/50" />}
+                      {key === 'stripe_key' && <KeySquare className="w-5 h-5 text-mister-anthracite/50" />}
                       <div>
                         <p className="text-sm text-mister-anthracite/70">{TranslateHeaderNames(key)}</p>
                         <p className="font-medium text-mister-anthracite">
@@ -420,16 +422,23 @@ const ItemDetails: React.FC = () => {
 
           {/* Gestion de la caution - Seulement pour les étudiants */}
           {resource === "student" && (
-            <Card className="border-fading-grey">
-              <CardContent className="p-4">
-                <StudentDepositManager
-                  studentId={item.id}
-                  currentAmount={item.deposit_amount}
-                  currentStatus={item.deposit_status}
-                  onUpdate={() => setRefreshKey(prev => prev + 1)}
-                />
-              </CardContent>
-            </Card>
+            <StudentDepositManager
+              studentId={item.id}
+              currentAmount={item.deposit_amount}
+              currentStatus={item.deposit_status}
+              onUpdate={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
+
+          {/* Accès application de vie scolaire - Seulement pour les étudiants */}
+          {resource === "student" && (
+            <SchoolAppCredentials
+              studentId={item.id}
+              currentApp={item.school_app}
+              currentUrl={item.school_app_url}
+              currentUsername={item.school_app_username}
+              onUpdate={() => setRefreshKey(prev => prev + 1)}
+            />
           )}
 
           {/* Actions rapides */}

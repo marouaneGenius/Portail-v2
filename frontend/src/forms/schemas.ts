@@ -14,7 +14,7 @@ export interface ArrayField  extends FormField   {
 export const userFields: FormField[] = [
   { name: 'firstname', label: 'Prénom', type: 'text', className: 'col-span-1' },
   { name: 'lastname', label: 'Nom', type: 'text' },
-  { name: 'phone', label: 'Télèphone', type: 'text' },
+  { name: 'phone', label: 'Téléphone', type: 'text' },
   { name: 'email', label: 'Adresse e‑mail', type: 'email', required: true },
   { name: 'password', label: 'Mot de passe', type: 'password', required: true },
   { name: 'role', label: 'Role', type: 'select', required: true, 
@@ -47,9 +47,9 @@ export const studentFields: FormField[] = [
   { name: 'firstname', label: 'Prénom', type: 'text', required: true },
   { name: 'lastname', label: 'Nom', type: 'text', required: true },
   { name: 'gender', label: 'Genre', type: 'select', required: true,
-    options: [ 
-      { value: 'male', label: 'Homme' }, 
-      { value: 'female', label: 'Femme' } 
+    options: [
+      { value: 'male', label: 'Homme' },
+      { value: 'female', label: 'Femme' }
     ]
   },
   { name: 'class', label: 'Classe', type: 'select', required: true },
@@ -67,7 +67,7 @@ export const parentFields: FormField[] = [
     ]
   },
   { name: 'email', label: 'E‑mail', type: 'email', required: true },
-  { name: 'phone', label: 'Télèphone', type: 'text', required: true ,className: 'col-span-2'},
+  { name: 'phone', label: 'Téléphone', type: 'text', required: true ,className: 'col-span-2'},
   { name: 'address', label: 'Adresse', type: 'text', required: true,className: 'col-span-2'},
   { name: 'zip_code', label: 'Code Postal', type: 'text', required: true},
   { name: 'city', label: 'Ville', type: 'text', required: true},
