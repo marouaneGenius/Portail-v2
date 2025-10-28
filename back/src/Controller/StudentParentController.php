@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Security\StudentParentUser;
 
 #[Route('/api/parent')]
 class StudentParentController extends AbstractController
@@ -22,7 +24,8 @@ class StudentParentController extends AbstractController
         private EntityManagerInterface    $em,
         private StudentParentRepository   $parentRepo,
         private NameNormalizerService     $nameNormalizer,
-        private PhoneValidatorService     $phoneValidator
+        private PhoneValidatorService     $phoneValidator,
+        private UserPasswordHasherInterface $passwordHasher
     ) {}
 
     // private function isProdEnv(): bool
@@ -335,5 +338,38 @@ class StudentParentController extends AbstractController
             ->getArrayResult();
 
         return $this->json($parents);
+    }
+
+    /**
+     * Réinitialise le mot de passe d'un parent à "genius2025"
+     */
+    #[Route('/{id}/reset-password', name: 'api_parent_reset_password', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function resetPassword(int $id): JsonResponse
+    {
+        $parent = $this->parentRepo->find($id);
+        if (!$parent) {
+            return $this->json(['error' => 'Parent non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // Nouveau mot de passe par défaut
+        $newPassword = 'genius2025';
+
+        // Hasher le mot de passe avec le système unifié
+        $studentParentUser = new StudentParentUser($parent);
+        $hashedPassword = $this->passwordHasher->hashPassword($studentParentUser, $newPassword);
+        $parent->setPassword($hashedPassword);
+
+        // Mettre à jour les métadonnées
+        $parent->setUpdatedAt(new \DateTimeImmutable());
+        $parent->setUpdatedBy($this->getUser()->getUserIdentifier());
+
+        $this->em->flush();
+
+        return $this->json([
+            'id' => $parent->getId(),
+            'message' => 'Mot de passe réinitialisé avec succès',
+            'new_password' => $newPassword
+        ]);
     }
 }

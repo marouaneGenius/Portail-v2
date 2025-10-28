@@ -118,6 +118,17 @@ const ItemDetails: React.FC = () => {
     navigate(`/${resource}/${id}/edit`);
   };
 
+  // Fonction pour réinitialiser le mot de passe d'un parent
+  const handleResetPassword = async () => {
+    if (!window.confirm('Voulez-vous vraiment réinitialiser le mot de passe à "genius2025" ?')) return;
+    try {
+      await api.post(`/api/parent/${id}/reset-password`);
+      alert('Mot de passe réinitialisé avec succès à "genius2025"');
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Erreur lors de la réinitialisation du mot de passe.");
+    }
+  };
+
   if (loading) return <p>Chargement…</p>;
   
   // Si erreur 404 ou item non trouvé, afficher la page 404
@@ -354,6 +365,22 @@ const ItemDetails: React.FC = () => {
                 <div className="flex-1">
                   <p className="text-sm text-mister-anthracite/70">Statut du compte</p>
                   <Badge className={getStatusColor(statusLabel)}>{statusLabel}</Badge>
+
+                  {/* Bouton réinitialiser mot de passe pour les parents */}
+                  {resource === "parent" && (
+                    <div className="mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetPassword}
+                        className="w-full"
+                      >
+                        <KeySquare className="w-4 h-4 mr-2" />
+                        Réinitialiser le mot de passe
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Affiche le rôle si la ressource est "user" */}
                   {resource === "user" && item.roles && (
                     <div className="flex items-center gap-2 mt-2">
