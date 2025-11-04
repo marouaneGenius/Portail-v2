@@ -79,6 +79,9 @@ class StudentExportService
             $subscriptionType = $activeSubscription ? $activeSubscription->getSubscriptionType() : 'Aucun';
             $hoursPerWeek = $activeSubscription ? $activeSubscription->getSessionPerWeek() : 0;
 
+            // Récupérer la date du premier cours planifié
+            $firstCourseDate = $this->getFirstScheduledCourseDate($student);
+
             $exportData[] = [
                 'student_firstname' => $student->getFirstname(),
                 'student_lastname' => $student->getLastname(),
@@ -89,6 +92,7 @@ class StudentExportService
                 'subscription_type' => $subscriptionType,
                 'hours_per_week' => $hoursPerWeek,
                 'total_expenses' => $totalParentExpenses,
+                'first_course_date' => $firstCourseDate,
             ];
         }
 
@@ -214,7 +218,8 @@ class StudentExportService
             'Téléphone Parent(s)',
             'Type Abonnement',
             'Nombres de séances par semaine',
-            'Montant total dépenses (€)'
+            'Montant total dépenses (€)',
+            'Date du premier cours planifié'
         ], ';');
 
         // Lignes de données
@@ -235,6 +240,11 @@ class StudentExportService
             // Traduire le statut
             $statusLabel = $this->translateStatus($row['status']);
 
+            // Formater la date du premier cours
+            $firstCourseDate = $row['first_course_date']
+                ? $row['first_course_date']->format('d/m/Y')
+                : '';
+
             fputcsv($output, [
                 $row['student_firstname'],
                 $row['student_lastname'],
@@ -247,7 +257,8 @@ class StudentExportService
                 implode(' / ', $parentsPhones),
                 $row['subscription_type'],
                 $row['hours_per_week'],
-                number_format($row['total_expenses'], 2, ',', ' ')
+                number_format($row['total_expenses'], 2, ',', ' '),
+                $firstCourseDate
             ], ';');
         }
 
@@ -296,5 +307,34 @@ class StudentExportService
 
         $result = $qb->getQuery()->getResult();
         return array_column($result, 'class');
+    }
+
+    /**
+     * Récupère la date du premier cours planifié pour un élève (hors séance découverte)
+     *
+     * @param $student L'élève
+     * @return \DateTimeInterface|null La date du premier cours ou null si aucun cours trouvé
+     */
+    private function getFirstScheduledCourseDate($student): ?\DateTimeInterface
+    {
+        $sessions = $student->getSessions();
+        $firstCourseDate = null;
+
+        foreach ($sessions as $session) {
+            // Exclure les séances découverte (trial_session) et les séances annulées
+            if ($session->getSessionType() === 'trial_session' || $session->isIsCanceled()) {
+                continue;
+            }
+
+            $dateSlot = $session->getDateSlot();
+            if ($dateSlot) {
+                // Si c'est le premier cours ou si ce cours est antérieur au précédent trouvé
+                if ($firstCourseDate === null || $dateSlot < $firstCourseDate) {
+                    $firstCourseDate = $dateSlot;
+                }
+            }
+        }
+
+        return $firstCourseDate;
     }
 }

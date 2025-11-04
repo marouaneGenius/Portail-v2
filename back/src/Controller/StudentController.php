@@ -704,12 +704,13 @@ class StudentController extends AbstractController
             'Actif',
             'Centre',
             'Parent - Prénom',
-            'Parent - Nom', 
+            'Parent - Nom',
             'Parent - Genre',
             'Parent - Email',
             'Parent - Téléphone',
             'Date de création',
-            'Créé par'
+            'Créé par',
+            'Date du premier cours planifié'
         ];
 
         foreach ($students as $student) {
@@ -719,6 +720,9 @@ class StudentController extends AbstractController
             // Récupérer le premier parent
             $parents = $student->getIdParent();
             $firstParent = $parents->count() > 0 ? $parents->first() : null;
+
+            // Récupérer la date du premier cours planifié (hors séance découverte)
+            $firstCourseDate = $this->getFirstScheduledCourseDate($student);
 
             $csvData[] = [
                 $student->getId(),
@@ -736,7 +740,8 @@ class StudentController extends AbstractController
                 $firstParent ? $firstParent->getEmail() : '',
                 $firstParent ? $firstParent->getPhone() : '',
                 $student->getCreatedAt() ? $student->getCreatedAt()->format('Y-m-d H:i:s') : '',
-                $student->getCreatedBy() ?: ''
+                $student->getCreatedBy() ?: '',
+                $firstCourseDate ? $firstCourseDate->format('d/m/Y') : ''
             ];
         }
 
@@ -950,4 +955,33 @@ class StudentController extends AbstractController
     // {
     //     return ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
     // }
+
+    /**
+     * Récupère la date du premier cours planifié pour un élève (hors séance découverte)
+     *
+     * @param Student $student L'élève
+     * @return \DateTimeInterface|null La date du premier cours ou null si aucun cours trouvé
+     */
+    private function getFirstScheduledCourseDate(Student $student): ?\DateTimeInterface
+    {
+        $sessions = $student->getSessions();
+        $firstCourseDate = null;
+
+        foreach ($sessions as $session) {
+            // Exclure les séances découverte (trial_session) et les séances annulées
+            if ($session->getSessionType() === 'trial_session' || $session->isIsCanceled()) {
+                continue;
+            }
+
+            $dateSlot = $session->getDateSlot();
+            if ($dateSlot) {
+                // Si c'est le premier cours ou si ce cours est antérieur au précédent trouvé
+                if ($firstCourseDate === null || $dateSlot < $firstCourseDate) {
+                    $firstCourseDate = $dateSlot;
+                }
+            }
+        }
+
+        return $firstCourseDate;
+    }
 }
