@@ -28,6 +28,8 @@ import { getLevelOfClass } from './subscriptions/SubscriptionFunctions';
 import { PaymentStatus } from './TrialSessionCard';
 import { StudentDepositManager } from './StudentDepositManager';
 import { SchoolAppCredentials } from './SchoolAppCredentials';
+import PronoteScrapingButton from './PronoteScrapingButton';
+import { PronoteDataCards } from './PronoteDataCards';
 
 export interface DetailPageParams {
   resource: string;
@@ -144,7 +146,7 @@ const ItemDetails: React.FC = () => {
     (key) =>
       !mainFields.includes(key) &&
       !addressFields.includes(key) &&
-      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active', 'school_app', 'school_app_url', 'school_app_username', 'deposit_amount', 'deposit_status', 'has_deposit'].includes(key)
+      !['parents', 'students', 'reports', 'sessions', 'centers', 'tutorschedules', 'school_subjects', 'is_active', 'school_app', 'school_app_url', 'school_app_username', 'school_app_password', 'deposit_amount', 'deposit_status', 'has_deposit'].includes(key)
   );
 
   // Pour le badge statut
@@ -166,7 +168,17 @@ const ItemDetails: React.FC = () => {
             <p className="text-mister-anthracite/70 capitalize">Détails du {resource}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {resource === 'student' && (
+            <PronoteScrapingButton
+              studentId={parseInt(id!)}
+              hasPronoteCredentials={
+                item.school_app === 'pronote' &&
+                !!(item.school_app_url && item.school_app_username && item.school_app_password)
+              }
+              onSuccess={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
           <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="w-4 h-4 mr-2" />
             Modifier
@@ -465,6 +477,14 @@ const ItemDetails: React.FC = () => {
               currentUrl={item.school_app_url}
               currentUsername={item.school_app_username}
               onUpdate={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
+
+          {/* Données Pronote - Seulement pour les étudiants avec Pronote */}
+          {resource === "student" && item.school_app === 'pronote' && (
+            <PronoteDataCards
+              studentId={item.id}
+              refreshTrigger={refreshKey}
             />
           )}
 

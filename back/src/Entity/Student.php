@@ -700,4 +700,72 @@ class Student
 
         return $this;
     }
+
+    /**
+     * Alias pour récupérer le lien Pronote depuis school_app_url
+     */
+    public function getPronoteLink(): ?string
+    {
+        return $this->school_app === 'pronote' ? $this->school_app_url : null;
+    }
+
+    /**
+     * Alias pour définir le lien Pronote dans school_app_url
+     */
+    public function setPronoteLink(?string $pronote_link): static
+    {
+        $this->school_app = 'pronote';
+        $this->school_app_url = $pronote_link;
+
+        return $this;
+    }
+
+    /**
+     * Alias pour récupérer le username Pronote depuis school_app_username
+     */
+    public function getPronoteUsername(): ?string
+    {
+        return $this->school_app === 'pronote' ? $this->school_app_username : null;
+    }
+
+    /**
+     * Alias pour définir le username Pronote dans school_app_username
+     */
+    public function setPronoteUsername(?string $pronote_username): static
+    {
+        $this->school_app = 'pronote';
+        $this->school_app_username = $pronote_username;
+
+        return $this;
+    }
+
+    /**
+     * Alias pour récupérer le password Pronote depuis school_app_password
+     */
+    public function getPronotePassword(): ?string
+    {
+        return $this->school_app === 'pronote' ? $this->school_app_password : null;
+    }
+
+    /**
+     * Alias pour définir le password Pronote dans school_app_password
+     */
+    public function setPronotePassword(?string $pronote_password): static
+    {
+        $this->school_app = 'pronote';
+        $this->school_app_password = $pronote_password;
+
+        return $this;
+    }
+
+    /**
+     * Vérifie si l'élève a des identifiants Pronote complets
+     */
+    public function hasPronoteCredentials(): bool
+    {
+        return $this->school_app === 'pronote' &&
+               !empty($this->school_app_url) &&
+               !empty($this->school_app_username) &&
+               !empty($this->school_app_password);
+    }
 }

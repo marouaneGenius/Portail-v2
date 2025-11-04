@@ -1,0 +1,34 @@
+{
+  "name": "vie-scolaire-scrapper",
+  "version": "1.0.0",
+  "description": "Service de scrapping automatisé pour les données de vie scolaire",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:api": "node src/api/server.js",
+    "dev": "node --watch src/index.js",
+    "dev:api": "node --watch src/api/server.js",
+    "scrape": "node src/scrapers/vieScolaireScraper.js",
+    "test": "echo \"Tests à implémenter\" && exit 0"
+  },
+  "keywords": [
+    "scrapper",
+    "puppeteer",
+    "vie-scolaire"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^21.5.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0",
+    "cron": "^3.1.6",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

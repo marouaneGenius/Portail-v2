@@ -35,6 +35,25 @@ services:
       - dbdata:/var/lib/postgresql/data
       - ./docker/postgres/initdb:/docker-entrypoint-initdb.d
 
+  scrapper:
+    build:
+      context: ./scrapper
+      dockerfile: Dockerfile
+    container_name: vie_scolaire_scrapper
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./scrapper:/app
+      - /app/node_modules
+      - ./scrapper/logs:/app/logs
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://symfony:symfony@db:5432/symfony}
+      API_PORT: 3000
+    depends_on:
+      - db
+    restart: unless-stopped
+
 
 volumes:
   dbdata:

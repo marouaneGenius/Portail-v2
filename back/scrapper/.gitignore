@@ -1,0 +1,9 @@
+node_modules/
+logs/*.log
+.env
+*.lock
+package-lock.json
+yarn.lock
+.DS_Store
+screenshots/
+temp/

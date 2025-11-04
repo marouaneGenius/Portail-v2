@@ -404,6 +404,7 @@ class StudentController extends AbstractController
             'school_app'        => $user->getSchoolApp(),
             'school_app_url'    => $user->getSchoolAppUrl(),
             'school_app_username' => $user->getSchoolAppUsername(),
+            'school_app_password' => $user->getSchoolAppPassword(),
             'reports' => array_map(fn($r) => [
                 'id'          => $r->getId(),
                 'created_at'  => $r->getCreatedAt()->format(\DateTime::ATOM),
