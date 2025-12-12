@@ -260,8 +260,13 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
 
     const startDate = subscription.subscription_start_date ;
     const start = new Date(startDate);
-    
-    const endDates: Date[] = [];
+
+    // Ajouter la date d'aujourd'hui comme première option
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const endDates: Date[] = [today];
+
     for (let m = INTERVAL; m <= TOTAL_MONTHS; m += INTERVAL) {
       const d = new Date(start);
       d.setMonth(start.getMonth() + m);
@@ -270,22 +275,33 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
     }
 
     // Prépare l'affichage (date de fin + date-limite)
-    return endDates.map((end) => {
+    return endDates.map((end, index) => {
       const deadline = new Date(end);
       deadline.setDate(end.getDate() - offsetDays);
+
+      // Pour la date d'aujourd'hui, utiliser un libellé spécifique
+      const isToday = index === 0;
+
       return {
         endDate: end,
         deadlineDate: deadline,
-        endFr: end.toLocaleDateString("fr-FR", {
-          weekday: "long",
-          day: "2-digit", 
-          month: "long",
-          year: "numeric",
-        }),
+        endFr: isToday
+          ? "Aujourd'hui - " + end.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })
+          : end.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            }),
         deadlineFr: deadline.toLocaleDateString("fr-FR", {
           weekday: "long",
           day: "2-digit",
-          month: "long", 
+          month: "long",
           year: "numeric",
         }),
         value: end.toISOString().split('T')[0] // pour le select
@@ -666,7 +682,8 @@ export function StudentSubscriptionCard({ studentId, student, hasParent }: Props
                 <option value="">Sélectionner une date de résiliation</option>
                 {selectedSubscription && calculateResiliationDates(selectedSubscription).map((dateInfo, index) => (
                   <option key={index} value={dateInfo.value}>
-                    {dateInfo.endFr} (à notifier avant le {dateInfo.deadlineFr})
+                    {dateInfo.endFr}
+                     {/* (à notifier avant le {dateInfo.deadlineFr}) */}
                   </option>
                 ))}
               </select>
